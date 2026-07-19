@@ -109,4 +109,6 @@ A contribution process will be introduced when the project reaches an appropriat
 
 Lumen is developed as part of the Illuminates.One initiative.
 
-Illuminates.One focuses on knowledge, continuity, provenance and engineering trustworthiness, with the goal of making AI-assisted work more reliable, understandable and sustainable.
+Illuminates.One exists to create tools that help people discover, preserve and build upon knowledge. The principles of continuity, provenance and engineering trustworthiness underpin every project developed under the initiative.
+
+Lumen is the first project to embody that philosophy, applying those principles to AI-assisted engineering and knowledge work through orchestration, continuity and persistent project knowledge.
