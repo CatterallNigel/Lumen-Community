@@ -135,9 +135,19 @@ Lumen preserves continuity across context boundaries.
 
 ## Project
 
-The persistent unit of work managed by Lumen.
+The persistent unit of work being managed by Lumen.
 
-A project may span many sessions, models, clients and days of work.
+A project represents a body of work, such as a software system, research effort, engineering task or other long-running activity.
+
+A project may span multiple sessions, models, clients and days of work.
+
+---
+
+## Lumen Project
+
+The software project that develops Lumen itself.
+
+Unless explicitly stated otherwise, the term *project* throughout the Lumen documentation refers to a project being managed by Lumen rather than the development of Lumen itself.
 
 ---
 
@@ -185,7 +195,7 @@ Provenance records where conclusions, facts or decisions originated.
 
 ## Continuity State
 
-The complete collection of information required to resume work consistently.
+The complete collection of information required to resume a project consistently.
 
 This may include objectives, checkpoints, reasoning, provenance, assumptions, unresolved questions and other project knowledge.
 
@@ -193,11 +203,21 @@ This may include objectives, checkpoints, reasoning, provenance, assumptions, un
 
 ## Project Knowledge
 
-The accumulated information describing the state of a project.
+The accumulated knowledge describing the current state of a project.
 
 Examples include objectives, established facts, architectural decisions, reasoning, provenance and continuity artefacts.
 
 Project knowledge persists independently of any individual language model session.
+
+---
+
+## Continuity Artefact
+
+Any persisted item that contributes to preserving project continuity.
+
+Examples include checkpoints, distillations, objectives, provenance records, architectural decisions, assumptions and other recorded project knowledge.
+
+Continuity artefacts collectively form the continuity state required to resume work consistently.
 
 ---
 
