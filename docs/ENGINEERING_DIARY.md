@@ -128,3 +128,64 @@ Where practical, experiments should modify only a single architectural or orches
 ### Status
 
 ✓ Adopted as an engineering principle.
+
+---
+
+## Research Direction Shift
+
+### Observation
+
+Lumen began with a practical engineering objective: determine whether a model with a 32k token context window could successfully read, retain and reason over a large source file significantly exceeding the available context through controlled checkpointing and continuity reconstruction.
+
+The successful analysis of a ~9,860 line Python source file demonstrated that this objective was achievable. Once this milestone had been reached, the primary engineering challenge changed.
+
+Rather than asking whether Lumen could preserve sufficient information to complete the task, attention shifted towards understanding how the underlying language model itself interprets instructions, maintains its working state and applies reasoning throughout a long-running task.
+
+### Analysis
+
+Current research is increasingly focused on the model's operational behaviour rather than its raw capability.
+
+Areas of investigation now include:
+
+* How instructions are interpreted and prioritised.
+* How multiple rules interact and how contradictions are resolved.
+* How understanding evolves as additional evidence is introduced.
+* How assumptions are created, revised or discarded.
+* How uncertainty is represented.
+* How the model's observable working state changes during execution.
+* Which orchestration policies improve consistency, continuity and reliability.
+
+These questions are intentionally model-agnostic. Although current experimentation is performed using Qwen, the underlying behaviours being investigated are expected to exist within all transformer-based language models to varying degrees.
+
+### Architectural Implication
+
+Lumen is evolving beyond a continuity mechanism.
+
+It is becoming an orchestration layer that seeks to make a model's operational behaviour observable, measurable and controllable.
+
+Rather than treating inference as a black box producing an answer, Lumen treats the model's evolving working state as an engineering artefact that can be:
+
+* observed;
+* versioned;
+* evaluated;
+* preserved;
+* reconstructed;
+* compared;
+* improved through evidence-based experimentation.
+
+This shifts Lumen's role from extending context windows to understanding and governing the behaviour of long-running AI workflows.
+
+### Reflection
+
+While research into instruction following, prompting and model behaviour undoubtedly exists within foundation model organisations and academic research, the current direction of Lumen appears to approach the problem from a different perspective.
+
+The objective is not to improve or retrain the underlying language model, but to understand how any compatible model behaves when operating within a managed orchestration environment.
+
+Lumen therefore treats continuity, instruction interpretation, working state and behavioural observability as first-class engineering concerns, independent of the underlying model implementation.
+
+### Conclusion
+
+The completion of the large-file continuity milestone represents the end of Lumen's initial proof-of-concept phase.
+
+Future research will increasingly concentrate on understanding and improving the interaction between orchestration policy and model behaviour, with the long-term goal of making AI systems more observable, auditable, predictable and reliable.
+
