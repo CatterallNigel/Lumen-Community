@@ -258,3 +258,9 @@ The architectural principle that Lumen should operate independently of any parti
 Any document, source code, configuration, checkpoint or other asset that contributes to the engineering of the system.
 
 Within Lumen, documentation is considered an engineering artefact.
+
+---
+
+## Trust through Accuracy
+
+Trust is earned by consistently describing the system as it is today. Documentation must distinguish clearly between implemented functionality, work in progress, architectural direction, and future vision. Aspirational features must never be presented as current capabilities.
