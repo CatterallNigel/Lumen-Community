@@ -264,3 +264,28 @@ Within Lumen, documentation is considered an engineering artefact.
 ## Trust through Accuracy
 
 Trust is earned by consistently describing the system as it is today. Documentation must distinguish clearly between implemented functionality, work in progress, architectural direction, and future vision. Aspirational features must never be presented as current capabilities.
+
+---
+
+## Document Review Gate
+
+Every new document, and every substantial revision to an existing document, should be reviewed against the following questions:
+
+1. **Does it still reflect reality?**
+   The document must clearly distinguish between what is currently implemented, what is in development, and what remains architectural direction or research.
+
+2. **Is it duplicated elsewhere?**
+   Information should have one authoritative home. Other documents should reference that source rather than repeating and gradually diverging from it.
+
+3. **Does it introduce concepts that belong in another document?**
+   New ideas should be placed according to their purpose: vision, architecture, roadmap, research, design, engineering history, or operational guidance.
+
+4. **Does it reference the documents it depends on?**
+   Related concepts should be linked so the documentation forms a connected body of knowledge rather than a collection of isolated files.
+
+5. **Should it become part of the White Paper?**
+   Material that explains Lumen’s central problem, principles, architecture, evidence, or significance should be considered for inclusion in the consolidated White Paper.
+
+A document should not be treated as complete merely because its content is correct in isolation. It must also be correctly positioned, connected, current, and consistent with the wider documentation set.
+
+> Lumen is intended to reduce model drift. Its documentation must be designed to resist project drift.
