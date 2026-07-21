@@ -256,4 +256,223 @@ Those distillations now become research data.
 
 The next stage of development is not simply improving checkpointing, but analysing whether the model's understanding demonstrably evolved throughout the experiment. If that evolution can be measured and correlated with prompt design, Lumen moves beyond preserving continuity and begins providing observable insight into how large language models construct understanding over extended tasks.
 
+--- 
+
+# Lumen v3.2.5 – Model Behaviour & Cognitive Evolution
+
+**Status:** Planned
+
+## Objective
+
+Following the successful completion of v3.2.4, the focus moves from validating Lumen's continuity architecture to analysing the behaviour of the underlying language model.
+
+The objective of v3.2.5 is to determine whether Lumen's prompt architecture and continuity mechanisms measurably influence how a model constructs, maintains and refines its internal understanding during long-running tasks.
+
+---
+
+# Primary Work Items
+
+## 1. Distillation Evolution Analysis
+
+Analyse every checkpoint generated during the v3.2.4 experiment.
+
+For each checkpoint identify:
+
+* New concepts introduced.
+* Concepts removed or corrected.
+* Changes in terminology.
+* Increasing architectural abstraction.
+* Newly discovered relationships.
+* Reduction of uncertainty.
+* Evidence that the model is revising rather than simply extending previous understanding.
+
+The objective is to determine whether the model's understanding evolves in a measurable and consistent manner.
+
+---
+
+## 2. Prompt Effectiveness Evaluation
+
+Evaluate the revised generated System Prompt and continuity prompt.
+
+Questions include:
+
+* Did the model consistently remain focused on the stated objective?
+* Did it avoid premature analysis?
+* Did it continue constructing a unified understanding across multiple source chunks?
+* Did the prompts encourage architectural reasoning rather than local code description?
+* Which prompt instructions appear to have had the greatest influence?
+
+The outcome should be recommendations for the next prompt revision.
+
+---
+
+## 3. Final Analysis Quality Assessment
+
+Review the final architectural summary produced by Qwen.
+
+Evaluate:
+
+* Completeness.
+* Accuracy.
+* Architectural understanding.
+* Identification of relationships.
+* Recognition of responsibilities.
+* Missing observations.
+* Hallucinations (if any).
+
+This establishes a baseline for future experimental comparisons.
+
+---
+
+## 4. Distillation Comparison Framework
+
+Define a repeatable method for comparing cognitive distillations.
+
+Possible evaluation criteria include:
+
+* Concept growth.
+* Relationship growth.
+* Architectural abstraction.
+* Consistency.
+* Confidence.
+* Correction of earlier assumptions.
+* Stability across checkpoint generations.
+
+The framework should be reusable across future experiments and different language models.
+
+---
+
+## 5. Cognitive State Research
+
+Investigate whether the checkpoint sequence represents a measurable approximation of the model's evolving cognitive state.
+
+Research questions include:
+
+* Does each checkpoint demonstrate increased understanding?
+* Can prompt changes alter this progression?
+* Can continuity improve reasoning quality?
+* Can cognitive regressions be detected?
+* Can cognitive improvement be measured objectively?
+
+This becomes one of the principal long-term research themes of Lumen.
+
+---
+
+## 6. MongoDB Checkpoint Persistence Resilience
+
+Improve checkpoint durability when MongoDB is temporarily unavailable.
+
+The current implementation successfully preserves runtime continuity but does not guarantee durable persistence if storage becomes unavailable.
+
+Investigate introducing:
+
+* Deferred checkpoint persistence.
+* Automatic retry with exponential backoff.
+* Local persistence journal (JSONL or SQLite).
+* Pending checkpoint queue.
+* Recovery of uncommitted checkpoints after restart.
+* Explicit checkpoint persistence status reporting.
+
+The objective is to ensure checkpoint generation and checkpoint persistence become independent operations.
+
+---
+
+## 7. Checkpoint Observation UI
+
+Create a simple HTML interface for viewing Lumen continuity checkpoints as they are generated.
+
+The initial implementation should remain deliberately minimal. Its purpose is observability, not presentation polish.
+
+### Initial Requirements
+
+The page should:
+
+* Display the current active session.
+* Show checkpoints in generation order.
+* Automatically update whenever a new checkpoint is created.
+* Display the latest checkpoint prominently.
+* Allow earlier checkpoints to remain visible for comparison.
+* Show essential checkpoint metadata, including:
+
+  * Generation number.
+  * Timestamp.
+  * Session identifier.
+  * Source coverage or file offsets.
+  * Context ratio before and after checkpointing.
+  * Distillation length.
+  * Persistence status.
+* Display the complete distilled continuity text.
+* Clearly distinguish:
+
+  * Successfully persisted checkpoints.
+  * Checkpoints retained only in memory.
+  * Checkpoints pending persistence retry.
+  * Failed persistence attempts.
+
+### Update Mechanism
+
+For the first version, automatic updating may use simple polling from the browser.
+
+A small JavaScript request can periodically retrieve the latest checkpoint state from Lumen and refresh the page when a new generation appears.
+
+This avoids introducing unnecessary WebSocket or event-stream complexity before the observation requirements are better understood.
+
+### Suggested Endpoints
+
+Possible initial endpoints:
+
+```text
+GET /checkpoints
+GET /api/checkpoints
+GET /api/checkpoints/latest
+```
+
+The HTML page can consume the JSON API and update itself without a full page reload.
+
+### Scope
+
+The first version does not need:
+
+* Authentication.
+* Complex filtering.
+* Editing.
+* Charts.
+* Rich visualisation.
+* Multi-user support.
+* Checkpoint comparison analysis.
+
+It should provide a clear, live view of what Lumen is generating.
+
+### Purpose
+
+The UI supports two immediate objectives:
+
+1. Operational observability — confirming checkpoint creation, continuity state and persistence status during a running task.
+2. Research observability — allowing the evolution of the model's understanding to be inspected as it happens.
+
+The page will also provide the foundation for later comparison, annotation and automated checkpoint analysis.
+
+---
+
+# Success Criteria
+
+v3.2.5 will be considered successful if it:
+
+* Produces a documented analysis of every cognitive distillation.
+* Demonstrates whether model understanding evolves during long-running tasks.
+* Identifies measurable effects of prompt engineering.
+* Defines a repeatable framework for analysing model behaviour.
+* Improves checkpoint persistence resilience without affecting runtime continuity.
+
+---
+
+# Expected Outcome
+
+If successful, v3.2.5 moves Lumen beyond being a continuity engine.
+
+It establishes Lumen as a research platform capable of observing, measuring and eventually improving how large language models construct understanding over extended periods of work.
+
+Rather than evaluating only a model's final answer, Lumen begins evaluating the evolution of the model's understanding that produced it.
+
+
 
