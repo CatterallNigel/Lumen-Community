@@ -189,3 +189,71 @@ The completion of the large-file continuity milestone represents the end of Lume
 
 Future research will increasingly concentrate on understanding and improving the interaction between orchestration policy and model behaviour, with the long-term goal of making AI systems more observable, auditable, predictable and reliable.
 
+---
+
+## Engineering Diary – v3.2.4 Experimental Evaluation
+
+### Objective
+
+Evaluate whether the revised Lumen architecture can maintain model continuity during the analysis of a large real-world source file while improving the model's evolving understanding through generated system prompts, continuity checkpoints and cognitive distillation.
+
+The experiment used the approximately 10,000-line `dashboard.py` module from EF Social Discovery as the test subject.
+
+---
+
+## Result
+
+**Status: Qualified Success**
+
+The experiment successfully completed its primary objective.
+
+Qwen read the complete source file, maintained continuity throughout the session, respected the instruction not to analyse the file until the complete read had finished, and ultimately produced a coherent architectural summary of the entire module.
+
+During execution, Lumen performed multiple continuity checkpoint generations and context reductions without disrupting the active session.
+
+A temporary MongoDB connectivity failure prevented one checkpoint from being persisted. However, the checkpoint remained available within the running Lumen process and the active Pi session, allowing the experiment to continue successfully. The failure therefore affected durable persistence rather than runtime continuity.
+
+---
+
+## Observations
+
+The experiment demonstrated that:
+
+* Lumen can orchestrate long-running reading tasks that significantly exceed the practical limits of a single uninterrupted model interaction.
+* Continuity checkpoints successfully reduced active context while preserving task continuity.
+* The generated system prompt encouraged disciplined task execution. Qwen consistently continued reading rather than prematurely analysing partial input.
+* Runtime continuity proved resilient to an external persistence failure.
+* The final analysis exhibited architectural reasoning rather than merely describing recently read code.
+
+---
+
+## What remains unproven
+
+Although the operational objectives were achieved, the principal research question remains open.
+
+The purpose of v3.2.4 was not simply to determine whether a model could read a large source file. The deeper objective is to understand whether Lumen can positively influence the model's evolving cognitive state during long-running tasks.
+
+Specifically:
+
+* Does each continuity checkpoint represent a more complete internal understanding?
+* Does the model progressively replace local observations with architectural understanding?
+* Do the generated prompts alter how the model organises and revises its working model of the software being analysed?
+* Does this evolution produce measurably higher quality final analyses?
+
+The current experiment generated the data required to answer these questions, but that analysis has not yet been performed.
+
+---
+
+## Engineering Assessment
+
+From an engineering perspective, v3.2.4 should be regarded as a successful milestone.
+
+The experiment validates the overall continuity architecture while simultaneously identifying a specific weakness in checkpoint persistence. The MongoDB failure represents an infrastructure resilience issue rather than a continuity failure and suggests that future versions should implement deferred or retryable checkpoint persistence.
+
+More importantly, v3.2.4 has produced the first complete dataset of sequential cognitive distillations from a long-running software analysis task.
+
+Those distillations now become research data.
+
+The next stage of development is not simply improving checkpointing, but analysing whether the model's understanding demonstrably evolved throughout the experiment. If that evolution can be measured and correlated with prompt design, Lumen moves beyond preserving continuity and begins providing observable insight into how large language models construct understanding over extended tasks.
+
+
