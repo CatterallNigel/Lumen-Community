@@ -1201,3 +1201,7 @@ Evidence gathered during the v3.2.4 experiment indicates that greater value will
 This remains consistent with Lumen's evidence-based engineering philosophy:
 
 > **Improve the measurement before validating the measurement.**
+
+Note: Interaction logs for the initial v3.2.6 benchmark include residual entries from the previous run because the logs were not cleared prior to startup. This does not affect checkpoint or result validation but reduces the usefulness of the early log sequence for timing analysis.
+
+---
