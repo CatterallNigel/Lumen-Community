@@ -48,6 +48,20 @@ Terminology should be used consistently throughout the project.
 
 Where a technical term has a specific meaning within Lumen, that meaning should remain consistent across all documentation.
 
+One concept should have one preferred term, and one term should describe only one concept.
+
+---
+
+## Eliminate ambiguity
+
+Architectural terminology must be precise and unambiguous.
+
+Every defined term should have one meaning throughout the documentation. Likewise, each architectural concept should have one preferred term.
+
+If a term could reasonably be interpreted in multiple ways, it should either be refined or explicitly defined in the project dictionary.
+
+Reducing ambiguity improves implementation consistency, architectural discussion and long-term maintainability.
+
 ---
 
 ## Model independence
@@ -143,6 +157,16 @@ A project may span multiple sessions, models, clients and days of work.
 
 ---
 
+## Knowledge Branch
+
+A Knowledge Branch is a line of understanding that originates from a specific checkpoint within a project.
+
+It inherits all knowledge captured by its originating checkpoint and allows new work to begin without repeating the effort required to establish that understanding.
+
+Multiple Knowledge Branches may originate from the same checkpoint while preserving complete provenance and immutable history.
+
+---
+
 ## Lumen Project
 
 The software project that develops Lumen itself.
@@ -153,9 +177,11 @@ Unless explicitly stated otherwise, the term *project* throughout the Lumen docu
 
 ## Session
 
-A single interaction with an underlying language model.
+A continuous execution using a single model context.
 
-Sessions are transient.
+A session begins when a new model context is created and ends when that context is no longer continued.
+
+Each session is constrained by a single model context, although Lumen may extend its useful lifetime through checkpointing and context optimisation.
 
 Projects persist beyond sessions.
 
@@ -171,9 +197,9 @@ Objectives should remain stable throughout the lifetime of the project unless in
 
 ## Checkpoint
 
-A recorded representation of the project's current continuity state at a particular point in time.
+A recorded, immutable representation of the project's current understanding and continuity state at a particular point in time.
 
-Checkpoints enable continuity restoration.
+Checkpoints enable continuity restoration and may become the origin of one or more Knowledge Branches.
 
 ---
 
@@ -283,9 +309,36 @@ Every new document, and every substantial revision to an existing document, shou
 4. **Does it reference the documents it depends on?**
    Related concepts should be linked so the documentation forms a connected body of knowledge rather than a collection of isolated files.
 
-5. **Should it become part of the White Paper?**
+5. **Is every architectural term unambiguous?**
+   Every defined term should have exactly one meaning. Where ambiguity exists, refine the terminology or extend the dictionary.
+
+6. **Should it become part of the White Paper?**
    Material that explains Lumen’s central problem, principles, architecture, evidence, or significance should be considered for inclusion in the consolidated White Paper.
 
 A document should not be treated as complete merely because its content is correct in isolation. It must also be correctly positioned, connected, current, and consistent with the wider documentation set.
 
 > Lumen is intended to reduce model drift. Its documentation must be designed to resist project drift.
+
+---
+
+## Engineering Integrity
+
+The Engineering Diary is an evidence-based research record.
+
+It is intended to document what was attempted, what was observed and what was learned, regardless of whether the outcome was successful.
+
+Entries must accurately record:
+
+- Objectives
+- Hypotheses
+- Implementation
+- Observations
+- Results
+- Conclusions
+- Outstanding Questions
+
+Negative results are considered equally valuable to positive results.
+
+A disproven hypothesis eliminates future uncertainty and contributes to understanding.
+
+The purpose of the diary is not to demonstrate success, but to preserve engineering knowledge.

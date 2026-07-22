@@ -6,7 +6,7 @@
 
 Investigate whether a model's reasoning can be represented as a model-agnostic semantic cognitive state, rather than a model-specific internal state.
 
-The goal is not to reproduce a model's hidden neural activations, but to capture the information required for another compatible LLM to resume work from an equivalent point of understanding.
+The goal is not to reproduce a model's hidden neural activations, but to capture the information required for another compatible LLM to resume work or create a new Knowledge Branch from an equivalent point of understanding.
 
 ### Research Questions
 
@@ -67,7 +67,7 @@ The second approach does **not** claim to replace post-training. Instead it inve
 
 ### Long-term Hypothesis
 
-If semantic cognitive state proves sufficiently model-independent, Lumen may provide a universal reasoning continuity layer that operates above individual LLM implementations.
+If semantic cognitive state proves sufficiently model-independent, Lumen may provide a universal semantic continuity layer that operates above individual LLM implementations.
 
 In this model, continuity is preserved through semantic understanding rather than model-specific neural state.
 

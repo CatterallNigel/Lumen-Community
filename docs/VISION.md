@@ -28,7 +28,7 @@ Lumen treats continuity as the central architectural problem.
 
 Rather than considering each conversation to be an independent activity, Lumen considers every conversation to be one part of a larger body of work.
 
-The project—not the individual model session—is the durable unit of work.
+The project is the durable unit of work. Knowledge Branches preserve reusable understanding, while Sessions provide bounded execution within individual model contexts.
 
 By preserving the information required to continue consistently, Lumen enables projects to progress beyond the lifetime of any individual model session.
 

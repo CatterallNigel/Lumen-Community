@@ -107,6 +107,10 @@ Experiments should be repeatable wherever practical.
 
 # Checkpoint Analysis
 
+Checkpoint analysis should always be interpreted within the context of a Project and its active Knowledge Branch.
+
+Successive cognitive distillations provide an observable record of how a model's understanding changes over time.
+
 Successive cognitive distillations provide an observable record of how a model's understanding changes over time.
 
 Areas of interest include:

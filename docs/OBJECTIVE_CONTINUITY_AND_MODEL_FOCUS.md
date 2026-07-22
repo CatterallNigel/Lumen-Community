@@ -8,7 +8,7 @@ Lumen is not responsible for performing reasoning. The underlying model remains 
 
 Lumen's role is to preserve continuity and maintain focus on the user's objectives throughout a project.
 
-Rather than allowing the current conversation to become the sole source of truth, Lumen continually reinforces the established state of the project.
+Rather than allowing the current conversation to become the sole source of truth, Lumen continually reinforces the established state of the active Knowledge Branch.
 
 ## Design Principle
 
@@ -34,7 +34,7 @@ Throughout a project Lumen preserves and reinforces:
 - constraints
 - unresolved questions
 - source provenance
-- current project understanding
+- current knowledge state
 
 This information forms the persistent project state rather than existing only within the model's transient context window.
 

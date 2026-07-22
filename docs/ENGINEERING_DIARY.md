@@ -475,4 +475,448 @@ It establishes Lumen as a research platform capable of observing, measuring and 
 Rather than evaluating only a model's final answer, Lumen begins evaluating the evolution of the model's understanding that produced it.
 
 
+---
 
+## v3.2.5 Results here 
+
+---
+
+# Lumen v3.2.6 – Observability & Cognitive Analysis
+
+**Status:** Planned
+
+## Objective
+
+Version 3.2.6 extends Lumen from checkpoint observability to complete execution observability and introduces the first generation of automated cognitive evolution analysis.
+
+The primary objective is to make the evolution of a model's understanding observable, measurable and comparable throughout long-running tasks.
+
+---
+
+# Engineering Objectives
+
+## 1. Live Session Dashboard
+
+Extend the existing Checkpoint UI into a complete live operational dashboard.
+
+Display:
+
+- Active session
+- Active project
+- Active model
+- Current objective
+- Current task phase
+- Reading progress
+- Context utilisation
+- Current checkpoint generation
+- MongoDB status
+- Pending persistence queue
+- Heartbeats
+- Progress updates
+- Request duration
+- Last activity timestamp
+
+The dashboard should become the primary operational view of a running Lumen session.
+
+---
+
+## 2. Checkpoint Evolution Analysis
+
+Implement semantic comparison between successive continuity checkpoints.
+
+Rather than displaying textual differences, analyse changes in understanding.
+
+Detect:
+
+- New concepts
+- Removed concepts
+- Corrected concepts
+- Relationship growth
+- Architectural abstraction
+- Confidence changes
+- Assumption corrections
+- Newly resolved questions
+
+The purpose is to determine how the model's internal representation evolves during long-running tasks.
+
+---
+
+## 3. Cognitive Delta
+
+Introduce a measurable "Cognitive Delta" between checkpoint generations.
+
+Example:
+
+Generation 1 → 2 : Δ 0.72
+
+Generation 2 → 3 : Δ 0.41
+
+Generation 3 → 4 : Δ 0.18
+
+Generation 4 → 5 : Δ 0.05
+
+The Cognitive Delta should indicate:
+
+- Degree of understanding change
+- Convergence
+- Regression
+- Significant reinterpretation
+
+This provides the first quantitative measurement of evolving model understanding.
+
+---
+
+## 4. Cognitive Evolution Timeline
+
+Generate a timeline describing how the model's understanding evolved.
+
+Example:
+
+Checkpoint 1
+
+Routes
+
+↓
+
+Checkpoint 2
+
+Routes
+
+Utilities
+
+↓
+
+Checkpoint 3
+
+Routes
+
+Utilities
+
+Evidence Sources
+
+↓
+
+Checkpoint 4
+
+Operator Dashboard
+
+↓
+
+Final
+
+System Architecture
+
+This provides a visual history of cognitive development throughout the session.
+
+---
+
+## 5. Model, Prompt and Lumen Benchmarking
+
+Support direct comparison across:
+
+- Prompt versions
+- Lumen versions
+- Model versions
+- Different language models
+
+Benchmark:
+
+- Evolution rate
+- Stability
+- Convergence
+- Final architectural understanding
+- Relationship discovery
+- Hallucination correction
+- Cognitive Delta
+
+The objective is to establish a repeatable benchmarking framework based on model behaviour rather than simply final answers.
+
+---
+
+## 6. Separate UI Logging
+
+Separate browser/UI access from operational execution logging.
+
+Operational log:
+
+- Model requests
+- Checkpoint generation
+- Context compaction
+- Mongo persistence
+- Heartbeats
+- Progress updates
+- Errors
+
+UI log:
+
+- Browser requests
+- Dashboard activity
+- Polling requests
+
+This preserves readability of the engineering logs during long-running sessions.
+
+---
+
+## 7. Session Observability
+
+Provide operational visibility into:
+
+- Active requests
+- Queue depth
+- Checkpoint frequency
+- Persistence latency
+- Mongo retry queue
+- MongoDB availability
+- Internal processing state
+
+This becomes the operational health view of Lumen.
+
+---
+
+## 8. Checkpoint Comparison View
+
+Allow any two checkpoint generations to be compared.
+
+Display:
+
+- Added concepts
+- Removed concepts
+- Changed architectural understanding
+- New dependencies
+- Corrected assumptions
+- Relationship growth
+- Confidence changes
+
+This is intended for engineering and research analysis.
+
+---
+
+## 9. Engineering Report Generation
+
+Generate a structured engineering report for completed sessions.
+
+Include:
+
+- Session summary
+- Timeline
+- Checkpoint evolution
+- Cognitive Delta
+- Final architectural model
+- Prompt version
+- Context statistics
+- Session statistics
+- Observations
+
+The report becomes an input to the Engineering Diary.
+
+---
+
+# Research Objectives
+
+Version 3.2.6 begins investigating a broader research question.
+
+Instead of asking:
+
+> What answer did the model produce?
+
+Lumen begins asking:
+
+> How did the model construct that understanding?
+
+Specific research questions include:
+
+- Does understanding converge during long-running tasks?
+- Does prompt engineering alter cognitive evolution?
+- Can model convergence be measured?
+- Can cognitive regressions be detected automatically?
+- Can prompt strategies be benchmarked?
+- Can different models be compared using Cognitive Delta?
+
+---
+
+# Expected Outcome
+
+Version 3.2.6 should establish Lumen as both an engineering platform and a research platform.
+
+Rather than observing only the final response, Lumen should expose the evolution of the model's understanding throughout the complete execution of a task.
+
+The resulting observability enables repeatable benchmarking of:
+
+- Language models
+- Prompt strategies
+- Continuity mechanisms
+- Future Lumen releases
+
+using measurable evidence rather than subjective assessment.
+
+---
+
+# Engineering Diary
+
+## Roadmap Revision — v3.2.6
+
+### Background
+
+The ongoing v3.2.4 checkpoint experiment has now progressed through approximately 8,000 lines of `dashboard.py` and has provided sufficient evidence to begin evaluating the checkpoint mechanism itself rather than only the continuity process.
+
+The experiment has demonstrated that Lumen is successfully preserving continuity across multiple checkpoint generations. However, it has also exposed opportunities to improve the quality of the checkpoint prompt and the engineering value of the resulting checkpoints.
+
+---
+
+## Observations
+
+Several sections of the checkpoint remain largely unchanged throughout the experiment, including:
+
+- Current architectural model
+- Primary and secondary responsibilities
+- Layers and responsibility boundaries
+- Data and control flow
+- Relationships and dependencies
+- Established facts
+
+In contrast, the **Important functions and routes** section continues to evolve as additional source code is read.
+
+This suggests that the current checkpoint prompt is more effective at accumulating implementation detail than encouraging deeper architectural synthesis.
+
+Similarly, the following sections consistently report no additional observations:
+
+- Inferences and confidence
+- Assumptions
+- Constraints and risks
+- Architectural pressure and likely refactoring seams
+- Open and partially resolved questions
+- Resolved or superseded questions
+
+While these responses may be factually correct, they also indicate that the prompt may not be sufficiently explicit in requiring the model to actively examine these areas. The prompt currently allows generic "None" responses without requiring the model to demonstrate that the topic has been considered.
+
+This behaviour is similar to engineering status reporting, where broad questions such as *"Any blockers?"* frequently receive *"No"* unless the question explicitly guides the engineer through specific areas requiring evaluation.
+
+---
+
+## Engineering Assessment
+
+The checkpoint prompt should now be treated as an engineering artefact rather than a static prompt.
+
+Like any other engineering component, it should evolve through controlled experimentation, benchmarking and evidence-based refinement.
+
+The objective is no longer simply to preserve continuity, but to improve the quality of the observable cognitive state captured at each checkpoint.
+
+---
+
+# Roadmap Revision
+
+## External Reviewer Deferred to v3.2.7
+
+The previously planned External Reviewer has been removed from the scope of v3.2.6 and deferred to **v3.2.7**.
+
+### Reason
+
+The current checkpoint format is still evolving.
+
+Introducing an independent reviewer before the checkpoint prompt has matured would primarily evaluate limitations in the checkpoint itself rather than providing meaningful validation of the underlying continuity process.
+
+The engineering priority therefore becomes:
+
+1. Improve the measurement.
+2. Validate the measurement.
+
+This preserves the scientific integrity of the evaluation process.
+
+---
+
+# Revised Objectives for v3.2.6
+
+Version 3.2.6 will focus on optimisation of checkpoint generation itself.
+
+Primary areas of work include:
+
+- Refinement of the checkpoint assistant prompt.
+- Removal of ambiguity within checkpoint generation.
+- Encouraging deeper architectural synthesis rather than simple accumulation of discovered functions.
+- Encouraging explicit identification of:
+  - assumptions
+  - uncertainty
+  - constraints
+  - architectural pressure
+  - refactoring opportunities
+  - open questions
+- Improved checkpoint evolution analysis.
+- Benchmarking different checkpoint prompt revisions.
+- Benchmarking different checkpoint sizes.
+- Measuring the effect of checkpoint size on:
+  - continuity quality
+  - architectural understanding
+  - checkpoint usefulness
+  - final explanation quality.
+
+---
+
+## Checkpoint Size Investigation
+
+The v3.2.4 experiment has also demonstrated that Lumen now injects only:
+
+- Two previous checkpoints.
+- Two raw source chunks.
+
+This provides additional context capacity that can be utilised for richer checkpoint generation.
+
+Version 3.2.6 will therefore investigate whether increasing checkpoint size produces measurable improvements in:
+
+- architectural understanding
+- continuity preservation
+- reasoning consistency
+- explanation quality
+
+while monitoring for diminishing returns or unnecessary verbosity.
+
+---
+
+# Research Direction
+
+The checkpoint is now viewed as an observable measurement of the model's current understanding rather than simply a continuity summary.
+
+This represents an important shift in emphasis.
+
+Rather than only preserving context, Lumen is now investigating how a model's observable cognitive state develops throughout long-running engineering tasks.
+
+Future work will therefore focus on improving the quality of that measurement before introducing independent validation.
+
+---
+
+# Revised Research Sequence
+
+## v3.2.4
+
+**Research Question**
+
+Can checkpoints preserve continuity across long-running engineering tasks?
+
+---
+
+## v3.2.6
+
+**Research Question**
+
+What constitutes an optimal engineering checkpoint?
+
+How should observable cognitive state be captured?
+
+---
+
+## v3.2.7
+
+**Research Question**
+
+How can checkpoint quality be independently evaluated and validated?
+
+---
+
+# Conclusion
+
+This roadmap revision represents a refinement of engineering priorities rather than a reduction in scope.
+
+Evidence gathered during the v3.2.4 experiment indicates that greater value will be obtained by first improving checkpoint generation before introducing external reviewer models.
+
+This remains consistent with Lumen's evidence-based engineering philosophy:
+
+> **Improve the measurement before validating the measurement.**
