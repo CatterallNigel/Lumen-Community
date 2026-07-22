@@ -477,7 +477,288 @@ Rather than evaluating only a model's final answer, Lumen begins evaluating the 
 
 ---
 
-## v3.2.5 Results here 
+# Engineering Diary
+
+## v3.2.5 Experimental Results
+
+**Date:** 22 July 2026
+
+---
+
+# Objective
+
+Evaluate the effectiveness of Lumen's checkpointing and continuity mechanisms by reading a large real-world production source file using a fixed experimental methodology.
+
+The experiment deliberately maintained:
+
+- identical objective
+- identical initial prompt
+- identical source file
+- identical model (Qwen 14B)
+- identical reading strategy
+
+Only changes to Lumen itself are permitted between experimental versions.
+
+This ensures that observed changes in behaviour can be attributed to Lumen rather than changes in prompts, models or test data.
+
+---
+
+# Test Summary
+
+**Model**
+
+Qwen 14B
+
+**Objective**
+
+Read:
+
+`src/ef_social_discovery/api/routes/dashboard.py`
+
+in its entirety and explain:
+
+- responsibilities
+- structure
+- functions
+- routes
+
+**Source**
+
+Approximately 10,000 lines of production source code.
+
+**Execution**
+
+The file was successfully read in its entirety using rolling checkpoint generation.
+
+Generation 12 represented the final rolling checkpoint before completion.
+
+The model subsequently completed reading the remaining source and produced the requested explanation.
+
+---
+
+# Experimental Observations
+
+## 1. Continuity remained stable
+
+No evidence was observed that the model lost awareness of:
+
+- the original objective
+- previously read sections
+- architectural understanding
+
+Checkpoint continuity remained stable throughout the complete read.
+
+This validates the current continuity mechanism.
+
+---
+
+## 2. Architectural convergence occurred early
+
+The architectural description contained within the checkpoints stabilised relatively early in the reading process.
+
+Subsequent checkpoints primarily expanded function inventories rather than significantly altering the architectural model.
+
+This suggests that:
+
+- architectural understanding converges relatively early
+- subsequent reads reinforce existing understanding
+- later checkpoints provide increasing implementation detail rather than new architectural insight
+
+---
+
+## 3. Inventory quality exceeded architectural synthesis
+
+The final explanation demonstrated good recall of:
+
+- route handlers
+- utility functions
+- helper methods
+
+However, the architectural synthesis remained comparatively shallow.
+
+The explanation primarily described *what* functions existed rather than *how* the major architectural components interacted.
+
+This is considered consistent with the reasoning capability expected from the model rather than evidence of continuity failure.
+
+The objective of Lumen is not to increase the intrinsic reasoning capability of the model, but to help the model operate consistently near its own capability ceiling.
+
+---
+
+## 4. Static checkpoint sections
+
+Several checkpoint sections remained effectively unchanged throughout the experiment.
+
+Examples included:
+
+- Assumptions
+- Constraints
+- Risks
+- Refactoring seams
+- Open questions
+
+At present it remains unclear whether these sections remained static because:
+
+- no additional evidence existed
+- the prompt discourages their evolution
+- the model does not naturally infer these observations
+
+This becomes a primary investigation for v3.2.6.
+
+---
+
+## 5. Final observable state is incomplete
+
+A significant architectural observation emerged during analysis.
+
+Rolling checkpoints are generated during context compaction.
+
+Consequently, the final portion of the source file remains only within the model's active context.
+
+The final answer therefore incorporates understanding that is **not represented by any checkpoint**.
+
+This creates a provenance gap.
+
+---
+
+# Architectural Conclusions
+
+## Final Cognitive Checkpoint
+
+This experiment demonstrated that a Final Cognitive Checkpoint is required.
+
+Originally considered an optimisation, it is now regarded as an architectural requirement.
+
+Its purpose is to:
+
+- capture the completed cognitive state
+- record understanding after the final source has been read
+- eliminate uncheckpointed understanding
+- provide a canonical recovery point
+- enable comparison between understanding and task execution
+
+Proposed execution flow:
+
+```text
+Read final source
+
+↓
+
+Final Cognitive Checkpoint
+
+↓
+
+Task execution
+
+↓
+
+Final Result
+```
+
+---
+
+## Result Persistence
+
+The experiment also demonstrated that the model's final response should become a first-class engineering artefact.
+
+Rather than existing only as transient output, the final result should be persisted alongside the checkpoint history.
+
+Proposed session structure:
+
+```text
+Project
+    ↓
+Knowledge Branch
+    ↓
+Session
+    ↓
+Checkpoint History
+    ↓
+Final Cognitive Checkpoint
+    ↓
+Result
+```
+
+---
+
+## Logging Separation
+
+The experiment identified two independent forms of observability.
+
+### Interaction Logging
+
+Records:
+
+- Pi requests
+- Lumen orchestration
+- model interaction
+- context usage
+- checkpoints
+- execution timing
+
+### Application Logging
+
+Records:
+
+- dashboard activity
+- UI navigation
+- operator actions
+- display events
+
+These logging streams should remain independent.
+
+Interaction logging provides engineering evidence.
+
+Application logging supports operational diagnostics.
+
+---
+
+# Lessons Learned
+
+The experiment demonstrates that:
+
+- Lumen successfully preserves continuity across very large source files.
+- Architectural understanding converges relatively early.
+- Checkpoint quality has become the limiting factor rather than checkpoint existence.
+- Function inventory continues to grow after architectural convergence.
+- A Final Cognitive Checkpoint is required to complete the provenance chain.
+- The final model response should become a persisted engineering artefact.
+- Future evaluation should assess models relative to their expected capability rather than against larger models.
+
+---
+
+# Impact on Roadmap
+
+## v3.2.6
+
+Focus shifts toward checkpoint optimisation.
+
+Areas of investigation include:
+
+- checkpoint prompt refinement
+- checkpoint evolution
+- checkpoint quality
+- Final Cognitive Checkpoint
+- Result persistence
+- checkpoint benchmarking
+- checkpoint size optimisation
+
+## v3.2.7
+
+The External Reviewer remains appropriately positioned within v3.2.7.
+
+The reviewer should validate mature checkpoint structures rather than influence their initial design.
+
+---
+
+# Conclusion
+
+v3.2.5 successfully demonstrated that Lumen can preserve continuity while reading a large production source file and maintain a stable architectural understanding throughout the session.
+
+The experiment also shifted the focus of development.
+
+The challenge is no longer proving that continuity can be maintained, but improving the quality, completeness and observability of that continuity.
+
+The principal architectural outcome of this experiment is the recognition that a **Final Cognitive Checkpoint** is required to ensure that every portion of the model's understanding is represented within Lumen's continuity record, completing the provenance chain from source ingestion through to task execution. 
 
 ---
 
