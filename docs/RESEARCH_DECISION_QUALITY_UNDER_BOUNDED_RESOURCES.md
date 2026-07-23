@@ -2,6 +2,8 @@
 
 This document proposes a research direction rather than a completed methodology. No accepted definition, scale, benchmark, or implementation currently exists. The purpose of this document is to preserve the concept, define its motivation, and establish a foundation for future investigation.
 
+Current AI evaluation focuses primarily on what a model can do. DQBR proposes that practical AI systems should also be evaluated on how well they decide what to do under finite resources.
+
 ---
 
 Status:
@@ -21,6 +23,42 @@ decisions rather than raw capability.
 
 DQBR is currently a conceptual framework and should not be considered a formal
 metric.
+
+---
+##  Response Evaluation
+
+### Satisfaction
+
+Establishes whether the response satisfies the explicit user request.
+
+### Enrichment
+
+Establishes whether the response transfers additional understanding beyond the
+minimum necessary to satisfy the request.
+
+### Capability Utilization
+
+Establishes whether the response expresses the fullest understanding the model
+had developed during task execution.
+
+---
+
+## Scope
+
+DQBR does not attempt to replace existing model benchmarks.
+
+Benchmarks such as MMLU, HumanEval and SWE-Bench measure aspects of model capability.
+
+DQBR instead evaluates the quality of decisions made by an AI system operating under bounded resources.
+
+The framework is intended to complement capability benchmarks rather than replace them.
+
+---
+
+Decision Quality
+
+The appropriateness of an AI system's selected course of action relative to its
+objective and the resources available at the time the decision was made.
 
 ---
 
