@@ -183,8 +183,19 @@
       "bases:Create new base": false
     }
   },
-  "active": "bba0fffa5f94f3ef",
+  "active": "a18330ec1e1924d4",
   "lastOpenFiles": [
+    "version-notes/README-VERSION-NOTES.md",
+    "version-notes/RELEASE-NOTES-v3.2.6.md",
+    "version-notes/RELEASE-NOTES-v3.1.md",
+    "version-notes/RELEASE-NOTES-v3.2.5.md",
+    "version-notes/RELEASE-NOTES-v3.2.4.md",
+    "version-notes/RELEASE-NOTES-v3.2.3.md",
+    "version-notes/RELEASE-NOTES-v3.2.2.md",
+    "version-notes/RELEASE-NOTES-v3.2.1.md",
+    "version-notes/RELEASE-NOTES-v3.2.0.md",
+    "version-notes",
+    "New folder",
     "docs/RESEARCH_DECISION_QUALITY_UNDER_BOUNDED_RESOURCES.md",
     "docs/RESEARCH_MODEL_CAPABILITY.md",
     "docs/VISON_OUT_OF_THE_BOX.md",
@@ -194,7 +205,6 @@
     "Lumen Checkpoints/v3.2.4/Lumen-Continuity-Partial.pdf",
     "Lumen Checkpoints/v3.2.4",
     "Lumen Checkpoints/New folder",
-    "Lumen Checkpoints",
-    "New folder"
+    "Lumen Checkpoints"
   ]
 }
