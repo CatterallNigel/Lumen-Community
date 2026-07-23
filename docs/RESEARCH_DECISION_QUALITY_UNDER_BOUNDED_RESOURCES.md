@@ -1,5 +1,9 @@
 # Decision Quality Under Bounded Resources (DQBR)
 
+This document proposes a research direction rather than a completed methodology. No accepted definition, scale, benchmark, or implementation currently exists. The purpose of this document is to preserve the concept, define its motivation, and establish a foundation for future investigation.
+
+---
+
 Status:
 Research
 
