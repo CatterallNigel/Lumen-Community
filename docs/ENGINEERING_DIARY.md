@@ -1205,3 +1205,327 @@ This remains consistent with Lumen's evidence-based engineering philosophy:
 Note: Interaction logs for the initial v3.2.6 benchmark include residual entries from the previous run because the logs were not cleared prior to startup. This does not affect checkpoint or result validation but reduces the usefulness of the early log sequence for timing analysis.
 
 ---
+
+# Lumen v3.2.6 Development Diary
+
+**Date:** 23 July 2026
+
+---
+
+## Overview
+
+Version 3.2.6 represented a significant milestone in the evolution of Lumen's continuity architecture.
+
+The primary objective was to evaluate the newly introduced Cognitive Checkpoint architecture during the analysis of a large real-world source file (`dashboard.py`) using Qwen2.5-Coder under constrained context conditions.
+
+The experiment demonstrated that Lumen is now capable of maintaining and progressively refining an architectural understanding across an extended analysis spanning many hours while remaining within a bounded context window.
+
+Equally importantly, the experiment exposed several architectural weaknesses that will directly influence the design of v3.2.7.
+
+---
+
+# Successes
+
+## Cognitive continuity
+
+The Cognitive Checkpoint architecture successfully accumulated understanding throughout the reading process.
+
+Rather than repeatedly rediscovering the architecture after each checkpoint, Qwen progressively extended its existing understanding as additional source code was analysed.
+
+This validates the overall architectural direction of preserving understanding rather than merely preserving conversation history.
+
+---
+
+## Progressive architectural model
+
+As additional source was analysed the checkpoint demonstrated a progressively richer architectural model.
+
+Understanding evolved rather than being recreated.
+
+This represents one of the strongest results from the experiment and confirms that the checkpoint architecture is capable of maintaining an evolving representation of project understanding.
+
+---
+
+## Context management
+
+Throughout the experiment context utilisation remained well controlled.
+
+Multiple checkpoint generations successfully reduced context usage while preserving continuity.
+
+The experiment completed the entire source analysis without exhausting the available context window.
+
+---
+
+## Observability
+
+The additional progress reporting introduced during recent releases proved extremely valuable.
+
+Rather than simply observing that the model had "stopped", the orchestration layer exposed exactly which phase the model was executing.
+
+This significantly simplified diagnosis of orchestration behaviour and exposed several lifecycle issues that would otherwise have appeared to be model failures.
+
+---
+
+# Areas for improvement
+
+One consistent observation throughout the evaluation was that several checkpoint sections repeatedly resolved to:
+
+```
+None identified
+```
+
+This occurred in the following areas:
+
+- Inferences and confidence
+- Assumptions required to interpret unseen or indirect behaviour
+- Constraints and risks examined
+- Architectural pressure and likely refactoring seams
+- Open and partially resolved questions
+- Resolved, superseded, or invalid questions
+
+The conclusion is **not** that Qwen is incapable of identifying these concepts.
+
+Instead, these sections ask broad architectural questions whose interpretation is ambiguous.
+
+Different models may legitimately interpret these requests in different ways, resulting in conservative "None identified" responses.
+
+---
+
+# Architectural conclusion
+
+The experiment produced an important architectural insight.
+
+Originally Cognitive Checkpoints were viewed primarily as continuity artefacts.
+
+The evaluation demonstrated that they are also reasoning artefacts.
+
+When checkpoints are re-injected into the model they do not simply restore remembered information.
+
+They reinforce the model's current reasoning framework.
+
+This means that checkpoint design influences not only what the model remembers, but also how it subsequently reasons.
+
+Consequently, ambiguous checkpoint structures may reinforce ambiguous reasoning.
+
+Future checkpoint design should therefore favour concrete, evidence-based observations from which architectural conclusions naturally emerge.
+
+---
+
+# Major defect discovered
+
+The evaluation exposed a significant orchestration defect during task completion.
+
+Following successful completion of source reading:
+
+- Final Cognitive Checkpoint generation was initiated.
+- The checkpoint completed successfully.
+- Task execution began.
+
+However, subsequent processing incorrectly re-entered the source completion lifecycle.
+
+This resulted in:
+
+- repeated reads beyond the end of the source file;
+- repeated Final Cognitive Checkpoint generation;
+- completion loops that persisted after aborting the operation;
+- subsequent user requests immediately entering Final Cognitive Checkpoint generation rather than processing the new request.
+
+This is considered a task lifecycle management defect rather than a Cognitive Checkpoint generation defect.
+
+The issue appears to arise from completion state not being fully consumed following successful task completion.
+
+---
+
+# Direction for v3.2.7
+
+Version 3.2.7 will deliberately focus on a single primary hypothesis.
+
+> **Redesign Cognitive Checkpoints to minimise ambiguity by replacing broad interpretive questions with specific, evidence-oriented observations that naturally support higher-level architectural conclusions.**
+
+Rather than attempting to improve every aspect of checkpoint generation simultaneously, development will concentrate on improving one area in a measurable and attributable manner.
+
+This approach aligns with the project's ongoing research into **Decision Quality Under Bounded Resources (DQBR)**, where each architectural change should have a clearly identifiable hypothesis and measurable outcome.
+
+Operational improvements for v3.2.7 will remain intentionally small while this research is undertaken.
+
+---
+
+# Overall assessment
+
+Version 3.2.6 successfully validated the Cognitive Checkpoint architecture and demonstrated that Lumen can preserve and evolve architectural understanding across extended source analysis.
+
+Although a significant completion lifecycle defect prevented the version from being considered release-ready, the experiment substantially increased confidence in the underlying continuity architecture while providing a clear and evidence-based direction for the next stage of development.
+
+Overall, v3.2.6 should be considered an architectural success and an experimental success, despite the discovery of a major lifecycle bug that must be resolved before the architecture can be considered production ready.
+
+---
+
+# Lumen v3.2.7 Development Diary
+
+**Status:** Planning
+
+**Date:** 23 July 2026
+
+---
+
+# Overview
+
+Development of v3.2.7 begins immediately following the evaluation of v3.2.6.
+
+The previous release successfully demonstrated that Cognitive Checkpoints can preserve and evolve architectural understanding throughout extended source analysis. It also exposed weaknesses in checkpoint design and a significant completion lifecycle bug.
+
+The lifecycle defect will be corrected as part of normal engineering maintenance. The primary objective of v3.2.7, however, is not to introduce additional features but to improve the quality of the understanding that Lumen records and later reintroduces to the model.
+
+This release therefore represents a refinement of understanding rather than an expansion of capability.
+
+---
+
+# Primary Objective
+
+The primary hypothesis for v3.2.7 is:
+
+> **Redesign Cognitive Checkpoints to minimise ambiguity by replacing broad interpretive questions with specific, evidence-oriented observations that naturally support higher-level architectural conclusions.**
+
+The goal is not to produce longer checkpoints.
+
+The goal is to produce checkpoints that better represent the model's actual understanding while providing a stronger reasoning framework when reintroduced later in the session.
+
+---
+
+# Architectural Motivation
+
+During the v3.2.6 evaluation several checkpoint sections consistently resolved to:
+
+```
+None identified
+```
+
+including:
+
+- Inferences and confidence
+- Assumptions required to interpret unseen or indirect behaviour
+- Constraints and risks examined
+- Architectural pressure and likely refactoring seams
+- Open and partially resolved questions
+- Resolved, superseded, or invalid questions
+
+The conclusion reached during the evaluation is that these questions are too broad and open to interpretation.
+
+The weakness is therefore considered to lie primarily in checkpoint design rather than model capability.
+
+---
+
+# Design Philosophy
+
+One of the most important conclusions from v3.2.6 is that Cognitive Checkpoints serve two distinct purposes.
+
+They preserve:
+
+- accumulated understanding;
+- the reasoning framework through which that understanding was developed.
+
+Consequently, ambiguous checkpoint structures may reinforce ambiguous reasoning when they are later re-injected into the model.
+
+Future checkpoint design should therefore prioritise:
+
+- observable evidence;
+- concrete engineering observations;
+- traceable conclusions;
+- minimal ambiguity.
+
+---
+
+# Experimental Scope
+
+This release will intentionally remain tightly focused.
+
+Rather than redesigning every weak checkpoint section simultaneously, only one coherent improvement will be investigated.
+
+The objective is to ensure that any observed improvement can be confidently attributed to the architectural change being evaluated.
+
+This follows the project's broader research into **Decision Quality Under Bounded Resources (DQBR)**, where architectural changes should be evidence-based and experimentally attributable.
+
+---
+
+# Checkpoint Design Direction
+
+Future checkpoint sections should encourage observation before interpretation.
+
+Rather than asking broad architectural questions, checkpoints should guide the model through progressively higher levels of reasoning.
+
+Conceptually this follows the progression:
+
+```
+Observation
+        ↓
+Supporting evidence
+        ↓
+Patterns identified
+        ↓
+Architectural inference
+        ↓
+Confidence and remaining uncertainty
+```
+
+This approach is expected to reduce ambiguity while producing architectural conclusions that remain traceable to observed evidence.
+
+---
+
+# Operational Changes
+
+Operational changes for this release will remain deliberately small.
+
+Current planned additions include:
+
+- Improvements to session commands.
+- Support for the `--clear-logs` startup option.
+
+Example:
+
+```bash
+python app.py --clear-logs
+```
+
+Larger operational improvements, including automatic client startup and expanded provider support, have been deferred to later releases in order to keep the experimental scope focused.
+
+---
+
+# Bug Fixes
+
+The following issue identified during v3.2.6 will be resolved.
+
+## Final Cognitive Checkpoint lifecycle
+
+Task completion currently allows repeated entry into the Final Cognitive Checkpoint generation phase, resulting in repeated completion processing and potential completion loops.
+
+Completion processing should become:
+
+- task-scoped;
+- idempotent;
+- consumed exactly once.
+
+Completion state from one task must never affect subsequent user requests.
+
+---
+
+# Success Criteria
+
+The primary evaluation criteria for v3.2.7 are:
+
+- Fewer ambiguous checkpoint sections.
+- Increased use of evidence-based observations.
+- Architectural conclusions that can be traced back to observed behaviour.
+- Improved usefulness of checkpoint reinjection during subsequent reasoning.
+- Preservation of checkpoint size and efficiency while improving information quality.
+
+Operational success will also require successful correction of the Final Cognitive Checkpoint lifecycle defect.
+
+---
+
+# Looking Forward
+
+v3.2.7 is expected to represent the first iteration of a broader programme investigating how Cognitive Checkpoints influence model reasoning.
+
+Rather than viewing checkpoints solely as continuity artefacts, Lumen is beginning to treat them as measurable reasoning artefacts whose structure directly affects the quality of subsequent analysis.
+
+This marks the beginning of a more evidence-driven approach to checkpoint design and forms part of the wider research programme into Decision Quality Under Bounded Resources.
