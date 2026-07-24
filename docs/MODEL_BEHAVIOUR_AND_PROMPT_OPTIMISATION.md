@@ -127,6 +127,73 @@ Areas of interest include:
 
 ---
 
+# Cognitive Checkpoint Design Principles
+
+The purpose of a Cognitive Checkpoint is to preserve the model's current state of understanding so that reasoning can continue naturally after context loss.
+
+A checkpoint is not intended to produce a final architectural assessment, nor to predict future understanding.
+
+Its role is to record what the model currently knows.
+
+## Present understanding rather than future understanding
+
+Experimental evaluation demonstrated that a Cognitive Checkpoint should preserve the model's present state of understanding, not require it to predict its future state of understanding.
+
+Questions that require knowledge of information not yet observed should be avoided.
+
+For example, asking a model to identify future architectural pressure, unresolved questions, or missing information while it is still incrementally reading a source file may require reasoning beyond its current knowledge.
+
+Such questions encourage prediction rather than observation.
+
+## The jigsaw principle
+
+An incremental checkpoint is analogous to constructing a jigsaw puzzle.
+
+After connecting only a small number of pieces, it is impossible to determine which remaining pieces are missing because the complete picture is not yet known.
+
+Similarly, an LLM reading a source file incrementally cannot reliably determine what architectural concepts, unresolved questions, or refactoring opportunities may emerge from source code it has not yet read.
+
+The checkpoint should therefore describe the picture currently assembled rather than speculate about the unseen portions.
+
+## Record observations, not predictions
+
+Checkpoint prompts should ask only questions that can be answered from the model's present cognitive state.
+
+Questions requiring future knowledge should not form part of incremental checkpoint generation.
+
+Suitable checkpoint content includes:
+
+- Established understanding.
+- New understanding acquired since the previous checkpoint.
+- Observable evidence supporting that understanding.
+- Current architectural model.
+- Confidence based upon observed source material.
+
+Checkpoint prompts should avoid requiring predictions about information that cannot yet exist within the model's current state of knowledge.
+
+## Small prompt changes may produce large behavioural changes
+
+Experiments comparing Lumen v3.2.6 and v3.2.7 demonstrated that relatively small changes to a checkpoint prompt produced disproportionately large changes in the model's observable reasoning behaviour.
+
+Although only a single checkpoint section was modified, the resulting cognitive distillations became significantly more conservative and preserved less architectural understanding.
+
+Prompt modifications should therefore be treated as experimental engineering changes rather than editorial refinements.
+
+Only one checkpoint hypothesis should be evaluated at a time, using identical models, objectives, input material, and benchmark tasks wherever practical.
+
+## Experimental findings
+
+Current evidence suggests:
+
+- Richer checkpoints are produced when the model is asked to record its current understanding.
+- Requiring the model to predict future understanding can reduce checkpoint quality.
+- Empty checkpoint sections may be behaviourally neutral, whereas speculative checkpoint sections may alter reasoning behaviour.
+- Checkpoint quality should be evaluated by the observable evolution of understanding rather than by the number of completed sections.
+
+These findings remain subject to further validation as additional checkpoint experiments are performed.
+
+---
+
 # Prompt Optimisation
 
 Prompt optimisation should always be driven by evidence gathered through experimentation.

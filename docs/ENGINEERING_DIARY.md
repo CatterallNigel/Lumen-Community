@@ -1529,3 +1529,245 @@ v3.2.7 is expected to represent the first iteration of a broader programme inves
 Rather than viewing checkpoints solely as continuity artefacts, Lumen is beginning to treat them as measurable reasoning artefacts whose structure directly affects the quality of subsequent analysis.
 
 This marks the beginning of a more evidence-driven approach to checkpoint design and forms part of the wider research programme into Decision Quality Under Bounded Resources.
+
+---
+
+# Lumen v3.2.7 Development Diary
+
+**Status:** Evaluation concluded
+
+**Date:** 24 July 2026
+
+---
+
+# Overview
+
+Version 3.2.7 investigated whether Cognitive Checkpoints could produce richer architectural understanding by replacing the broad **Inferences and confidence** section with a more structured evidence-oriented approach.
+
+The working hypothesis was:
+
+> **Checkpoint quality would improve if every conclusion explicitly identified its supporting observation, source evidence, confidence, and remaining uncertainty.**
+
+The release also retained the Final Cognitive Checkpoint lifecycle corrections introduced following the v3.2.6 evaluation and added the `--clear-logs` startup option.
+
+Evaluation was intentionally performed using the same benchmark previously used for v3.2.6 to provide a direct comparison.
+
+The benchmark was interrupted after Pi unexpectedly disappeared. The run had progressed to approximately line 6,753 of `dashboard.py`, providing sufficient checkpoint history for an initial evaluation.
+
+---
+
+# Operational interruption
+
+During evaluation, the checkpoint viewer reported repeated MongoDB persistence failures.
+
+This was expected operational behaviour rather than a regression in Lumen.
+
+MongoDB had previously been migrated from the HP development machine to the Toshiba system, however the running Lumen instance was not restarted using the updated connection configuration.
+
+Checkpoint persistence therefore repeatedly attempted to reconnect to the previous MongoDB instance.
+
+Although this generated significant persistence noise throughout the run, it is not believed to have materially affected the Cognitive Checkpoint content itself.
+
+The reason Pi disconnected remains unknown and has not yet been investigated.
+
+---
+
+# Checkpoint change evaluated
+
+The v3.2.6 checkpoint structure contained:
+
+```text
+Established facts and supporting evidence:
+Inferences and confidence:
+Assumptions required to interpret unseen or indirect behaviour:
+Constraints and risks examined:
+Architectural pressure and likely refactoring seams:
+Open and partially resolved questions:
+Resolved, superseded, or invalid questions:
+```
+
+Version 3.2.7 replaced the **Inferences and confidence** section with:
+
+```text
+Evidence-linked observations and conclusions:
+```
+
+Each checkpoint entry was requested to explicitly identify:
+
+- Observation
+- Source evidence
+- Supported conclusion
+- Confidence
+- Remaining uncertainty
+
+The intention was to reduce ambiguity by encouraging conclusions that were explicitly traceable back to observable source evidence.
+
+---
+
+# Experimental evaluation
+
+The experiment did **not** produce the intended improvement.
+
+The new evidence-linked section repeatedly contained only a single generic observation:
+
+> The file is structured as a FastAPI router.
+
+This observation was already captured elsewhere within the checkpoint and did not develop into a meaningful evidence-to-conclusion chain.
+
+The generated structure also appeared incomplete. The requested *Supported conclusion* was either absent or collapsed into the surrounding fields, suggesting that the model was not naturally adopting the intended structure.
+
+---
+
+# Comparison with v3.2.6
+
+At comparable source coverage, the v3.2.6 checkpoints developed a progressively richer architectural representation.
+
+As additional source was read, the checkpoints accumulated architectural capability areas including:
+
+- HTML generation
+- Response formatting
+- CSS styling
+- JavaScript functionality
+- Status handling
+- Reply options
+- Draft copying
+- Action-card generation
+- Trend analysis
+- Warning-signal processing
+- Journey opportunities
+- Route opportunities
+- Destination opportunities
+- Engagement reply sources
+- Conversation synopses
+- Content perspectives
+- Conversation DNA
+- Content workspace cards
+
+These additions reflected genuine progression in the model's understanding as more source code became available.
+
+By comparison, the equivalent v3.2.7 checkpoints continued to describe the file primarily as:
+
+> A FastAPI router with multiple route handlers for dashboard-related endpoints.
+
+Similarly, the architectural capability groups remained broadly limited to:
+
+- Routing and request handling
+- Data processing and retrieval using imported functions
+
+Although successive checkpoints classified themselves as **EXTENDED**, the architectural model itself showed relatively little observable progression compared with v3.2.6.
+
+---
+
+# Primary conclusion
+
+The v3.2.7 hypothesis was **not validated**.
+
+The evidence-oriented checkpoint structure did not improve the previously weak analytical sections and appears to have reduced the richness of the architectural understanding that v3.2.6 had already been producing successfully.
+
+The evidence therefore suggests that the revised prompt encouraged a more conservative reasoning strategy.
+
+Rather than preserving broader architectural understanding, the model appeared to prefer recording only conclusions that it considered directly and unquestionably supported by the immediately available source.
+
+---
+
+# Original weak areas remain unresolved
+
+The following sections continued to return:
+
+```text
+None identified
+```
+
+- Assumptions required to interpret unseen or indirect behaviour
+- Constraints and risks examined
+- Architectural pressure and likely refactoring seams
+- Open and partially resolved questions
+- Resolved, superseded, or invalid questions
+
+These sections had already demonstrated the same behaviour during the v3.2.6 evaluation.
+
+The v3.2.7 experiment therefore indicates that simply tightening the wording of these prompts is insufficient.
+
+---
+
+# Architectural interpretation
+
+These checkpoint sections currently ask the model to produce relatively mature architectural judgements while the file is still being incrementally analysed.
+
+To populate them, the model must determine:
+
+- whether a meaningful signal exists;
+- which conceptual category it belongs to;
+- whether sufficient evidence is available;
+- whether the observation is significant enough to preserve;
+- how confidently it can be expressed.
+
+The repeated **None identified** responses therefore appear more consistent with conservative uncertainty than with an absence of potentially useful observations.
+
+This suggests that Cognitive Checkpoints should preserve lower-level architectural signals rather than requiring completed architectural conclusions during incremental reading.
+
+---
+
+# Lessons learned
+
+An important architectural observation emerged from this experiment.
+
+Although only a single checkpoint section was modified, the resulting checkpoints demonstrated a broader change in the model's reasoning behaviour and architectural representation.
+
+This suggests that Cognitive Checkpoint prompts should be treated as experimental components rather than simple prompt refinements.
+
+Even apparently local prompt changes can influence the model's overall reasoning strategy.
+
+Future checkpoint experiments should therefore modify only one clearly defined hypothesis at a time and always be evaluated against the same benchmark.
+
+---
+
+# Decision
+
+The v3.2.7 checkpoint prompt experiment will be reverted.
+
+The complete v3.2.6 checkpoint request will be restored unchanged.
+
+The following v3.2.7 improvements will remain:
+
+- Final Cognitive Checkpoint lifecycle correction
+- Task-scoped completion handling
+- Prevention of repeated completion transitions
+- `--clear-logs` startup support
+- Session command improvements
+
+Only the unsuccessful checkpoint experiment will be removed.
+
+---
+
+# Direction for v3.2.8
+
+The evidence suggests that future checkpoint development should shift away from demanding completed architectural conclusions.
+
+Instead, v3.2.8 will investigate preserving observable architectural **signals** that can later support higher-level reasoning during final synthesis.
+
+The objective is to determine whether recording concrete indicators rather than completed interpretations results in richer long-term architectural continuity.
+
+---
+
+# Research outcome
+
+Version 3.2.7 produced an important architectural observation beyond the immediate checkpoint regression.
+
+A Cognitive Checkpoint should preserve the model's present state of understanding, not require it to predict its future state of understanding.
+
+The v3.2.6 checkpoints consistently demonstrated that the model's architectural understanding expanded naturally as additional source code was read.
+
+Although several checkpoint sections remained empty throughout v3.2.6, they appeared to be largely neutral with respect to the model's overall reasoning behaviour.
+
+Version 3.2.7 attempted to populate these areas by requesting more explicit evidence-linked reasoning. Rather than improving the checkpoints, this appears to have altered the model's reasoning strategy, resulting in a less detailed representation of the architecture.
+
+This suggests that incremental checkpoints should record the model's current understanding rather than require it to perform architectural judgements about information that has not yet been observed.
+
+Future checkpoint design should therefore begin by asking:
+
+> What must survive context loss for reasoning to continue naturally?
+
+rather than:
+
+> What additional analysis would a human reviewer like to see?
