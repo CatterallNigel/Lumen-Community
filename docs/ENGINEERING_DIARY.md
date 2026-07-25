@@ -1771,3 +1771,594 @@ Future checkpoint design should therefore begin by asking:
 rather than:
 
 > What additional analysis would a human reviewer like to see?
+
+---
+
+# Lumen v3.2.8 – Evaluation Summary
+
+**Date:** 25 July 2026
+
+## Overview
+
+v3.2.8 represents a significant improvement in Lumen's ability to preserve and develop the model's understanding of a large source file during long-running analysis tasks.
+
+The primary objective of v3.2.8 was to improve the quality of the cognitive checkpoints rather than the quality of the final answer itself. That objective was largely achieved.
+
+The testing also exposed a new class of completion-stage issues which now become the focus of v3.2.9.
+
+---
+
+# Major Achievements
+
+## 1. Significantly Improved Cognitive Checkpoints
+
+Compared with v3.2.6, the checkpoints produced by Qwen became substantially richer and more architecturally useful.
+
+Rather than simply recording obvious observations, the checkpoints now contain:
+
+- Current architectural model
+- Primary and secondary responsibilities
+- Architectural capability groups
+- Relationships and dependencies
+- Established facts and supporting evidence
+- Evidence-backed inferences with confidence
+- Layer boundaries
+- Current working strategy
+
+The checkpoints demonstrate that the model is progressively constructing a coherent understanding of the entire source file instead of treating each read chunk independently.
+
+This represents the largest improvement observed in v3.2.8.
+
+---
+
+## 2. Improved Architectural Continuity
+
+The checkpoint evolution across generations shows genuine accumulation of architectural understanding.
+
+Each checkpoint extends the previous one instead of replacing it, allowing the architectural model to become progressively more complete as additional source material is read.
+
+The checkpoints now function as a true working cognitive state rather than a simple progress summary.
+
+---
+
+## 3. Stable Long Running Operation
+
+The final cognitive checkpoint required approximately one hour to complete while maintaining heartbeat and progress reporting throughout.
+
+No loss of session continuity occurred during this process.
+
+This demonstrates that Lumen can successfully support extremely long-running reasoning operations.
+
+---
+
+## 4. Clear Separation Between Reading and Understanding
+
+One of the most important outcomes of this experiment is the observation that reading completion and understanding quality are now largely independent.
+
+The model successfully developed a considerably richer understanding of the source than previous versions.
+
+This indicates that the checkpoint redesign has largely solved the earlier problem of weak retained understanding.
+
+---
+
+# Observed Issues
+
+## 1. Final Checkpoint Occurs Too Early
+
+The "Final Cognitive Checkpoint" is currently generated before the final source read has been fully completed.
+
+Immediately afterwards Qwen attempted another read request at the final offset.
+
+This indicates that Lumen currently considers the reading phase complete slightly too early.
+
+The checkpoint should only become "final" once all required source material has been confirmed as fully read.
+
+---
+
+## 2. Final Read Completion Bug
+
+Following completion of the checkpoint, Qwen issued another read request using the final offset.
+
+The tool reported that additional source lines still remained.
+
+This demonstrates a completion verification bug in the final read sequence.
+
+The end-of-file condition is not currently being verified correctly before entering the completion phase.
+
+---
+
+## 3. Excellent Understanding Did Not Produce an Excellent Answer
+
+This became the most significant finding of the experiment.
+
+The final checkpoint contains considerably more architectural understanding than appears in the user-facing answer.
+
+The information required to produce an excellent explanation was already present inside the checkpoint.
+
+However, the final answer remained a relatively generic summary.
+
+This demonstrates that:
+
+> Better understanding does not automatically produce a better final answer.
+
+The limitation is therefore no longer primarily in the model's retained understanding.
+
+The limitation is now in converting that understanding into the final response.
+
+---
+
+## 4. Unexpected Final Refusal
+
+After writing the intermediate analysis file and attempting one final read, Qwen returned:
+
+> "I'm sorry, but I can't assist with that request."
+
+This refusal appears unrelated to the task itself and occurred after successful completion of almost all required work.
+
+Further investigation is required to determine whether this represents:
+
+- model behaviour,
+- prompt interaction,
+- completion-stage instability,
+- or another edge case.
+
+---
+
+## 5. Result Persistence Failure
+
+Following completion of the response, Lumen attempted to persist the final result artifact.
+
+Persistence failed because of an internal coding error:
+
+```
+NameError:
+_get_database is not defined
+```
+
+This occurred after the model had already produced its final response and therefore did not cause the refusal.
+
+This is an implementation bug within the result persistence layer.
+
+---
+
+# Architectural Conclusions
+
+This evaluation suggests that Lumen's execution pipeline can now be viewed as distinct stages:
+
+```
+Read source
+    ↓
+Develop architectural understanding
+    ↓
+Generate cognitive checkpoints
+    ↓
+Verify task completion
+    ↓
+Generate final answer
+    ↓
+Persist result
+    ↓
+Return response
+```
+
+v3.2.8 significantly improved the first three stages.
+
+The remaining weaknesses now occur primarily in the transitions between those stages.
+
+---
+
+# Direction for v3.2.9
+
+v3.2.9 should not significantly redesign the checkpoint structure.
+
+The checkpoint quality is now sufficient to support high-quality answers.
+
+Development should instead focus on:
+
+- correcting the final read completion sequence
+- ensuring final checkpoints only occur after confirmed EOF
+- improving conversion of checkpoint understanding into the final response
+- validating completion conditions before ending the task
+- fixing final result persistence
+- investigating the unexpected refusal behaviour
+
+---
+
+# Overall Assessment
+
+v3.2.8 should be considered a successful architectural release.
+
+It demonstrates that improved cognitive checkpoints substantially improve the model's retained understanding of large codebases.
+
+The primary limitation has shifted from **understanding the source** to **effectively expressing that understanding**.
+
+This represents meaningful progress, as the remaining work is now concentrated within the completion stage rather than the cognitive modelling stage itself.
+
+---
+
+# Lumen v3.2.9 – Development Diary
+
+**Date:** 25 July 2026
+
+## Background
+
+The evaluation of v3.2.8 demonstrated that the recent checkpoint redesign has been highly successful.
+
+The quality of the cognitive checkpoints improved significantly, allowing Qwen to progressively construct and retain a much richer architectural understanding of a large source file throughout a long-running analysis session.
+
+More importantly, the evaluation revealed that the primary limitation is no longer the model's ability to understand the source material.
+
+Instead, the remaining weaknesses occur during the completion phase of the task.
+
+This changes the focus of development for v3.2.9.
+
+---
+
+# Primary Objective
+
+Improve completion reliability by ensuring that:
+
+- source acquisition genuinely completes,
+- the final cognitive checkpoint represents the completed task,
+- the accumulated understanding is fully utilised,
+- and the final answer satisfies the original completion condition.
+
+Unlike previous versions, v3.2.9 is intentionally focused on the completion pipeline rather than redesigning checkpoint generation.
+
+---
+
+# Development Scope
+
+## 1. Correct Final Source Completion
+
+### Problem
+
+Testing identified that the "Final Cognitive Checkpoint" can currently be generated before the final source read has actually completed.
+
+Following generation of the checkpoint, Qwen attempted another read request, indicating that source acquisition was still in progress.
+
+This allows the completion phase to begin before end-of-file has been confirmed.
+
+### Objectives
+
+- Verify end-of-file before permitting final completion.
+- Prevent generation of the Final Cognitive Checkpoint while further reads remain.
+- Correct handling of very small final source segments.
+- Eliminate the observed final read edge case.
+- Ensure no outstanding tool continuations remain before completion begins.
+
+### Expected Result
+
+```
+Read source
+    ↓
+EOF confirmed
+    ↓
+Final Cognitive Checkpoint
+    ↓
+Final Answer
+```
+
+---
+
+## 2. Completion Integrity
+
+### Problem
+
+The model currently appears capable of developing significantly more understanding than it ultimately expresses in its final response.
+
+Although the checkpoint satisfies much of the requested analysis, the returned answer remains comparatively generic.
+
+### Objectives
+
+Introduce explicit completion validation before task termination.
+
+Lumen should verify that:
+
+- all requested work has been completed,
+- the completion condition has been satisfied,
+- no required answer sections are missing,
+- the model has transitioned correctly from reading into explanation.
+
+Completion should become an explicit orchestration responsibility rather than relying entirely on model behaviour.
+
+---
+
+## 3. Improve Checkpoint-to-Answer Conversion
+
+### Problem
+
+The final cognitive checkpoint now contains substantially more architectural understanding than is reflected in the final answer.
+
+This indicates that understanding is being successfully retained but is not being fully utilised.
+
+### Objectives
+
+Treat the Final Cognitive Checkpoint as the authoritative representation of the completed reasoning process.
+
+Rather than requiring the model to reconstruct its understanding, Lumen should explicitly instruct it to build the final response from the checkpoint that has already been produced.
+
+The objective is not to expose checkpoint text directly to the user, but to use the checkpoint as the foundation from which the final explanation is composed.
+
+This represents the primary research objective for v3.2.9.
+
+---
+
+## 4. Result Persistence
+
+### Problem
+
+Testing exposed an implementation defect within the final result persistence layer.
+
+The persistence attempt failed due to an undefined database accessor.
+
+This occurred after the model had already produced its response and therefore did not influence the generated answer.
+
+### Objectives
+
+- Correct the database accessor implementation.
+- Verify successful persistence of final result artifacts.
+- Ensure persistence failures cannot interfere with response delivery.
+- Improve diagnostic reporting should persistence fail.
+
+---
+
+# Explicitly Out of Scope
+
+The following components performed well during v3.2.8 testing and are intentionally excluded from further modification during this iteration:
+
+- Cognitive checkpoint structure
+- Checkpoint content
+- Checkpoint wording
+- Checkpoint generation strategy
+- Context compaction
+- Continuity storage
+- Session management
+- Long-running heartbeat support
+
+Maintaining stability in these areas allows v3.2.9 to isolate improvements within the completion stage.
+
+---
+
+# Success Criteria
+
+v3.2.9 will be considered successful if the following conditions are achieved.
+
+## Source Completion
+
+- Final Cognitive Checkpoint generated only after confirmed end-of-file.
+- No remaining read operations after completion begins.
+- No incomplete tool continuations.
+
+---
+
+## Completion Integrity
+
+- Original completion condition explicitly satisfied.
+- All requested answer components present.
+- Reading phase correctly transitions into explanation.
+
+---
+
+## Final Answer Quality
+
+Compared with v3.2.8, the final answer should:
+
+- make fuller use of the accumulated architectural understanding,
+- provide richer structural explanations,
+- demonstrate stronger evidence-based reasoning,
+- answer every aspect of the original request.
+
+The objective is not simply a longer answer, but a more complete expression of the understanding already developed during analysis.
+
+---
+
+## Reliability
+
+- No unexpected refusals.
+- No premature completion.
+- No persistence failures.
+- Stable completion of long-running analysis sessions.
+
+---
+
+# Architectural Direction
+
+v3.2.9 represents a natural progression of Lumen's development.
+
+Earlier versions concentrated on preserving context.
+
+Recent versions concentrated on improving retained understanding.
+
+The next stage is ensuring that retained understanding is converted into the highest-quality answer the model is capable of producing.
+
+The development emphasis therefore shifts from improving the model's cognitive state to improving the orchestration of task completion.
+
+This continues Lumen's philosophy that better AI systems are achieved not only through better models, but through better engineering around those models.
+
+---
+
+# Lumen Research Diary – Cross-Model Interpretation of Cognitive Checkpoints
+
+**Date:** 25 July 2026
+
+## Background
+
+Following completion of the v3.2.8 evaluation, an independent experiment was performed to assess whether Lumen's exported cognitive checkpoints could be understood by another large language model with no prior knowledge of the Lumen project.
+
+The objective was not to evaluate the quality of the original analysis itself, but to determine whether the checkpoint representation contained sufficient structured information for another model to reconstruct the intended understanding.
+
+---
+
+# Experimental Setup
+
+The experiment intentionally used an external model with no prior exposure to:
+
+- Lumen
+- The checkpoint format
+- The original conversation
+- The source code
+- The development objectives
+
+The only information supplied was the exported **v3.2.8 Checkpoint PDF**.
+
+No additional explanation of Lumen's architecture or purpose was provided.
+
+---
+
+# Initial Interpretation
+
+The external model immediately recognised the document as a checkpoint and continuity mechanism for a long-running AI task.
+
+It independently concluded that the document represented:
+
+- progressive context preservation,
+- structured memory across context-window limitations,
+- objective tracking,
+- architectural understanding,
+- and execution state.
+
+Without being told anything about Lumen, it described the system as effectively providing memory management for long-running AI reasoning sessions.
+
+This is significant because it demonstrates that the checkpoint format is understandable without requiring knowledge of its implementation.
+
+---
+
+# Interpretation of Checkpoint Structure
+
+The external model correctly identified the purpose of the major checkpoint sections, including:
+
+- Objective and completion condition
+- Source coverage
+- Context utilisation and compaction
+- Architectural model
+- Responsibilities
+- Capability groups
+- Data and control flow
+- Relationships and dependencies
+- Evidence and confidence
+- Checkpoint evolution
+- Current working strategy
+- Next required action
+
+This indicates that the checkpoint organisation communicates its intent clearly and consistently.
+
+---
+
+# Reconstruction of Source Understanding
+
+A second experiment asked the external model to explain the source file using only the checkpoint document.
+
+Although it had never seen the actual source code, it produced a coherent architectural explanation describing:
+
+- the overall purpose of the FastAPI dashboard router,
+- route handling,
+- embedded presentation generation,
+- HTML, CSS and JavaScript generation,
+- utility functions,
+- dashboard features,
+- health monitoring,
+- manual action handling,
+- workspace and engagement functionality,
+- dependencies on supporting application modules.
+
+Importantly, the model also correctly identified the limitations of the available evidence, explicitly stating that exact endpoint behaviour and detailed control flow could not be reconstructed from the checkpoint alone.
+
+No unsupported implementation details were invented.
+
+---
+
+# Key Observation
+
+The experiment demonstrates that the cognitive checkpoint preserved substantially more useful information than was expressed in Qwen's final response during the original evaluation.
+
+The same checkpoint that failed to produce a satisfactory final answer from the originating model was sufficient for an independent model to generate a useful architectural explanation.
+
+This strongly supports the conclusion reached during the v3.2.8 evaluation:
+
+> The primary limitation is no longer the preservation of understanding, but the conversion of that understanding into the final user-facing answer.
+
+---
+
+# Cross-Model Portability
+
+Perhaps the most interesting outcome is that the checkpoint functioned as a **model-independent cognitive artifact**.
+
+The checkpoint was produced during Qwen's reasoning process.
+
+However, another model was able to:
+
+- interpret its structure,
+- understand its purpose,
+- reconstruct the architectural understanding,
+- identify evidential limitations,
+- and generate a coherent explanation.
+
+This required no shared conversation history or implementation knowledge.
+
+The checkpoint therefore appears to preserve understanding in a form that is largely independent of the originating model.
+
+---
+
+# Architectural Significance
+
+This experiment suggests that Lumen's checkpoint format may provide more than context preservation.
+
+It may also enable structured transfer of reasoning state between different language models.
+
+Conceptually, the workflow becomes:
+
+```
+Model A
+Develops understanding
+        ↓
+Lumen
+Externalises cognitive state
+        ↓
+Checkpoint
+Portable structured representation
+        ↓
+Model B
+Interprets and continues reasoning
+```
+
+Although additional validation is required, this represents an encouraging indication that Lumen's continuity mechanism is becoming genuinely model-agnostic.
+
+---
+
+# Implications for v3.2.9
+
+The experiment reinforces the current development direction.
+
+Rather than redesigning checkpoint generation, development should continue focusing on improving the transition from retained understanding to final response generation.
+
+The evidence now suggests that:
+
+- checkpoint quality is sufficient,
+- retained understanding is significantly richer than previous releases,
+- external models can successfully utilise the checkpoint,
+- and the remaining weakness lies within completion orchestration.
+
+This further validates the decision to make answer synthesis and completion integrity the primary objectives of v3.2.9.
+
+---
+
+# Conclusions
+
+This experiment provides independent evidence supporting three important conclusions.
+
+1. **Checkpoint structure is externally understandable.**
+
+   The checkpoint format communicates its purpose without requiring knowledge of Lumen's internal implementation.
+
+2. **Checkpoint content preserves meaningful architectural understanding.**
+
+   Another model was able to reconstruct a useful explanation of the source file using only the checkpoint document.
+
+3. **The current bottleneck is answer generation rather than understanding.**
+
+   The originating model developed sufficient understanding but failed to express it fully, while an independent model successfully transformed the retained checkpoint into a coherent explanation.
+
+Taken together, these findings strengthen confidence that Lumen's checkpoint architecture is maturing into a robust, model-independent representation of accumulated reasoning, and that future development should concentrate on improving the orchestration of task completion rather than redesigning the checkpoint itself.
+
+---
