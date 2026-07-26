@@ -2772,3 +2772,216 @@ This abstraction provides a stable operational model independent of implementati
 - Decouples operational diagnostics from implementation details.
 - Provides a scalable foundation for future providers, storage backends and distributed deployments.
 - Establishes a consistent operational model for all future subsystems.
+
+---
+
+# DEVELOPMENT-DIARY-v3.2.11.md
+
+# Lumen v3.2.11 Development Diary
+
+## Theme
+
+**Operational Observability**
+
+Following the architectural work completed during v3.2.9 and v3.2.10, the focus of v3.2.11 shifts from improving Lumen's internal behaviour to improving the visibility of that behaviour.
+
+The primary objective of this release is to establish the foundations of the **Lumen Console** as the primary operational interface for a running Lumen instance.
+
+---
+
+# Background
+
+Versions 3.2.9 and 3.2.10 significantly improved the reliability of Lumen's execution pipeline.
+
+These releases focused on:
+
+- completion integrity
+- EOF verification
+- Final Cognitive Checkpoint sequencing
+- checkpoint persistence
+- persistence retry behaviour
+- completion diagnostics
+
+During testing it became apparent that although Lumen was producing increasingly rich operational information, much of that information remained difficult to interpret while a task was actively executing.
+
+Operational visibility therefore became the next architectural priority.
+
+---
+
+# Objectives
+
+The primary objective of v3.2.11 is to improve the observability of Lumen.
+
+Rather than introducing new orchestration behaviour, this release focuses on making existing behaviour visible.
+
+The Console should allow an operator to answer questions such as:
+
+- What is Lumen doing?
+- Which session is currently active?
+- What is the current objective?
+- Which checkpoint is current?
+- What capabilities are currently available?
+- Which provider is active?
+- Is Lumen healthy?
+- Is any service degraded?
+
+without requiring inspection of diagnostic logs.
+
+---
+
+# Lumen Console
+
+During planning it became clear that the existing Web UI had evolved beyond a debugging interface.
+
+The interface is therefore redefined as the **Lumen Console**.
+
+The Console becomes the primary operational interface for a running Lumen instance.
+
+Its purpose is observation rather than administration.
+
+The Console remains intentionally read-only.
+
+Operational insight takes precedence over operational control.
+
+---
+
+# Session-Centric Observability
+
+One significant observation during testing was that checkpoint history from previous executions could appear alongside the currently running session.
+
+Although technically correct, this presentation blurred the distinction between historical artefacts and current operational state.
+
+The Console therefore adopts a session-centric operational model.
+
+Only the active session represents the current operational state.
+
+Historical sessions remain available through Session History.
+
+This allows the operator to immediately distinguish between:
+
+- current activity
+- historical execution
+
+while preserving complete historical traceability.
+
+---
+
+# Operational State versus Operational Artefacts
+
+A new architectural distinction was introduced during this release.
+
+Operational State includes:
+
+- current session
+- current objective
+- current checkpoint
+- current provider
+- operational mode
+- capability assessment
+
+Operational Artefacts include:
+
+- historical sessions
+- checkpoints
+- results
+- persistence history
+- logs
+- distillations
+
+The Console presents operational state as its primary view.
+
+Historical artefacts remain available for engineering analysis but do not form part of the active operational display.
+
+---
+
+# Capability-Based Observability
+
+The Console moves away from reporting individual service status as the primary operational view.
+
+Instead it presents capability health.
+
+For example:
+
+Session Persistence
+
+rather than
+
+MongoDB Connected
+
+Underlying service health remains available but exists to explain capability state rather than define it.
+
+---
+
+# Runtime Visibility
+
+The Console will progressively expose the runtime state of Lumen including:
+
+- current task
+- current source
+- source coverage
+- context utilisation
+- checkpoint progression
+- provider interaction
+- persistence activity
+- operational warnings
+- runtime duration
+
+This information is intended to provide continuous visibility while work is being performed.
+
+---
+
+# Checkpoint Presentation
+
+Checkpoint displays are redesigned to prioritise operational summaries before detailed cognitive state.
+
+Each checkpoint should immediately present:
+
+- generation
+- checkpoint type
+- persistence status
+- context reduction
+- continuity size
+- source
+- creation time
+
+before presenting detailed checkpoint content.
+
+This allows operators to quickly understand the state of execution while retaining access to the complete cognitive checkpoint.
+
+---
+
+# Architectural Outcome
+
+v3.2.11 represents the beginning of a new architectural direction.
+
+Earlier releases concentrated primarily on improving the internal behaviour of Lumen.
+
+This release shifts attention towards improving the operator's understanding of that behaviour.
+
+The Console becomes the architectural foundation for future operational capabilities while deliberately remaining read-only.
+
+Administrative functions remain outside the scope of this release.
+
+---
+
+# Expected Benefits
+
+The expected benefits include:
+
+- clearer operational visibility
+- improved engineering diagnostics
+- easier monitoring of long-running tasks
+- improved understanding of session progression
+- improved distinction between active and historical work
+- reduced dependence upon log inspection
+- foundation for future operational administration
+
+---
+
+# Conclusion
+
+v3.2.11 establishes observability as a first-class architectural capability within Lumen.
+
+Rather than introducing significant new orchestration behaviour, the release focuses on making Lumen's existing behaviour visible, understandable and easier to operate.
+
+This release represents the transition from improving the internal operation of Lumen to improving the operational experience of using Lumen.
