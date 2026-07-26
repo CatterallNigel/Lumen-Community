@@ -2362,3 +2362,413 @@ This experiment provides independent evidence supporting three important conclus
 Taken together, these findings strengthen confidence that Lumen's checkpoint architecture is maturing into a robust, model-independent representation of accumulated reasoning, and that future development should concentrate on improving the orchestration of task completion rather than redesigning the checkpoint itself.
 
 ---
+
+# Lumen v3.2.9 – Evaluation Diary
+
+**Date:** 26 July 2026
+
+## Background
+
+v3.2.9 was developed following the successful v3.2.8 evaluation.
+
+The primary objective was not to further improve cognitive checkpoint quality, but to improve the completion phase of long-running tasks by ensuring that:
+
+- source reading completed correctly,
+- final checkpoints occurred only after confirmed EOF,
+- accumulated understanding was converted into a higher-quality answer,
+- and completion diagnostics provided better observability.
+
+Unfortunately, the primary evaluation run was interrupted when the development NUC became unresponsive before task completion.
+
+Although the final answer was lost, the Lumen logs provided valuable insight into the behaviour of the new orchestration logic.
+
+---
+
+# Positive Findings
+
+## Completion Integrity Improvements
+
+One of the principal objectives of v3.2.9 was to prevent premature task completion.
+
+The logs demonstrate that this behaviour worked correctly.
+
+Throughout the run, Lumen consistently reported:
+
+- EOF not yet verified.
+- Outstanding read operations still existed.
+- Final checkpoint not yet generated.
+- No answer generation had begun.
+
+Unlike v3.2.8, Lumen no longer attempted to enter the completion phase while further source material remained to be read.
+
+This represents successful validation of the new completion integrity logic.
+
+---
+
+## Read Continuation Behaviour
+
+The previous malformed final read behaviour did not reappear during testing.
+
+Continuation requests remained well-formed and correctly preserved both:
+
+- source path
+- continuation offset
+
+No invalid continuation requests were observed.
+
+Although the run did not reach end-of-file, the continuation mechanism behaved correctly throughout the observed execution.
+
+---
+
+## Completion Diagnostics
+
+The new completion diagnostics proved valuable.
+
+For the first time Lumen explicitly reported:
+
+- EOF verification state
+- Final checkpoint state
+- Outstanding reads
+- Recovery usage
+- Persistence state
+- Delivery state
+
+This substantially improved the ability to understand exactly where execution had reached.
+
+---
+
+## Context Management
+
+Context management continued to perform well.
+
+Despite the overall interaction history exceeding 1.6 million characters, only the required working context was presented to the model.
+
+Checkpoint generation also remained well within the configured context limits.
+
+This demonstrates that the continuity and context compaction mechanisms continue to scale successfully.
+
+---
+
+## Two-Checkpoint Continuity Window
+
+The intended checkpoint window design operated correctly.
+
+Only the two most recent checkpoints were presented to the model, with the latest checkpoint explicitly treated as authoritative.
+
+This confirms that checkpoint injection remains bounded regardless of overall session duration.
+
+---
+
+# Observed Issues
+
+## NUC Failure
+
+The primary evaluation could not be completed because the development NUC became unresponsive before the task reached completion.
+
+As a result, the following behaviours could not be evaluated:
+
+- confirmed EOF
+- Final Cognitive Checkpoint timing
+- answer synthesis
+- completion recovery
+- final response quality
+
+The interruption occurred while Qwen was generating the next cognitive checkpoint.
+
+No evidence suggests that Lumen itself terminated unexpectedly prior to the system failure.
+
+---
+
+## Persistence Retry Behaviour
+
+The evaluation exposed an architectural weakness within checkpoint persistence.
+
+When MongoDB was unavailable, every checkpoint independently continued retrying persistence.
+
+As newer checkpoints were generated, older checkpoints remained active within the retry queue.
+
+This resulted in:
+
+- unnecessary MongoDB connection attempts
+- excessive retry logging
+- unstable checkpoint ordering within the UI
+- avoidable background activity
+
+Operationally, only the newest checkpoint remained important, while earlier checkpoints had already become superseded.
+
+---
+
+## UI Ordering
+
+Checkpoint ordering within the UI was influenced by retry activity rather than checkpoint chronology.
+
+As older checkpoints retried persistence, they repeatedly appeared at the top of the checkpoint list despite no longer representing the current cognitive state.
+
+Chronological ordering should remain independent of persistence activity.
+
+---
+
+## EOF Diagnostic Semantics
+
+The initial completion diagnostic reported EOF as verified before any meaningful source reading had occurred.
+
+Although this did not affect execution, the diagnostic was semantically misleading.
+
+EOF should instead be represented using explicit lifecycle states such as:
+
+- unknown
+- incomplete
+- verified
+
+---
+
+# Conclusions
+
+Although the evaluation could not be completed, it successfully validated much of the redesigned completion pipeline.
+
+Most importantly, Lumen no longer attempted premature completion while outstanding reads remained.
+
+The principal improvements introduced in v3.2.9 therefore appear to be functioning correctly.
+
+The remaining issues identified during testing relate primarily to operational robustness rather than reasoning quality.
+
+These findings directly informed the development objectives for v3.2.10.
+
+---
+
+# Lumen v3.2.11 – Development Objectives
+
+## Operational Capability Assessment
+
+### Background
+
+Previous versions assumed all supporting services were available during startup.
+
+Operational testing demonstrated that Lumen can continue functioning when certain supporting services (such as MongoDB) are unavailable, albeit with reduced functionality.
+
+Historically, startup validation focused on the availability of individual services.
+
+Beginning with v3.2.11, Lumen shifts from **service health** to **capability health**.
+
+Service availability is an implementation detail.
+
+Operational capabilities represent what Lumen is actually able to do.
+
+This distinction provides a more accurate representation of the system's operational state while decoupling user-facing diagnostics from the underlying implementation.
+
+---
+
+## Service Health vs Capability Health
+
+Service health answers the question:
+
+> Is a particular infrastructure component available?
+
+Examples include:
+
+```
+MongoDB        Offline
+Ollama         Available
+Web UI         Available
+```
+
+Capability health answers the more important operational question:
+
+> What functionality is currently available?
+
+Example:
+
+```
+Session Persistence        Disabled
+Checkpoint Persistence     Disabled
+Checkpoint Recall          Disabled
+Cognitive History          Disabled
+
+Context Management         Ready
+Checkpoint Generation      Ready
+Context Compaction         Ready
+Response Generation        Ready
+Tool Execution             Ready
+```
+
+Service health is therefore an input into operational assessment.
+
+Capability health is the primary operational output presented to the operator.
+
+---
+
+## Startup Validation
+
+During startup, Lumen validates each required service before accepting work.
+
+Example:
+
+```
+Lumen v3.2.11
+
+Performing startup validation...
+
+✓ Configuration
+✓ Prompt Profiles
+✓ Tool Registry
+✓ Session Manager
+
+Checking external services...
+
+MongoDB        Offline
+Ollama         Available
+Web UI         Available
+```
+
+Once service validation has completed, Lumen derives its operational capabilities.
+
+---
+
+## Capability Assessment
+
+After validating services, Lumen determines the capabilities currently available.
+
+Example:
+
+```
+Operational Capability Assessment
+
+Configuration                Ready
+Prompt Profiles              Ready
+Translator                   Ready
+Provider                     Connected
+Web UI                       Ready
+
+Session Persistence          Disabled
+Checkpoint Persistence       Disabled
+Checkpoint Recall            Disabled
+Cognitive History            Disabled
+
+Context Management           Ready
+Checkpoint Generation        Ready
+Context Compaction           Ready
+Tool Execution               Ready
+Response Generation          Ready
+```
+
+This provides a clear operational summary of what Lumen is capable of performing rather than simply reporting which services are online.
+
+---
+
+## Operational Mode
+
+Following capability assessment, Lumen determines its current operating mode.
+
+Possible modes are:
+
+### NORMAL
+
+All required capabilities are available.
+
+### DEGRADED
+
+Supporting capabilities are unavailable, but core reasoning and orchestration remain fully operational.
+
+### LIMITED
+
+Loss of one or more major capabilities significantly reduces functionality.
+
+### FAILED
+
+Mandatory startup requirements were not satisfied and Lumen cannot continue.
+
+Example:
+
+```
+Operational Mode : DEGRADED
+```
+
+---
+
+## Degraded Startup
+
+When MongoDB is unavailable, Lumen pauses before startup.
+
+Example:
+
+```
+MongoDB is unavailable.
+
+The following capabilities will be unavailable:
+
+• Session Persistence
+• Checkpoint Persistence
+• Session Recall
+• Cognitive History
+
+Core reasoning capabilities remain available.
+
+Start Lumen in degraded mode? [Y/n]
+```
+
+Selecting **Yes** continues startup in degraded mode.
+
+Selecting **No** terminates startup.
+
+This confirmation is only displayed when startup can safely continue with reduced functionality.
+
+---
+
+## Configurable Startup Behaviour
+
+Startup behaviour can be configured.
+
+Example:
+
+```yaml
+startup:
+
+    require_database: false
+    confirm_degraded_startup: true
+```
+
+If:
+
+```
+require_database = true
+```
+
+startup terminates whenever MongoDB is unavailable.
+
+If:
+
+```
+require_database = false
+```
+
+Lumen may continue operating in degraded mode.
+
+---
+
+## Architectural Direction
+
+Operational capability assessment becomes the authoritative representation of Lumen's runtime state.
+
+Individual services are responsible for enabling capabilities, but operators interact primarily with capabilities rather than implementation details.
+
+This allows underlying infrastructure to evolve without changing how operational health is presented.
+
+For example, session persistence may one day use MongoDB, PostgreSQL or another storage provider, while the reported capability remains simply:
+
+```
+Session Persistence : Ready
+```
+
+This abstraction provides a stable operational model independent of implementation.
+
+---
+
+## Expected Benefits
+
+- Separates infrastructure health from operational capability.
+- Provides immediate visibility into what Lumen can actually perform.
+- Reduces confusion during startup failures.
+- Enables graceful degraded operation.
+- Decouples operational diagnostics from implementation details.
+- Provides a scalable foundation for future providers, storage backends and distributed deployments.
+- Establishes a consistent operational model for all future subsystems.

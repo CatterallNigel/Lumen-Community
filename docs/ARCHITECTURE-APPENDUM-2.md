@@ -133,3 +133,13 @@ The overarching objective remains unchanged:
 > **Prompt design should maximise the quality of a model's observable reasoning while remaining consistent with the model's current state of knowledge.**
 
 Lumen therefore treats prompt engineering as an evidence-based engineering discipline, where prompt behaviour is measured, compared, and refined through repeatable experimentation rather than intuition.
+
+---
+
+## Lumen Console
+
+The Lumen Console is the primary operational interface for a running Lumen instance.
+
+Its architecture, philosophy and operational model are documented separately in:
+
+docs/LUMEN-CONSOLE.md
