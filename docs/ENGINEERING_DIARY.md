@@ -3700,3 +3700,126 @@ The Operational Console reflects this evolution.
 Rather than simply displaying checkpoint history, it will provide a real-time operational view of the orchestration process itself, allowing engineers to understand what the system is currently doing, why it is doing it, and how execution is progressing.
 
 In many respects, the vision is becoming **"btop for AI orchestration"**—a single operational dashboard that exposes the live state of the entire execution pipeline rather than requiring engineers to reconstruct behaviour from multiple log files after execution has completed.
+
+
+---
+
+## v3.2.12 and v3.2.13 Release Plan Revision
+
+The work originally planned for the v3.2.12 UI release has been deferred to v3.2.13.
+
+This change follows a startup failure encountered during testing, where the configured MongoDB URL was incorrect. Lumen did not detect the problem clearly at startup, and the issue was only discovered after restarting the test.
+
+### v3.2.12 — Generic Dependency Validation Framework
+
+v3.2.12 will introduce a reusable dependency validation framework that runs before Lumen accepts any work.
+
+The immediate requirement is to verify that MongoDB is available and accessible, but the implementation should be generic rather than a one-off database check.
+
+The framework should support:
+
+* configuration validation;
+* filesystem and required-file validation;
+* MongoDB connectivity and accessibility validation;
+* model-provider endpoint validation;
+* configured-model availability validation;
+* required and optional dependency classifications;
+* clear startup diagnostics;
+* fail-fast behaviour when a required dependency is unavailable;
+* structured validation results that can later be consumed by the UI.
+
+The intended startup sequence is:
+
+1. Load configuration.
+2. Validate configuration values.
+3. Initialise logging.
+4. Run all registered dependency validators.
+5. Produce a startup validation report.
+6. Abort startup if any required dependency has failed.
+7. Initialise session and checkpoint services.
+8. Accept work only after the environment has been validated.
+
+The validation framework should distinguish between:
+
+* **Healthy** — the dependency is available and operating normally.
+* **Degraded** — the dependency is available but has a non-fatal issue.
+* **Failed** — the dependency is unavailable or unusable.
+
+Startup policy:
+
+* A failed required dependency prevents Lumen from starting.
+* A failed optional dependency allows Lumen to start in a degraded state.
+* All validation results should be logged clearly and retained in a structured form.
+
+Initial validators for v3.2.12 should cover:
+
+* configuration;
+* filesystem access;
+* MongoDB;
+* the configured model provider;
+* the configured model.
+
+MongoDB validation should confirm:
+
+* the connection URL is syntactically valid;
+* the server is reachable;
+* authentication succeeds;
+* the configured database is accessible;
+* required collections can be accessed;
+* session and checkpoint persistence can operate correctly.
+
+The error messages should identify the failing component and the likely cause, rather than exposing only a generic connection exception or stack trace.
+
+Example startup output:
+
+```text
+Lumen Dependency Validation
+────────────────────────────────────────
+PASS  configuration   Configuration valid
+PASS  filesystem      Required paths accessible
+FAIL  mongodb         Connection refused
+PASS  ollama          Provider reachable
+PASS  model           Configured model available
+────────────────────────────────────────
+Startup aborted: required dependency failed.
+```
+
+### Testing Approach
+
+The v3.2.12 test does not require another large or long-running analysis.
+
+A small bounded file and a simple task will be sufficient to verify:
+
+* successful startup with valid dependencies;
+* normal task execution;
+* session persistence;
+* checkpoint persistence;
+* clear failure reporting;
+* correct fail-fast behaviour.
+
+The failure test matrix should include:
+
+* invalid MongoDB URL;
+* unreachable MongoDB host;
+* authentication failure;
+* inaccessible or uninitialised database;
+* unavailable model-provider endpoint;
+* configured model not found;
+* missing required file or directory;
+* unwritable persistence path;
+* optional dependency unavailable.
+
+### v3.2.13 — UI Work
+
+The UI work previously planned for v3.2.12 moves to v3.2.13.
+
+This ordering is preferable because the UI will be able to consume the structured dependency and health information produced by v3.2.12, rather than implementing separate or duplicated status logic.
+
+The revised sequence is therefore:
+
+```text
+v3.2.12 — Prove the environment is operational
+v3.2.13 — Expose operational state through the UI
+```
+
+This provides a cleaner engineering dependency between the two releases and gives the UI a reliable operational foundation.
