@@ -2985,3 +2985,527 @@ v3.2.11 establishes observability as a first-class architectural capability with
 Rather than introducing significant new orchestration behaviour, the release focuses on making Lumen's existing behaviour visible, understandable and easier to operate.
 
 This release represents the transition from improving the internal operation of Lumen to improving the operational experience of using Lumen.
+
+---
+
+## Revised v3.2.10 Assessment
+
+Following a review of the complete interaction, bridge, audit, UI and MongoDB logs, v3.2.10 can be considered a significant step forward in Lumen's continuity architecture. The core checkpointing and context management pipeline performed reliably, while the additional observability exposed a number of architectural weaknesses that now define the priorities for v3.2.11.
+
+### Successfully Demonstrated
+
+v3.2.10 successfully demonstrated:
+
+- Controlled incremental source reading.
+- Automatic checkpoint generation.
+- Context reduction and continuation.
+- Final Cognitive Checkpoint creation.
+- Eventual checkpoint persistence following MongoDB recovery.
+- Duplicate tool-call detection and replay protection.
+
+These validate the overall direction of the continuity architecture and confirm that the checkpointing pipeline itself is functioning as intended.
+
+---
+
+## Architectural Weaknesses Identified
+
+The review also exposed several important architectural issues.
+
+### Persistent Session Overloading
+
+A single session is currently reused across multiple independent executions.
+
+While this successfully preserves continuity, it also causes the session to become both the long-term continuity boundary and the execution boundary. As additional runs are performed, the distinction between historical continuity and individual execution becomes increasingly blurred.
+
+---
+
+### MongoDB Resilience
+
+MongoDB persistence failures resulted in extremely large retry counts before eventual recovery.
+
+Although no data was ultimately lost, persistence should not require hundreds or thousands of retries before succeeding. This indicates that the retry strategy requires redesign, including bounded retries, exponential backoff and improved failure handling.
+
+---
+
+### State Ambiguity
+
+Checkpoint creation and checkpoint persistence are currently treated as though they are the same operation.
+
+Operationally these are distinct events:
+
+- Checkpoint created
+- Checkpoint queued
+- Checkpoint persisted
+- Persistence failed
+
+Separating these states will make system health significantly easier to understand.
+
+---
+
+### Recovery Loop Behaviour
+
+The replay guard correctly detected repeated tool invocations, however the recovery strategy simply repeated the same instruction multiple times.
+
+The logs showed the model repeatedly attempting the identical tool call despite receiving the same correction. Twenty identical recovery attempts were made before recovery was exhausted.
+
+Future recovery behaviour should become progressively more aggressive rather than simply repeating the same request.
+
+---
+
+### Empty Completion Delivery
+
+After recovery exhaustion, the task completed successfully from the orchestration perspective but produced an empty response.
+
+An internally completed task should never silently deliver zero output. A bounded fallback response should always be generated.
+
+---
+
+### UI Polling
+
+The current UI repeatedly polls historical checkpoint endpoints approximately every two seconds regardless of session activity.
+
+This unnecessarily increases application activity, creates excessive log volume, performs unnecessary MongoDB queries, and tightly couples operational state to historical data retrieval.
+
+---
+
+### Stale Persisted Metadata
+
+The MongoDB session record continued to report bridge version 3.2.6 despite execution occurring under v3.2.10.
+
+Session metadata should accurately represent the execution environment or clearly distinguish session metadata from execution metadata.
+
+---
+
+# v3.2.11 Planning Additions
+
+The review reinforces that v3.2.11 should become primarily an **observability and operational architecture release**.
+
+## Session and Run Identity
+
+Introduce a dedicated **run_id** beneath **session_id**.
+
+Sessions should remain the long-term continuity boundary while every Pi invocation or user objective becomes its own execution run.
+
+Each of the following should reference both identifiers:
+
+- checkpoints
+- model requests
+- final responses
+- persistence operations
+- recovery events
+- execution statistics
+
+This cleanly separates continuity from execution.
+
+---
+
+## Persistence Observability
+
+Persistence should expose explicit operational states rather than a simple success/failure outcome.
+
+Recommended persistence lifecycle:
+
+- created
+- queued_for_persistence
+- persisted
+- persistence_failed
+
+MongoDB capability should also be displayed independently from model execution capability.
+
+Additional persistence improvements should include:
+
+- bounded retry counts
+- exponential backoff
+- retry jitter
+- retry age
+- retry count
+- next retry time
+- terminal failure state
+- prevention of startup retry storms
+
+---
+
+## Recovery Behaviour
+
+Recovery should progressively change strategy instead of repeating the same instruction.
+
+Suggested progression:
+
+**Attempt 1**
+
+Request a normal final response.
+
+**Attempt 2**
+
+Remove tool availability and request the final response again.
+
+**Attempt 3**
+
+Construct a bounded fallback response directly from the Final Cognitive Checkpoint.
+
+Under no circumstances should an internally completed task silently return an empty successful response.
+
+---
+
+## UI Architecture
+
+Operational state should become independent from historical checkpoint browsing.
+
+The UI should provide:
+
+- dedicated operational state endpoint
+- session-scoped API calls
+- run-scoped API calls
+- checkpoint updates driven by events rather than continuous polling
+- significantly reduced historical polling frequency
+
+The Console should report the current operational state directly rather than attempting to infer activity by repeatedly querying checkpoint history.
+
+---
+
+## Overall Conclusion
+
+The additional logs do not fundamentally change the direction of v3.2.11, but they considerably sharpen its priorities.
+
+The continuity pipeline has now demonstrated that it is capable of successfully reading large sources, generating checkpoints, reducing context, and recovering persisted state.
+
+The next engineering challenge is no longer continuity itself.
+
+It is operational observability.
+
+v3.2.11 should therefore focus on making execution behaviour fully visible by exposing not only model activity, but also recovery state, persistence state, session identity, run identity, and UI interaction with the underlying operational data.
+
+---
+
+# Lumen v3.2.11 — Operational Observability
+
+## Overview
+
+Lumen v3.2.11 is primarily an **observability release**.
+
+The core continuity architecture introduced during the v3.2.x series has now demonstrated that it can successfully:
+
+- maintain continuity across long-running tasks,
+- generate and restore cognitive checkpoints,
+- reduce context through checkpointing,
+- recover from transient persistence failures,
+- and detect repeated tool execution.
+
+The next stage is to make the internal operation of Lumen visible to both engineers and users.
+
+Rather than improving the continuity engine itself, v3.2.11 focuses on making every stage of execution understandable in real time.
+
+---
+
+# Objectives
+
+The primary objectives for v3.2.11 are:
+
+- expose the operational state of Lumen
+- distinguish execution from continuity
+- improve persistence visibility
+- improve recovery visibility
+- simplify debugging
+- provide a foundation for future session management
+
+---
+
+# 1. Operational Console
+
+Introduce a dedicated operational dashboard showing the current execution state rather than attempting to infer behaviour from log files.
+
+The Console should provide live visibility into:
+
+## Execution
+
+- Current capability
+- Current objective
+- Active model
+- Active provider
+- Current request
+- Current run
+- Session identifier
+- Runtime duration
+
+---
+
+## Context
+
+- Context window utilisation
+- Estimated tokens
+- Context ratio
+- Current checkpoint generation
+- Next checkpoint threshold
+- Distilled Continuity status
+
+---
+
+## Model
+
+- Current model state
+- Tokens per second
+- Provider latency
+- Current reasoning stage
+- Active tool
+- Tool execution count
+
+---
+
+## Recovery
+
+- Recovery active
+- Replay guard status
+- Recovery strategy
+- Recovery attempt
+- Expected next action
+
+---
+
+## Persistence
+
+- MongoDB status
+- Session persistence
+- Checkpoint persistence
+- Pending persistence queue
+- Retry count
+- Retry age
+- Last successful persistence
+- Next retry
+
+---
+
+# 2. Session and Run Separation
+
+Introduce a dedicated execution hierarchy.
+
+```
+Project
+    ├── Session
+    │      ├── Run
+    │      │      ├── Requests
+    │      │      ├── Checkpoints
+    │      │      ├── Final checkpoint
+    │      │      └── Final response
+```
+
+Each level has a distinct responsibility.
+
+## Project
+
+The long-lived engineering effort.
+
+## Session
+
+The continuity boundary.
+
+A session contains the accumulated understanding that can be resumed later.
+
+## Run
+
+A single Pi invocation or user objective.
+
+Each run records:
+
+- requests
+- checkpoints
+- persistence
+- recovery
+- final response
+
+This separates historical continuity from individual execution.
+
+---
+
+# 3. Persistence Lifecycle
+
+Persistence should expose explicit operational states.
+
+```
+Created
+        ↓
+
+Queued
+
+        ↓
+
+Persisting
+
+        ↓
+
+Persisted
+```
+
+Failure path:
+
+```
+Persisting
+
+        ↓
+
+Persistence Failed
+
+        ↓
+
+Retry Scheduled
+
+        ↓
+
+Retrying
+
+        ↓
+
+Persisted
+```
+
+The Console should clearly distinguish:
+
+- checkpoint created
+- checkpoint queued
+- checkpoint persisted
+- checkpoint failed
+
+rather than presenting persistence as a single event.
+
+---
+
+# 4. Recovery Improvements
+
+Recovery should become progressively more intelligent.
+
+Current behaviour repeatedly asks the model to produce a final answer.
+
+v3.2.11 should instead escalate recovery.
+
+## Attempt 1
+
+Request the final response.
+
+## Attempt 2
+
+Remove tool availability.
+
+Request the final response again.
+
+## Attempt 3
+
+Construct a bounded fallback response directly from the Final Cognitive Checkpoint.
+
+The objective is to ensure that a successfully completed task never produces an empty response.
+
+---
+
+# 5. UI Architecture
+
+Separate operational monitoring from historical browsing.
+
+Current behaviour polls checkpoint history to infer execution state.
+
+Instead the UI should expose dedicated operational endpoints.
+
+```
+/api/console/current
+
+/api/session/{session}
+
+/api/session/{session}/run/{run}
+
+/api/session/{session}/run/{run}/state
+```
+
+Historical checkpoint views should refresh only when necessary rather than continuously polling.
+
+---
+
+# 6. Improved Retry Strategy
+
+Persistence retries should become bounded and observable.
+
+Features include:
+
+- exponential backoff
+- retry jitter
+- retry limits
+- retry ageing
+- retry scheduling
+- terminal failure state
+
+Startup should not immediately attempt thousands of historical retries.
+
+---
+
+# 7. Capability-Based Status
+
+The operational state should describe *what Lumen is doing* rather than simply reporting progress.
+
+Examples:
+
+```
+Reading Source
+```
+
+```
+Building Architectural Model
+```
+
+```
+Generating Checkpoint
+```
+
+```
+Persisting Checkpoint
+```
+
+```
+Waiting for MongoDB
+```
+
+```
+Recovering Duplicate Tool Call
+```
+
+```
+Generating Final Response
+```
+
+```
+Delivering Response
+```
+
+This provides meaningful insight into the current behaviour of the system.
+
+---
+
+# Expected Outcome
+
+v3.2.11 will transform Lumen from a system that can **maintain continuity** into one that can also **explain its own operation**.
+
+The release establishes a clear separation between continuity, execution, persistence and recovery while providing the observability required to understand complex long-running AI workflows.
+
+This work also lays the architectural foundation for future features including bounded sessions, automatic session rollover, project-level continuity, multi-user execution, distributed persistence and richer operational analytics.
+
+## Final Cognitive Checkpoint Sequencing
+
+Investigate whether Final Cognitive Checkpoint generation is occurring before the source-reading lifecycle has completed.
+
+The Final Cognitive Checkpoint must not begin until:
+
+- all required tool calls have completed,
+- the final source chunk has been delivered to the model,
+- EOF has been explicitly verified,
+- no outstanding read remains,
+- and the model has transitioned from information acquisition to response generation.
+
+The current logs suggest that checkpoint finalisation may be occurring while the final read is still outstanding. This may cause the replay guard to incorrectly classify a legitimate final read as a duplicate or may alter the execution state before the model has finished consuming the source.
+
+The intended lifecycle should be:
+
+1. Read all required source content.
+2. Verify EOF.
+3. Clear outstanding tool state.
+4. Generate the user-facing answer.
+5. Create the Final Cognitive Checkpoint.
+6. Persist the checkpoint and final response.
+
+v3.2.11 should add explicit logging around each transition so that the relationship between EOF verification, final answer generation, and Final Cognitive Checkpoint creation can be traced unambiguously.
+
+---
