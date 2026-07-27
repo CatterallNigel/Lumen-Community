@@ -3509,3 +3509,194 @@ The intended lifecycle should be:
 v3.2.11 should add explicit logging around each transition so that the relationship between EOF verification, final answer generation, and Final Cognitive Checkpoint creation can be traced unambiguously.
 
 ---
+
+# Engineering Decision – Operational Console Deferred to v3.2.12
+
+## Background
+
+The original planning for v3.2.11 included the introduction of a new **Lumen Operational Console**, providing real-time visibility into the internal execution state of the orchestration engine.
+
+During implementation and investigation of the recent long-running execution logs, it became apparent that several areas of the execution lifecycle required further engineering before an operational console could accurately represent the system.
+
+Rather than implementing a user interface over behaviour that was still evolving, the decision was made to prioritise correctness of the execution engine itself.
+
+---
+
+# Why the Decision Was Made
+
+The investigation into the repeated `read()` requests highlighted that the primary problem was not a lack of visibility, but uncertainty around the execution lifecycle itself.
+
+Several questions remained unanswered:
+
+- Was the model requesting the final unread chunk?
+- Had EOF actually been reached?
+- Was the replay guard incorrectly classifying a legitimate continuation request?
+- Was the Final Cognitive Checkpoint being generated too early?
+- Had execution transitioned into response generation, or was the model still legitimately reading?
+
+These are execution engine questions rather than user interface questions.
+
+Building an operational console before answering them would likely result in redesigning large parts of the interface as the execution model matured.
+
+---
+
+# Revised Scope for v3.2.11
+
+v3.2.11 therefore became an execution correctness release.
+
+The focus shifted towards:
+
+- Final Cognitive Checkpoint sequencing
+- EOF verification
+- Continuation and cursor management
+- Replay Guard behaviour
+- Recovery strategy
+- Session and Run separation
+- Persistence lifecycle
+- Additional execution logging
+
+The objective became ensuring that the orchestration engine behaves correctly before exposing its behaviour.
+
+---
+
+# Moving the Operational Console to v3.2.12
+
+With the execution lifecycle becoming significantly clearer during v3.2.11, the Operational Console is now planned as the primary feature of **v3.2.12**.
+
+This provides two important benefits.
+
+Firstly, the console can be designed around a stable execution model rather than a changing one.
+
+Secondly, the console becomes an engineering tool rather than simply another user interface.
+
+---
+
+# Vision for the Operational Console
+
+The Operational Console is intended to become the primary interface for observing Lumen while it is executing.
+
+Unlike the existing Checkpoint Viewer, which presents historical continuity artifacts, the Operational Console will present the live operational state of the orchestration engine.
+
+Examples include:
+
+## Execution
+
+- Current Session
+- Current Run
+- Current Capability
+- Current Objective
+- Current Execution Phase
+- Runtime
+
+---
+
+## Source Reading
+
+- Current source file
+- Current read offset
+- Outstanding read request
+- EOF state
+- Remaining content
+
+---
+
+## Model
+
+- Active model
+- Active provider
+- Context utilisation
+- Estimated tokens
+- Tokens per second
+- Provider latency
+
+---
+
+## Recovery
+
+- Replay Guard status
+- Recovery strategy
+- Recovery attempt
+- Recovery reason
+
+---
+
+## Continuity
+
+- Checkpoint generation
+- Final Cognitive Checkpoint
+- Distilled Continuity status
+- Current architectural understanding
+
+---
+
+## Persistence
+
+- MongoDB connectivity
+- Persistence queue
+- Retry count
+- Retry ageing
+- Last successful persistence
+
+---
+
+## Tool Activity
+
+- Current tool
+- Previous tool
+- Tool execution history
+- Tool execution latency
+
+---
+
+# Operational Timeline
+
+The console should also expose the execution timeline, allowing an engineer to observe the progression of a request in real time.
+
+Example:
+
+```text
+13:01:15  Reading dashboard.py
+13:01:18  Offset 500
+13:01:21  Offset 1000
+13:01:27  Offset 1500
+13:01:34  Offset 2000
+13:02:02  EOF verified
+13:02:04  Building architectural model
+13:02:08  Generating response
+13:02:12  Final Cognitive Checkpoint
+13:02:13  Persisting
+13:02:14  Complete
+```
+
+This provides significantly greater diagnostic value than reviewing multiple log files after execution has completed.
+
+---
+
+# Relationship with Existing UI
+
+The existing **Checkpoint Viewer** will continue to serve as the historical continuity browser.
+
+The new Operational Console will complement rather than replace it.
+
+The distinction becomes:
+
+| Checkpoint Viewer | Operational Console |
+|-------------------|---------------------|
+| Historical | Live |
+| Continuity artifacts | Execution state |
+| Previous checkpoints | Current execution |
+| Final results | Current behaviour |
+
+Together these provide both operational observability and historical continuity.
+
+---
+
+# Long-Term Direction
+
+The discussions during v3.2.11 reinforced that Lumen is evolving beyond a continuity engine into a complete AI execution engine.
+
+The Operational Console reflects this evolution.
+
+Rather than simply displaying checkpoint history, it will provide a real-time operational view of the orchestration process itself, allowing engineers to understand what the system is currently doing, why it is doing it, and how execution is progressing.
+
+In many respects, the vision is becoming **"btop for AI orchestration"**—a single operational dashboard that exposes the live state of the entire execution pipeline rather than requiring engineers to reconstruct behaviour from multiple log files after execution has completed.
