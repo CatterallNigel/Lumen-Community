@@ -3823,3 +3823,613 @@ v3.2.13 — Expose operational state through the UI
 ```
 
 This provides a cleaner engineering dependency between the two releases and gives the UI a reliable operational foundation.
+
+---
+
+# Lumen v3.2.11 — Conclusion Notes
+
+## Summary
+
+Lumen v3.2.11 successfully demonstrated that the long-running source-reading and continuity process can operate across a large codebase, preserve substantial architectural understanding, and continue through repeated checkpoint cycles.
+
+However, the investigation also identified two fundamental lifecycle defects that make the current session and completion behaviour unreliable:
+
+1. session identity is not unique per execution;
+2. Lumen incorrectly treats source exhaustion as proof that the model has finished reading.
+
+These defects are significant enough that the next release should focus entirely on correcting session boundaries and task-completion handling before further dependency-validation or UI work proceeds.
+
+---
+
+## Session Identity Findings
+
+The current session ID is generated deterministically from the model name and the beginning of the first user prompt.
+
+The implementation effectively derives the session key from:
+
+```python
+seed = f"{model}\n{first_user[:1000]}"
+```
+
+and then hashes that value.
+
+This means that separate runs using the same model and initial prompt can receive the same session ID.
+
+As a result:
+
+* independent executions are recorded as though they belong to one session;
+* historical runs are mixed together in the MongoDB session collection;
+* checkpoints from different versions and executions share the same session identity;
+* checkpoint restoration can use state belonging to an unrelated run;
+* debugging and evaluation are contaminated by historical data;
+* session lineage cannot be trusted.
+
+A session ID must represent one execution, not the semantic similarity of its starting prompt.
+
+---
+
+## Required Session Behaviour
+
+Each new run must receive a newly generated UUID.
+
+That UUID should remain stable for the full duration of the run, including:
+
+* source reads;
+* tool calls;
+* continuity updates;
+* cognitive checkpoints;
+* compaction events;
+* final result persistence.
+
+A resumed task should also receive a new active session ID.
+
+The relationship to the previous run should be recorded separately, for example:
+
+```yaml
+session_id: <new UUID>
+resumed_from_session_id: <previous UUID>
+```
+
+This preserves ancestry without merging two executions into the same logical session.
+
+---
+
+## Final Checkpoint Findings
+
+The most important behavioural finding from v3.2.11 concerns the Final Cognitive Checkpoint.
+
+Lumen currently inserts this checkpoint immediately after it has delivered the final source chunk.
+
+The logs show a transition equivalent to:
+
+```text
+Source reading complete
+Capturing Final Cognitive Checkpoint before task execution
+```
+
+However, at that point Lumen only knows that no more source content is available.
+
+It does not know that Qwen has:
+
+* fully processed the final chunk;
+* integrated it into its current understanding;
+* completed the requested analysis;
+* transitioned from reading to answering.
+
+The latest continuity state immediately before the Final Cognitive Checkpoint still indicated that the model believed further reading was required.
+
+This confirms that the checkpoint is being triggered before Qwen has naturally completed its reading process.
+
+---
+
+## Source Exhaustion Is Not Reading Completion
+
+Three separate lifecycle states were being treated as though they were equivalent:
+
+```text
+RESOURCE_EXHAUSTED
+No more source content is available.
+
+READING_COMPLETE
+The model has processed and integrated the supplied source.
+
+TASK_COMPLETE
+The model has produced the requested result.
+```
+
+Lumen can directly determine only the first state.
+
+The end of the source cursor means:
+
+```text
+There are no more chunks to return.
+```
+
+It does not mean:
+
+```text
+The model has finished thinking about the source.
+```
+
+It also does not mean:
+
+```text
+The requested task has been completed.
+```
+
+The model itself must be allowed to determine when it has finished processing the final chunk and is ready to produce the answer.
+
+---
+
+## Impact of the Current Final Checkpoint
+
+The premature Final Cognitive Checkpoint interrupts Qwen at the most sensitive transition in the task lifecycle.
+
+The current flow is effectively:
+
+```text
+Final source chunk returned
+        ↓
+Lumen assumes reading is complete
+        ↓
+Final Cognitive Checkpoint requested
+        ↓
+Model spends substantial time generating checkpoint state
+        ↓
+Context is replaced or reconstructed
+        ↓
+Model is expected to resume and produce the answer
+```
+
+In the examined run, this checkpoint operation consumed approximately fifty minutes.
+
+It also captured a state that still believed further source reading was required.
+
+The checkpoint therefore risks:
+
+* interrupting the model before it has absorbed the final source;
+* distilling an incomplete or contradictory cognitive state;
+* replacing useful working context immediately before answer generation;
+* causing repeated reading or replay behaviour;
+* delaying completion substantially;
+* preventing the model from naturally transitioning into the requested summary.
+
+---
+
+## Correct Completion Lifecycle
+
+The desired flow is:
+
+```text
+Final source chunk returned
+        ↓
+Source cursor reports no more content
+        ↓
+Lumen does not interrupt
+        ↓
+Qwen processes the final chunk
+        ↓
+Qwen naturally produces the requested answer
+        ↓
+Lumen detects task completion
+        ↓
+Terminal state is persisted
+```
+
+The authoritative task-completion signal should be the model producing a normal assistant response without requesting another source or tool operation.
+
+A final persisted record may then be created from:
+
+* the completed answer;
+* the final source position;
+* the latest valid continuity state;
+* session metadata;
+* model and provider details;
+* checkpoint ancestry;
+* task status.
+
+This terminal persistence should not require another disruptive model-generated checkpoint unless there is a specific reason to perform one.
+
+---
+
+## Overall Assessment
+
+v3.2.11 was valuable because it exposed a lifecycle problem that was initially easy to interpret as replay suppression or repeated reading.
+
+The evidence instead indicates that Qwen's behaviour was reasonable.
+
+After receiving the final source chunk, Qwen still needed time and context to process it and naturally transition into its answer.
+
+Lumen interrupted that transition because it treated source delivery as model completion.
+
+The primary issue is therefore not that Qwen failed to stop reading.
+
+The issue is that Lumen declared the reading phase complete before Qwen had done so.
+
+---
+
+## Decisions
+
+The following decisions were made from the v3.2.11 investigation:
+
+1. Session IDs must no longer be derived from model and prompt content.
+2. Every new run must receive a unique UUID.
+3. Resumed work must use a new active session ID with explicit ancestry.
+4. Existing MongoDB session and checkpoint data should be cleaned before validating the corrected behaviour.
+5. Source cursor exhaustion must not trigger a Final Cognitive Checkpoint.
+6. Qwen must be allowed to continue naturally after receiving the final source chunk.
+7. Task completion should be recognised only after the model produces the requested answer.
+8. Terminal persistence should occur after answer generation.
+9. Previously planned dependency-validation work moves from v3.2.12 to v3.2.13.
+10. Previously planned UI work moves from v3.2.13 to v3.2.14.
+
+---
+
+## Next Release
+
+v3.2.12 will focus exclusively on session and completion lifecycle corrections.
+
+Its primary objectives are:
+
+* trustworthy execution-level session identity;
+* clean checkpoint isolation;
+* explicit session ancestry;
+* correct distinction between source exhaustion and task completion;
+* removal of the premature Final Cognitive Checkpoint;
+* uninterrupted transition from final source processing to answer generation;
+* post-answer terminal state persistence;
+* lifecycle instrumentation and regression testing.
+
+Dependency validation and UI development will resume only after this execution lifecycle is proven reliable.
+
+---
+
+## Final Conclusion
+
+v3.2.11 demonstrated that Lumen can sustain long-running model-guided analysis, but also revealed that its orchestration layer was making assumptions about model state that it could not actually verify.
+
+Lumen knows when it has supplied the last source chunk.
+
+It does not know, at that moment, that the model has finished reading.
+
+The next release must therefore stop inferring cognitive completion from resource exhaustion and allow the model to complete the task naturally before Lumen persists the final state.
+
+---
+
+# Lumen v3.2.12 Release Notes
+
+## Overview
+
+Version 3.2.12 focuses entirely on correcting Lumen's execution lifecycle rather than adding new user-facing functionality.
+
+Investigation of the long-running architectural analysis performed during v3.2.11 identified two fundamental orchestration issues:
+
+* session identity was not unique per execution;
+* Lumen incorrectly interpreted source exhaustion as task completion.
+
+Both issues affected the reliability of checkpoint persistence, session restoration and long-running analysis.
+
+As a result, all previously planned dependency validation work has been deferred to v3.2.13, while the Distilled Cognition UI work has moved to v3.2.14.
+
+The sole objective of v3.2.12 is to establish reliable execution boundaries and correct task completion behaviour.
+
+---
+
+# New Features
+
+## Execution-Level Session Identity
+
+Every new execution now creates a unique session identifier.
+
+A session ID now represents one execution of Lumen rather than the semantic similarity of the initial prompt.
+
+The same identifier is maintained throughout the complete lifecycle of the execution including:
+
+* source reading;
+* tool calls;
+* checkpoint generation;
+* context compaction;
+* final persistence.
+
+This establishes clear execution boundaries and prevents unrelated runs from sharing session history.
+
+---
+
+## Explicit Session Lineage
+
+Resumed work is now treated as a continuation of previous knowledge rather than a continuation of the previous execution.
+
+A resumed session creates a new active session while preserving its ancestry through explicit metadata.
+
+This provides complete traceability while ensuring that each execution remains independent.
+
+---
+
+## Terminal Session Persistence
+
+Lumen now distinguishes between active execution state and terminal session state.
+
+Rather than interrupting the model immediately after source exhaustion, terminal persistence occurs only after successful task completion.
+
+The terminal record captures:
+
+* final answer;
+* session metadata;
+* model information;
+* source coverage;
+* checkpoint ancestry;
+* execution statistics;
+* completion status.
+
+---
+
+# Behaviour Changes
+
+## Correct Separation of Lifecycle States
+
+Lumen now distinguishes three separate execution states:
+
+* Resource Exhausted
+* Reading Complete
+* Task Complete
+
+Only the first of these can be determined directly by the orchestration layer.
+
+Reading completion and task completion are now determined from the model's natural execution rather than inferred from source exhaustion.
+
+---
+
+## Natural Model Completion
+
+After the final source chunk has been supplied, Lumen now allows the model to continue processing naturally.
+
+The model transitions directly from:
+
+* reading;
+* understanding;
+* reasoning;
+
+into producing the requested answer without unnecessary interruption.
+
+This more closely reflects how large language models naturally complete long-running analytical tasks.
+
+---
+
+## Improved Session Isolation
+
+Session history, checkpoint history and execution metadata are now isolated between independent runs.
+
+This significantly improves:
+
+* debugging;
+* reproducibility;
+* regression testing;
+* checkpoint restoration;
+* architectural analysis.
+
+---
+
+# Removed Behaviour
+
+## Premature Final Cognitive Checkpoint
+
+The automatic Final Cognitive Checkpoint previously triggered immediately after source exhaustion has been removed.
+
+The checkpoint frequently interrupted the model while it was still processing the final source material and before it had naturally transitioned into answer generation.
+
+This behaviour has been replaced with post-completion terminal persistence.
+
+---
+
+## Prompt-Derived Session Identity
+
+Session identifiers are no longer derived from:
+
+* model name;
+* initial prompt;
+* prompt hashing.
+
+Execution identity is now independent of prompt similarity.
+
+---
+
+# Internal Improvements
+
+## Execution Lifecycle
+
+The execution lifecycle has been simplified into clearly defined phases:
+
+* Session Initialisation
+* Source Reading
+* Context Maintenance
+* Model Reasoning
+* Answer Generation
+* Terminal Persistence
+
+Each phase now has well-defined responsibilities.
+
+---
+
+## Improved Execution Logging
+
+Additional instrumentation has been introduced around:
+
+* session creation;
+* session restoration;
+* source exhaustion;
+* answer generation;
+* terminal persistence;
+* execution completion.
+
+These diagnostics provide significantly better visibility during long-running investigations.
+
+---
+
+## Foundation for Future Releases
+
+The corrected execution lifecycle establishes a stable foundation for the upcoming releases:
+
+### v3.2.13
+
+* dependency validation framework;
+* configuration validation;
+* filesystem validation;
+* MongoDB validation;
+* model-provider validation;
+* fail-fast startup diagnostics.
+
+### v3.2.14
+
+* Distilled Cognition UI;
+* execution observability;
+* checkpoint visualisation;
+* context utilisation monitoring;
+* provider and tool activity;
+* operational dashboards.
+
+---
+
+# Compatibility
+
+No breaking user-facing changes have been introduced.
+
+Existing projects and prompts continue to operate normally while benefiting from improved execution isolation and completion behaviour.
+
+---
+
+# Summary
+
+Version 3.2.12 represents an architectural refinement rather than a feature release.
+
+While relatively little changes from the user's perspective, the internal execution model has been significantly improved by:
+
+* establishing execution-level session identity;
+* separating execution ancestry from execution identity;
+* removing premature interruption of model reasoning;
+* distinguishing source exhaustion from task completion;
+* persisting terminal state only after successful completion.
+
+These changes provide a substantially more reliable foundation for future long-running analysis and continuity management while preparing the platform for the dependency validation and observability work planned for subsequent releases.
+
+---
+
+# Roadmap Revision – Version Realignment Following v3.2.11 Investigation
+
+## Background
+
+During the completion of Lumen v3.2.11, an extensive investigation into long-running architectural analysis uncovered two fundamental orchestration issues that directly affect the reliability of the platform:
+
+* execution-level session identity;
+* task completion lifecycle management.
+
+These findings are foundational to Lumen's Continuity Engine and affect every long-running analysis, checkpoint, and session restoration.
+
+Following this investigation, it was agreed that these architectural corrections should take precedence over all previously planned development work.
+
+---
+
+## Roadmap Revision
+
+To accommodate the required execution lifecycle work, the release roadmap has been revised as follows.
+
+### Previous Plan
+
+| Version | Planned Focus                        |
+| ------- | ------------------------------------ |
+| v3.2.12 | Dependency Validation Framework      |
+| v3.2.13 | Distilled Cognition & Operational UI |
+
+### Revised Plan
+
+| Version | Revised Focus                                      |
+| ------- | -------------------------------------------------- |
+| v3.2.12 | Session Identity & Execution Lifecycle Corrections |
+| v3.2.13 | Dependency Validation Framework                    |
+| v3.2.14 | Distilled Cognition & Operational UI               |
+
+---
+
+## Reason for the Change
+
+The investigation demonstrated that the previously identified issues are not incremental improvements but fundamental architectural defects.
+
+Specifically:
+
+* sessions are not currently isolated per execution;
+* checkpoint history can become contaminated across multiple runs;
+* execution ancestry is not clearly represented;
+* source exhaustion is incorrectly interpreted as reading completion;
+* reading completion is incorrectly interpreted as task completion;
+* the Final Cognitive Checkpoint interrupts the model during the transition from reading to answer generation.
+
+These behaviours affect the reliability of every subsequent capability built upon Lumen.
+
+Implementing dependency validation or additional user interface functionality before correcting these foundations would increase technical debt and make future behaviour more difficult to reason about.
+
+---
+
+## Scope of v3.2.12
+
+Version 3.2.12 is now dedicated exclusively to execution lifecycle improvements, including:
+
+* execution-level UUID session identifiers;
+* explicit session ancestry;
+* correct execution boundaries;
+* separation of Resource Exhausted, Reading Complete and Task Complete states;
+* removal of the premature Final Cognitive Checkpoint;
+* uninterrupted transition from final source processing into answer generation;
+* post-answer terminal persistence;
+* additional lifecycle instrumentation and regression testing.
+
+This work establishes the execution model upon which future versions will build.
+
+---
+
+## Deferred Work
+
+### v3.2.13
+
+The original v3.2.12 work now moves to v3.2.13 and will introduce the generic dependency validation framework, including:
+
+* configuration validation;
+* filesystem validation;
+* MongoDB connectivity validation;
+* model-provider validation;
+* fail-fast startup diagnostics;
+* bounded validation testing.
+
+---
+
+### v3.2.14
+
+The original v3.2.13 work moves unchanged to v3.2.14 and will focus on operational observability and user experience, including:
+
+* Distilled Cognition UI;
+* execution observability;
+* context utilisation monitoring;
+* checkpoint visualisation;
+* provider activity;
+* tool activity;
+* operational dashboards.
+
+---
+
+## Engineering Decision
+
+This roadmap revision reflects an important engineering principle adopted during the development of Lumen:
+
+> **Correct the execution model before extending platform capabilities.**
+
+Reliable execution boundaries, trustworthy session identity, and correct lifecycle management form the foundation of Continuity. Higher-level capabilities such as dependency validation and operational user interfaces should be built only after those foundations are demonstrably correct.
+
+---
+
+## Conclusion
+
+The discovery made during v3.2.11 materially changed the understanding of Lumen's internal execution model.
+
+Rather than treating these findings as isolated bug fixes, they have been recognised as architectural corrections deserving their own release.
+
+By dedicating v3.2.12 entirely to execution lifecycle reliability, the subsequent dependency validation (v3.2.13) and observability work (v3.2.14) will be implemented on a significantly more robust and predictable foundation.
+
+
