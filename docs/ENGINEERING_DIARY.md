@@ -4432,4 +4432,786 @@ Rather than treating these findings as isolated bug fixes, they have been recogn
 
 By dedicating v3.2.12 entirely to execution lifecycle reliability, the subsequent dependency validation (v3.2.13) and observability work (v3.2.14) will be implemented on a significantly more robust and predictable foundation.
 
+---
+# Lumen v3.2.12 – Continuity Validation
 
+**Date:** 31st July 2026
+
+Today was dedicated to validating the new continuity framework introduced in Lumen v3.2.12. Rather than concentrating on UI improvements (now deferred to v3.2.13), the objective of this release was to prove that Lumen can reliably orchestrate a long-running task beyond the practical context limits of the underlying language model.
+
+## Objective
+
+Validate that Lumen can:
+
+- Create and maintain a unique session.
+- Persist rolling continuity checkpoints.
+- Recover and continue reasoning from those checkpoints.
+- Read and understand a large source file over many checkpoint cycles.
+- Produce a final result linked to the complete session history.
+
+The test used a single source file:
+
+```
+src/ef_social_discovery/api/routes/dashboard.py
+```
+
+approximately 8,700 lines in length.
+
+The task given to the model was intentionally simple:
+
+> Read the file in its entirety before providing an explanation of its responsibilities, structure, important functions, routes and how the major parts work together.
+
+---
+
+# Session Identity
+
+The first validation was the session lifecycle.
+
+Results:
+
+- A unique session identifier was generated when the conversation began.
+- Every checkpoint belonged to the same session.
+- The terminal checkpoint belonged to the same session.
+- The persisted result referenced the same session.
+- Terminating the session and starting a completely new conversation generated a different session identifier.
+
+This demonstrates that session identity is now behaving exactly as intended.
+
+The relationship is now:
+
+```
+Session
+    ├── Rolling checkpoints
+    ├── Terminal checkpoint
+    └── Final persisted result
+```
+
+This represents an important architectural milestone because all subsequent continuity work depends upon stable session identity.
+
+---
+
+# Checkpoint Validation
+
+Fourteen rolling checkpoints were generated during the task.
+
+The checkpoints demonstrated:
+
+- progressive source coverage;
+- successful context reduction;
+- preservation of the original objective;
+- maintenance of architectural understanding across repeated context compaction;
+- successful continuation after each checkpoint.
+
+The recorded source coverage increased continuously until the complete file had been read.
+
+No evidence was observed that Lumen lost task state or restarted reasoning from an earlier position.
+
+Operationally, the checkpoint mechanism can therefore be considered successful.
+
+---
+
+# Final Result Validation
+
+Once reading had completed, Lumen generated a terminal checkpoint followed by a persisted final result.
+
+The session relationship remained intact:
+
+```
+Session
+    ↓
+Rolling checkpoints
+    ↓
+Terminal checkpoint
+    ↓
+Persisted result
+```
+
+This validates the complete lifecycle implemented in v3.2.12.
+
+---
+
+# Assessment
+
+It is important to separate the responsibilities of the orchestration layer from those of the language model.
+
+Lumen is responsible for:
+
+- orchestration;
+- checkpoint creation;
+- context management;
+- session management;
+- persistence;
+- recovery.
+
+The underlying language model (Qwen 2.5 Coder 14B 32K in this test) is responsible for:
+
+- reading the source;
+- interpreting the code;
+- deciding what information to retain;
+- generating checkpoint summaries;
+- producing the final answer.
+
+This distinction is important when evaluating results.
+
+Operationally, Lumen performed as designed.
+
+The quality of the architectural explanation belongs to the language model rather than the orchestration layer.
+
+---
+
+# Observations
+
+The checkpoints progressively expanded the architectural understanding of the source file while preserving continuity across fourteen generations.
+
+However, the checkpoint summaries became increasingly abstract.
+
+Instead of retaining a detailed inventory of routes, functions and concrete implementation details, they gradually evolved into high-level architectural summaries.
+
+The final answer therefore demonstrated good broad architectural understanding but contained significantly fewer concrete implementation details than expected from a complete reading of an 8,700-line source file.
+
+This does **not** indicate a failure of continuity.
+
+Instead, it suggests that the language model preferred semantic abstraction over preservation of detailed source knowledge.
+
+---
+
+# Research Question
+
+An interesting research question emerged during testing.
+
+At present there is no objective scale for assessing the capability of a language model performing long-running engineering analysis.
+
+A result may appear:
+
+- poor,
+- acceptable,
+- good,
+- or excellent,
+
+but there is currently no benchmark that allows those judgements to be made objectively for a 14B local model.
+
+Future work should investigate the difference between:
+
+- orchestration capability (Lumen),
+- model capability (Qwen),
+- overall system capability (Lumen + model).
+
+This aligns closely with the ongoing **Decision Quality Under Bounded Resources** research.
+
+Rather than asking:
+
+> "Is Qwen a good model?"
+
+the more useful question becomes:
+
+> "Given fixed computational resources, how much useful understanding can a model produce, preserve and ultimately deliver?"
+
+This appears to be a much more meaningful research direction.
+
+---
+
+# Conclusion
+
+Version 3.2.12 represents a significant milestone in Lumen's development.
+
+For the first time, the complete continuity lifecycle has been demonstrated:
+
+- stable session identity;
+- rolling checkpoint persistence;
+- successful context recovery;
+- continued long-running reasoning;
+- terminal checkpoint generation;
+- persisted final result.
+
+Operationally, the continuity architecture can now be considered proven.
+
+The next stage of research shifts away from continuity itself and towards evaluating the quality of reasoning that different language models can achieve when operating within the continuity framework provided by Lumen.
+
+---
+
+# Lumen v3.2.13 – Dependency Validation Framework
+
+**Planned Version:** v3.2.13
+
+Following the successful completion of the continuity validation work in v3.2.12, the focus now shifts from long-running execution to operational readiness.
+
+The objective of this release is simple:
+
+> **Before Lumen accepts work, verify that it is capable of completing that work.**
+
+Rather than allowing execution to begin and discovering configuration or infrastructure problems later, Lumen should validate its operating environment during startup and fail immediately if required dependencies are unavailable.
+
+---
+
+# Objectives
+
+Implement a generic dependency validation framework capable of validating all mandatory runtime dependencies before Lumen begins accepting requests.
+
+The framework should provide:
+
+- deterministic startup validation;
+- fail-fast behaviour;
+- structured diagnostics;
+- reusable validation components;
+- a foundation for future operational monitoring.
+
+This validation layer becomes the first stage of every Lumen startup.
+
+---
+
+# Validation Categories
+
+## Configuration
+
+Validate that all required configuration exists and is internally consistent.
+
+Checks include:
+
+- required configuration values exist;
+- values are valid;
+- incompatible configuration combinations are detected;
+- invalid startup configuration prevents execution.
+
+---
+
+## Filesystem
+
+Validate the runtime filesystem.
+
+Checks include:
+
+- required directories exist;
+- required files exist;
+- persistence locations are available;
+- read/write permissions are valid.
+
+---
+
+## MongoDB
+
+Validate persistence.
+
+Checks include:
+
+- MongoDB reachable;
+- authentication successful;
+- configured database exists;
+- required collections accessible;
+- read/write operations succeed.
+
+---
+
+## Model Provider
+
+Validate the configured model provider.
+
+Checks include:
+
+- provider reachable;
+- provider responding;
+- API compatibility confirmed;
+- configured provider available.
+
+---
+
+## Model Availability
+
+Validate the configured model.
+
+Checks include:
+
+- configured model exists;
+- model available;
+- model loadable;
+- model capable of accepting requests.
+
+---
+
+# Dependency Classification
+
+Dependencies should be classified according to operational importance.
+
+## Required
+
+Failure prevents startup.
+
+Examples include:
+
+- configuration;
+- filesystem;
+- MongoDB;
+- model provider;
+- configured model.
+
+---
+
+## Optional
+
+Failure permits startup with degraded functionality.
+
+Examples may include:
+
+- metrics;
+- future observability services;
+- optional integrations.
+
+---
+
+# Startup Behaviour
+
+Startup should produce a clear operational state.
+
+Possible outcomes:
+
+## READY
+
+All required dependencies validated.
+
+Lumen begins accepting work.
+
+---
+
+## FAILED
+
+One or more required dependencies unavailable.
+
+Lumen does not begin accepting work.
+
+A clear explanation should identify:
+
+- failing component;
+- validation failure;
+- recommended corrective action.
+
+---
+
+## DEGRADED
+
+Only optional components unavailable.
+
+Lumen begins accepting work while reporting reduced capability.
+
+---
+
+# Structured Validation Results
+
+Validation should return structured objects rather than simple log messages.
+
+Each validation should provide information similar to:
+
+- component;
+- validation status;
+- severity;
+- reason;
+- diagnostic information;
+- timestamp.
+
+This structure will later become the data source for the operational UI planned for v3.2.14.
+
+---
+
+# Engineering Principles
+
+The framework should be:
+
+- generic;
+- reusable;
+- easily extensible;
+- independent of specific dependency implementations;
+- capable of supporting future validation plugins.
+
+Adding new dependency checks should require minimal additional code.
+
+---
+
+# Testing Strategy
+
+Unlike v3.2.12, this release intentionally requires only lightweight testing.
+
+Typical validation scenarios include:
+
+- all dependencies available;
+- MongoDB unavailable;
+- model provider unavailable;
+- configured model missing;
+- filesystem unavailable;
+- invalid configuration.
+
+Each scenario should complete in seconds rather than hours.
+
+The objective is simply to verify correct startup behaviour and fail-fast diagnostics.
+
+---
+
+# Relationship to Previous Releases
+
+v3.2.12 established that Lumen can successfully orchestrate long-running execution while preserving continuity across repeated context compaction.
+
+v3.2.13 establishes that Lumen will only begin execution once its required operating environment has been successfully validated.
+
+Together these releases provide both operational safety and execution continuity.
+
+---
+
+# Looking Forward
+
+This validation framework will become the operational foundation for the user interface planned in v3.2.14.
+
+Rather than constructing UI logic directly from logs, the interface will consume structured validation information produced by this framework, allowing real-time visibility into Lumen's operational state.
+
+---
+
+# Expected Outcome
+
+At the completion of v3.2.13, Lumen should:
+
+- validate its runtime environment before accepting work;
+- fail immediately when required dependencies are unavailable;
+- report clear, structured diagnostics;
+- support degraded operation where appropriate;
+- provide a reusable validation framework for future system capabilities.
+
+This represents another step towards making Lumen not only capable of long-running reasoning, but also operationally robust and predictable.
+
+# Conclusion
+v3.2.13.1 PASS — startup dependency validation, fail-fast behaviour, dependent-check skipping, clean failure reporting, and successful startup have all been verified.
+
+---
+
+# Lumen v3.2.14 – Operational Intelligence UI
+
+**Planned Version:** v3.2.14
+
+With the continuity engine now proven (v3.2.12) and the startup dependency validation framework completed (v3.2.13), the next stage of Lumen's development is observability.
+
+The objective of this release is not to change how Lumen works internally.
+
+Instead, it is to make Lumen's internal reasoning and operational state visible in real time.
+
+Rather than reading logs to understand what Lumen is doing, the engineer should be able to observe the system directly.
+
+---
+
+# Vision
+
+Lumen should expose its internal state in the same way that tools such as:
+
+- htop
+- btop
+- Grafana
+- Docker Desktop
+
+allow engineers to understand the behaviour of a running system.
+
+The interface should provide operational awareness rather than configuration.
+
+It should answer questions such as:
+
+- What is Lumen doing?
+- What does it currently understand?
+- How close is the next checkpoint?
+- Which model is active?
+- Which tools are currently executing?
+- Is the system healthy?
+- What has happened during this session?
+
+without requiring inspection of log files.
+
+---
+
+# Objectives
+
+Provide a live operational dashboard exposing:
+
+- execution state;
+- reasoning state;
+- continuity state;
+- checkpoint activity;
+- dependency health;
+- model activity;
+- tool activity;
+- persistence state.
+
+The UI should consume structured information already produced by the Lumen runtime rather than duplicating business logic.
+
+---
+
+# Distilled Cognition
+
+The centrepiece of the UI is the current understanding of the running task.
+
+This should present the model's current distilled cognition, including:
+
+- objective;
+- completion condition;
+- current task phase;
+- current architectural model;
+- primary responsibilities;
+- working strategy;
+- next required action;
+- current confidence.
+
+This represents the current state of Lumen's understanding rather than the full conversation.
+
+---
+
+# Session Information
+
+Display information about the active session.
+
+Including:
+
+- Session ID;
+- creation time;
+- elapsed execution time;
+- current generation;
+- persistence state;
+- execution status.
+
+This provides a clear operational identity for the running task.
+
+---
+
+# Continuity Dashboard
+
+Visualise the continuity engine.
+
+Display:
+
+- context utilisation;
+- remaining context;
+- checkpoint trigger percentage;
+- checkpoint count;
+- current checkpoint generation;
+- continuity size;
+- latest checkpoint;
+- terminal checkpoint status.
+
+The engineer should be able to understand continuity at a glance.
+
+---
+
+# Checkpoint Timeline
+
+Provide a timeline of checkpoint evolution.
+
+Display:
+
+- rolling checkpoints;
+- checkpoint generations;
+- timestamps;
+- context reduction;
+- checkpoint persistence;
+- terminal checkpoint;
+- final result.
+
+The timeline should demonstrate how reasoning evolves throughout execution.
+
+---
+
+# Execution Dashboard
+
+Display live execution state.
+
+Including:
+
+- current activity;
+- current source being processed;
+- source coverage;
+- current operation;
+- execution phase;
+- current transition.
+
+Examples:
+
+- Reading source
+- Waiting for model
+- Tool execution
+- Creating checkpoint
+- Generating response
+- Persisting result
+
+---
+
+# Dependency Dashboard
+
+Consume the structured validation framework introduced in v3.2.13.
+
+Display:
+
+- Configuration
+- Filesystem
+- MongoDB
+- Model Provider
+- Model
+- Optional services
+
+Each dependency should indicate:
+
+- status;
+- severity;
+- diagnostic summary.
+
+This removes the need to inspect startup logs.
+
+---
+
+# Model Dashboard
+
+Display information about the active language model.
+
+Including:
+
+- provider;
+- model name;
+- request state;
+- response state;
+- request duration;
+- current activity.
+
+Future versions may include:
+
+- estimated token throughput;
+- model latency;
+- provider statistics.
+
+---
+
+# Tool Activity
+
+Visualise tool execution.
+
+Display:
+
+- current tool;
+- active tool request;
+- tool execution history;
+- execution duration;
+- success/failure status.
+
+This allows engineers to understand how Lumen is orchestrating external capabilities.
+
+---
+
+# Persistence Dashboard
+
+Display persistence state.
+
+Including:
+
+- persistence enabled;
+- latest persistence;
+- checkpoint persistence;
+- terminal checkpoint;
+- final result persistence.
+
+Future versions may include persistence browsing.
+
+---
+
+# Operational Status
+
+Provide an overall operational summary.
+
+Examples:
+
+```
+READY
+```
+
+```
+RUNNING
+```
+
+```
+CHECKPOINTING
+```
+
+```
+WAITING FOR MODEL
+```
+
+```
+PERSISTING
+```
+
+```
+COMPLETED
+```
+
+```
+FAILED
+```
+
+This becomes the primary operational indicator for Lumen.
+
+---
+
+# Design Principles
+
+The interface should follow several guiding principles.
+
+## Operational First
+
+The UI is an engineering tool.
+
+It exists to understand the behaviour of a running system rather than provide cosmetic features.
+
+---
+
+## Live Information
+
+Emphasise what is happening now.
+
+Historical information should support current operational awareness rather than dominate it.
+
+---
+
+## Progressive Disclosure
+
+Provide immediate visibility of high-level system state while allowing deeper operational detail when required.
+
+---
+
+## Read-Only
+
+The initial implementation is intentionally observational.
+
+The UI should display system state without allowing operational changes.
+
+Future versions may introduce operational controls.
+
+---
+
+## Structured Data
+
+The interface should consume structured objects produced by Lumen.
+
+Business logic should remain within the orchestration engine rather than being duplicated inside the UI.
+
+---
+
+# Expected Outcome
+
+At the completion of v3.2.14, Lumen should expose its internal operation in real time.
+
+An engineer should be able to understand:
+
+- what Lumen is doing;
+- what Lumen currently understands;
+- why Lumen is performing an action;
+- how continuity is evolving;
+- whether the system is healthy;
+- how the orchestration engine is progressing.
+
+without examining logs.
+
+---
+
+# Looking Forward
+
+The completion of v3.2.14 marks the transition from a capable orchestration engine to an observable orchestration platform.
+
+Subsequent releases can build upon this operational foundation by introducing richer visualisation, historical session exploration, execution analytics, and comparative reasoning analysis across different language models.
+
+This represents another important milestone in Lumen's evolution towards becoming a comprehensive AI orchestration and continuity platform.
