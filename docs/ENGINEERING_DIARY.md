@@ -5215,3 +5215,488 @@ The completion of v3.2.14 marks the transition from a capable orchestration engi
 Subsequent releases can build upon this operational foundation by introducing richer visualisation, historical session exploration, execution analytics, and comparative reasoning analysis across different language models.
 
 This represents another important milestone in Lumen's evolution towards becoming a comprehensive AI orchestration and continuity platform.
+
+---
+
+## Engineering Observation – Qwen Tool Replay Behaviour
+
+During validation of Lumen v3.2.14, an interesting model behaviour was observed while testing with **Qwen 2.5-Coder 14B**.
+
+The test prompt instructed the model to:
+
+> Read `src/ef_social_discovery/api/routes/operations.py` in full before explaining the file.
+
+The sequence of events was:
+
+1. Qwen correctly requested the `read` tool.
+2. Lumen successfully executed the tool and returned the complete file (approximately 15 KB).
+3. The complete tool result was included in the subsequent model context.
+4. Rather than transitioning to the requested explanation, Qwen issued an identical `read` tool request for the same file.
+5. Lumen's replay protection correctly detected the duplicate request and prevented unnecessary re-execution of the tool.
+
+To determine whether this behaviour was introduced by the recent Pi upgrade, the experiment was repeated under two Pi versions:
+
+| Pi Version | Result |
+|------------|--------|
+| 0.80.7 | Duplicate `read` request reproduced |
+| 0.83.0 | Duplicate `read` request reproduced |
+
+The behaviour was therefore identical across both Pi releases.
+
+### Conclusion
+
+The evidence strongly suggests this is **not**:
+
+- a Pi regression;
+- a Lumen orchestration issue;
+- a tool execution failure;
+- a context-window limitation.
+
+Instead, it appears to be a characteristic of the current Qwen 2.5-Coder 14B model, where under certain prompt/tool interactions it fails to transition from a completed tool invocation to answer generation and instead attempts to repeat the same tool call.
+
+This observation reinforces an important architectural principle of Lumen:
+
+> The orchestrator should be resilient to imperfect model behaviour.
+
+Lumen's replay protection successfully prevented redundant tool execution, demonstrating the value of the orchestration layer in detecting and mitigating undesirable model behaviour.
+
+### Future Consideration
+
+A future enhancement to the replay guard could progressively increase its intervention:
+
+1. Detect the first duplicate tool request and remind the model that the requested tool has already completed successfully.
+2. If the duplicate persists, temporarily suppress the repeated tool from the available tool set and request a text-only response.
+3. If the model still fails to transition, terminate the interaction gracefully with a clear diagnostic indicating that the model failed to progress from tool usage to answer generation.
+
+This would make Lumen increasingly robust when orchestrating a wide range of language models with differing tool-use behaviours.
+
+
+---## Engineering Observation – Variable Qwen Solution Paths After Tool Use
+
+During testing of **Lumen v3.2.14.1** with **Qwen 2.5-Coder 14B**, repeated runs of closely related prompts produced materially different execution paths, despite using the same model, source file, tool set and orchestration environment.
+
+The source file used throughout the tests was:
+
+```text
+src/ef_social_discovery/api/routes/operations.py
+```
+
+The file was successfully returned to Qwen as a complete tool result in each run.
+
+---
+
+### Observed Solution Paths
+
+#### Duplicate Source Read
+
+In one run, Qwen:
+
+```text
+read operations.py
+→ requested operations.py again
+```
+
+The second `read` request contained no offset and therefore represented a request to reread the complete file from the beginning.
+
+Lumen's successful-tool replay guard detected the duplicate and prevented unnecessary re-execution.
+
+In some cases, the replay guard successfully prompted Qwen to provide the final answer. In another case, Qwen continued to request the source again and did not reach a satisfactory resolution.
+
+This path therefore demonstrated that repeated source reads can block or significantly delay task completion.
+
+---
+
+#### Post-Read Stall
+
+In another run, Qwen:
+
+```text
+read operations.py
+→ produced no further tool request or answer
+```
+
+The model continued processing for several minutes until the operation was manually aborted.
+
+This showed that Qwen may receive the complete source successfully but still fail to transition from tool output to final answer generation.
+
+---
+
+#### Write, Read Back and Answer
+
+Two later runs followed a different and repeatable route:
+
+```text
+read operations.py
+→ generate summary
+→ write summary.txt
+→ read summary.txt
+→ return summary
+```
+
+In these runs, Qwen successfully constructed the requested summary after the initial source read.
+
+However, instead of returning the summary directly, it first wrote the result to `summary.txt`, read that file back, and only then presented the same content as the final response.
+
+Although unnecessarily indirect and slower than required, this route completed successfully.
+
+The two successful runs followed the same broad strategy after a full restart of Pi, Ollama and Lumen, suggesting that this may be a locally preferred execution path for the summarisation prompt under the current conditions.
+
+---
+
+### Line-Count Prompt
+
+A related test used the simpler prompt:
+
+> Read `operations.py` and tell me how many lines it contains.
+
+For this task, Qwen initially attempted to reread the source file after receiving it.
+
+Lumen's replay guard blocked the duplicate read and requested a final response.
+
+Qwen then answered directly:
+
+```text
+The file contains 204 lines.
+```
+
+Importantly, Qwen did **not**:
+
+```text
+write the line count to a file
+→ read the file back
+→ return the result
+```
+
+The line-count result was returned directly after replay-guard intervention.
+
+This demonstrates that the `write → read → answer` route is not a universal Qwen strategy for all post-read tasks.
+
+---
+
+### Current Interpretation
+
+The tests show that Qwen can select significantly different solution paths for very similar tasks:
+
+```text
+read → reread → blocked or delayed
+read → stall
+read → reread → replay guard → answer
+read → write result → read result → answer
+```
+
+The variation does not appear to be caused by:
+
+- Pi version;
+- source-file size;
+- context-window pressure;
+- failure of the `read` tool;
+- inability to understand the file.
+
+Instead, it appears to reflect variability in Qwen's planning and tool-selection behaviour after receiving a tool result.
+
+The model clearly possesses the capability to answer the requests. The unreliable element is how consistently it selects a direct and efficient route to completion.
+
+---
+
+### Engineering Significance
+
+This observation reinforces an important role for Lumen:
+
+> Lumen must orchestrate models that may be capable of producing the correct result while still selecting inefficient, repetitive or non-progressing execution paths.
+
+The successful-tool replay guard has already demonstrated value by:
+
+- preventing redundant source reads;
+- helping Qwen transition to a final answer;
+- avoiding unnecessary tool execution;
+- exposing model behaviour that would otherwise appear only as unexplained latency.
+
+Future work should continue to distinguish between:
+
+- answer capability;
+- planning stability;
+- tool-selection quality;
+- execution efficiency;
+- successful task completion.
+
+These are separate dimensions of model behaviour and should not be treated as equivalent.
+
+
+--- 
+
+# ENGINEERING_DIARY.md
+
+## 2026-07-31 — Lumen v3.2.14.3: Observability reveals reasoning variance
+
+Today produced one of the more interesting observations since the introduction of the Operational Intelligence dashboard.
+
+The original objective was simply to verify that the new execution telemetry accurately represented the internal execution of a model session. During testing, however, a much more significant behavioural characteristic became apparent.
+
+---
+
+## Test
+
+Prompt:
+
+> Read `src/ef_social_discovery/api/routes/operations.py` in full and then summarise it.
+
+Environment remained effectively identical between runs:
+
+- Lumen v3.2.14.3
+- qwen2.5-coder:14b-32k
+- Same source file
+- Same toolset
+- Same generated system prompt
+- Same orchestration layer
+- Same hardware
+
+The expectation might reasonably be that repeated executions would follow approximately the same reasoning path and therefore produce approximately the same answer.
+
+Instead, Lumen showed something rather different.
+
+---
+
+## Observed execution paths
+
+Across repeated executions several distinct solution paths have now been observed.
+
+Examples include:
+
+```
+read
+→ answer
+```
+
+```
+read
+→ write summary.txt
+→ answer
+```
+
+```
+read
+→ write summary.txt
+→ read summary.txt
+→ answer
+```
+
+and previously
+
+```
+read
+→ repeated reads
+→ extended thinking
+→ answer
+```
+
+The execution graph therefore varies despite an identical task.
+
+This variance would have been almost invisible before the introduction of the execution timeline.
+
+---
+
+## Answer variance
+
+Even more interesting was the variation in the final answers.
+
+All answers were factually acceptable.
+
+However they differed significantly in:
+
+- overall length
+- structure
+- ordering
+- terminology
+- completeness
+- emphasis
+
+One answer produced only a broad paragraph.
+
+Another produced a structured thirteen-point functional breakdown.
+
+Another focused more heavily on helper functions and dispatch behaviour.
+
+The semantic core remained consistent, but the presentation and completeness varied considerably.
+
+---
+
+## Stable semantic understanding
+
+Despite the differing outputs, the model consistently recognised the same major responsibilities within the source file:
+
+- pipeline monitoring
+- ingestion integrity
+- queue health
+- manual refresh operations
+- thread digest processing
+- engagement management
+- Reddit context processing
+- helper/default-limit functions
+
+This suggests that the underlying understanding is relatively stable even though the expression of that understanding is not.
+
+---
+
+## Research observation
+
+This reinforces an important aspect of the Decision Quality Under Bounded Resources research.
+
+Traditional benchmarks would likely score every successful run simply as:
+
+PASS
+
+However, Lumen exposes dimensions that are normally invisible.
+
+Two successful executions may differ substantially in:
+
+- elapsed time
+- number of tool invocations
+- execution route
+- reasoning path
+- answer completeness
+- answer structure
+- operational efficiency
+
+The quality of the reasoning process therefore becomes observable rather than being hidden behind the final answer.
+
+This supports an emerging hypothesis:
+
+> Model evaluation should consider not only whether the final answer is correct, but also the consistency, efficiency, stability and quality of the reasoning path used to produce that answer.
+
+---
+
+## Operational Intelligence dashboard
+
+The new dashboard is now proving its value beyond simple status reporting.
+
+It successfully reconstructs and visualises:
+
+- execution phase
+- execution timeline
+- context utilisation
+- source coverage
+- tool activity
+- dependency state
+- persistence events
+- distilled cognition
+
+Rather than merely reporting system health, the dashboard is becoming an instrumentation platform for observing model behaviour itself.
+
+This represents an important shift.
+
+The dashboard is evolving from an operational monitor into a research instrument capable of exposing characteristics of LLM behaviour that would otherwise remain hidden.
+
+---
+
+## Remaining improvement
+
+One small issue remains.
+
+Tool execution time is currently displayed as 0 seconds because individual tool invocations complete too quickly and are rounded to whole seconds.
+
+Future versions should accumulate tool durations with sub-second precision so that total tool overhead becomes measurable across an entire execution.
+
+--- 
+
+## 2026-08-01 — The Lumen Research Ecosystem Takes Shape
+
+Today's work was less about writing code and more about stepping back and designing the next stage of the Lumen journey.
+
+For some time I have been observing an interesting phenomenon during testing. Using exactly the same model, the same prompts, the same files and the same execution environment, the quality of the answers produced can vary noticeably between runs. The model weights never change, yet the resulting understanding and final answer often do.
+
+Rather than continuing to speculate, I decided that the next step is to build the tooling necessary to investigate this scientifically.
+
+The result was the design of what is now becoming the **Lumen Research Ecosystem**.
+
+Rather than embedding experimental functionality inside Lumen itself, the research environment will consist of four independent projects, each with a single responsibility.
+
+### Lumen Trace
+
+Lumen Trace will become a completely transparent proxy that sits between Pi and Lumen.
+
+Its responsibility is deliberately simple:
+
+- capture every request and response
+- record the interaction exactly as it occurred
+- never modify traffic
+- produce immutable recordings
+
+This becomes the trusted source of experimental data.
+
+The first implementation will simply allow a recording to be named before capture begins, with the recording name automatically appended with a timestamp, for example:
+
+```
+operations.py baseline_20260801_084713
+```
+
+The recording metadata and captured messages will be stored separately in MongoDB.
+
+### Lumen Replay
+
+Replay consumes Trace recordings.
+
+It reproduces exactly the same interaction repeatedly while resetting the model between runs.
+
+Replay performs no analysis.
+
+Its purpose is simply to generate controlled experimental executions.
+
+### Lumen Assess
+
+Assessment intentionally begins with extremely simple metrics.
+
+Initially it will determine whether answers are identical or different by comparing hashes and basic statistics such as character count.
+
+Only later will it evolve towards semantic comparison, reasoning analysis and checkpoint comparison.
+
+This staged approach ensures that deterministic measurements always form the foundation before introducing AI-assisted evaluation.
+
+### Lumen Servire
+
+The final piece of the ecosystem is Servire.
+
+Rather than becoming another processing component, Servire will provide a unified operational dashboard across the ecosystem.
+
+Trace, Replay and Assess remain completely independent projects.
+
+Servire simply brings them together into a single operational experience.
+
+### Documentation
+
+With the architecture fresh in mind I documented the research ecosystem inside the Lumen Community repository.
+
+Rather than producing large monolithic documents, each project now has its own documentation directory beginning with an overview document.
+
+This structure should scale much better as each project grows.
+
+### Reflection
+
+Today's work feels like another architectural milestone.
+
+Until now I have largely been building Lumen itself.
+
+Today marks the point where I started building the ecosystem that will allow Lumen to be studied.
+
+The objective is no longer simply to produce better AI answers.
+
+The objective is to understand **how** those answers develop, **why** they differ between identical executions, and ultimately what determines when a model decides it has "done enough."
+
+That question now feels measurable rather than philosophical.
+
+Perhaps the most satisfying outcome from today's work is the growing coherence of the ecosystem:
+
+- **Lumen** — AI orchestration
+- **Lumen Trace** — Observe
+- **Lumen Replay** — Reproduce
+- **Lumen Assess** — Measure
+- **Lumen Servire** — Illuminate
+
+Together they form a research platform rather than simply another AI application.
+
+I also realised that the philosophy behind Illuminates.One is becoming increasingly appropriate for the project.
+
+**Light to see illuminates one.**
+
+Understanding comes from observation.
+
+Insight comes from illumination.
