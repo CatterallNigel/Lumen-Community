@@ -5700,3 +5700,226 @@ I also realised that the philosophy behind Illuminates.One is becoming increasin
 Understanding comes from observation.
 
 Insight comes from illumination.
+
+--- 
+
+# 2026-08-01
+## Lumen Trace Milestones 1–4 Complete
+
+Today marks the completion of the first production-ready implementation of **Lumen Trace**.
+
+Lumen Trace is the first member of the planned Lumen engineering toolchain and is responsible for transparently recording every interaction between Pi and Lumen without modifying behaviour.
+
+This represents an important architectural milestone because it establishes a complete evidence chain for later behavioural analysis.
+
+---
+
+## Objectives
+
+The original objectives were:
+
+- Build a production-quality FastAPI service.
+- Operate as a transparent HTTP proxy.
+- Record every request and response.
+- Persist recordings into MongoDB.
+- Provide a lightweight operational UI.
+- Avoid changing Pi or Lumen behaviour.
+
+All objectives were achieved.
+
+---
+
+## Completed Milestones
+
+### Milestone 1
+
+Established the project foundation.
+
+Implemented:
+
+- project structure
+- FastAPI
+- configuration loading
+- structured logging
+- MongoDB lifecycle
+- health endpoint
+
+The FastAPI lifespan now acts as the application's composition root.
+
+---
+
+### Milestone 2
+
+Implemented the transparent proxy.
+
+The proxy now forwards all requests and responses between Pi and Lumen while preserving:
+
+- headers
+- request body
+- response body
+- streaming behaviour
+- status codes
+
+No protocol changes are introduced.
+
+---
+
+### Milestone 3
+
+Implemented the recording engine.
+
+Added:
+
+- recording lifecycle
+- recording identifiers
+- exchange identifiers
+- request/response persistence
+- recording metadata
+- MongoDB storage
+- recording API
+
+Recordings are independent of future replay or assessment.
+
+---
+
+### Milestone 4
+
+Implemented the first Trace UI.
+
+Features include:
+
+- start recording
+- stop recording
+- recording status
+- live timeline
+- message inspection
+- formatted JSON viewing
+- polling suppression
+- conversation statistics
+
+The UI is intentionally lightweight.
+
+Trace exists to capture evidence rather than analyse it.
+
+---
+
+## Architectural Decisions
+
+Several important architectural decisions were made.
+
+### Single Responsibility
+
+Trace records interactions.
+
+It does not attempt to:
+
+- replay
+- analyse
+- score
+- explain
+- compare
+
+Those responsibilities belong to Replay, Assess and Servire.
+
+---
+
+### Passive Observation
+
+Trace never modifies requests or responses.
+
+Its role is passive observation only.
+
+This guarantees recorded behaviour accurately reflects the real execution.
+
+---
+
+### MongoDB
+
+MongoDB was selected because recorded interactions naturally form hierarchical documents containing:
+
+- metadata
+- requests
+- responses
+- headers
+- streaming information
+
+This structure maps well onto BSON.
+
+---
+
+### UI Philosophy
+
+The Trace UI deliberately remains minimal.
+
+Its purpose is to answer:
+
+"What happened?"
+
+rather than
+
+"Why did it happen?"
+
+Future visualisation work belongs within Lumen Servire.
+
+---
+
+## Validation
+
+End-to-end testing successfully demonstrated:
+
+Pi
+
+↓
+
+Trace
+
+↓
+
+Lumen
+
+↓
+
+Qwen
+
+while preserving identical operational behaviour.
+
+Recordings accurately captured:
+
+- prompts
+- streamed responses
+- tool activity
+- request timing
+- protocol metadata
+
+without altering execution.
+
+---
+
+## Lessons Learned
+
+The recording engine proved significantly simpler than originally expected.
+
+The primary engineering challenge became preserving protocol transparency while accurately capturing streaming responses.
+
+Separating Trace from future analysis tools proved to be the correct architectural decision.
+
+---
+
+## Current Status
+
+Lumen Trace MVP is considered complete.
+
+Future work is expected to consist primarily of:
+
+- maintenance
+- bug fixes
+- compatibility improvements
+
+The next engineering effort moves to:
+
+**Lumen Replay (Lumen Repetere)**
+
+which will use Trace recordings to investigate model behaviour, replay determinism and behavioural divergence.
+
+---
+
