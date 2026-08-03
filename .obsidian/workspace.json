@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.MD",
+                "file": "docs/research-ecosystem/replay/LUMEN_REPLAY_RUNTIME_GUIDE.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "LUMEN_REPLAY_RUNTIME_GUIDE"
             }
           }
         ]
@@ -183,8 +183,9 @@
       "bases:Create new base": false
     }
   },
-  "active": "a18330ec1e1924d4",
+  "active": "bba0fffa5f94f3ef",
   "lastOpenFiles": [
+    "README.MD",
     "docs/VISION-UI.md",
     "version-notes/RELEASE-NOTES-v3.2.8.md",
     "docs/ARCHITECTURE-APPENDUM-2.md",

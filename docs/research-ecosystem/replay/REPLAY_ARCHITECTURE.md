@@ -1,264 +1,105 @@
-# Lumen Replay (Repetere)
-## Runtime Architecture and Product Responsibilities
+# Lumen Replay Runtime Architecture
 
-Version: 1.0
-Status: Architectural Baseline
+Version: 1.0  
+Status: Architectural baseline  
+Applies to: Lumen Replay (Repetere)
 
----
+## Product boundary
 
-# Overview
+> Trace captures what happened. Replay reproduces what mattered. Assess determines what it means.
 
-Lumen Replay is **not** an HTTP replay engine.
+Trace remains an immutable recorder of all traffic between Pi and Lumen. Replay derives the
+meaningful model conversation, repeats the original opportunity to solve the task and records the
+first Fork Point. Assess later combines Trace, Replay and Lumen evidence to evaluate quality,
+stability, tool use and model capability.
 
-Replay exists to reproduce a previously recorded AI conversation under identical starting conditions in order to determine whether the model follows the same behavioural path.
+Replay does not score answers, qualify reasoning or decide whether a divergent path is better.
 
-Replay is deliberately **not** responsible for assessing model quality or determining whether one reasoning path is better than another.
+## Runtime topology
 
-Those responsibilities belong to Lumen Assess.
+Normal deployment requires one routing change in Trace:
 
----
-
-# Product Responsibilities
-
-The Lumen engineering toolchain consists of four independent products.
-
-```
-Trace (Vestigare)
-        ↓
-Replay (Repetere)
-        ↓
-Assess (Aestimare)
-        ↓
-Servire
+```text
+Pi -> Trace -> Replay -> Lumen -> model provider
 ```
 
-Each product has a single, clearly defined responsibility.
+Replay is a transparent proxy by default. Requests and responses are forwarded unchanged until an
+explicit `\obt replay` command is received.
 
----
+## Runtime states
 
-# Trace
-
-Trace captures everything that transpires between Pi and Lumen.
-
-Responsibilities:
-
-- record every HTTP request
-- record every HTTP response
-- record tool calls
-- record tool results
-- record heartbeats
-- record checkpoint polling
-- record operational traffic
-- never modify recorded data
-
-Trace remains entirely passive.
-
-It records reality.
-
----
-
-# Replay
-
-Replay reconstructs a replayable conversation from the Trace recording.
-
-Replay removes transport noise that has no influence on model behaviour.
-
-Examples include:
-
-- heartbeat traffic
-- checkpoint polling
-- operation polling
-- health requests
-- transport keep-alives
-
-Replay creates a Replay Plan representing the meaningful conversational events.
-
-Replay then executes the conversation against Lumen under controlled conditions.
-
-Replay compares every meaningful event with the original recording.
-
-Replay **does not** determine whether one behaviour is better than another.
-
----
-
-# Assess
-
-Assess evaluates Replay outcomes.
-
-Assess combines:
-
-- original Trace recording
-- Replay execution metadata
-- Lumen session data
-- checkpoints
-- summaries
-- tool usage
-- final answers
-
-Assess determines:
-
-- answer quality
-- behavioural differences
-- tool efficiency
-- checkpoint evolution
-- consistency
-- model capability
-- model stability
-
----
-
-# Servire
-
-Servire orchestrates the complete engineering workflow.
-
----
-
-# Replay Runtime
-
-Replay operates in two distinct phases.
-
-## Phase 1
-
-Replay owns the conversation.
-
-```
-Replay
-    ↓
-Lumen
-    ↓
-Model
+```text
+TRANSPARENT
+    |
+    | \obt replay start <replay-id>
+    v
+COMPARING
+    |                      |
+    | complete match       | first behavioural difference
+    v                      v
+TRANSPARENT            PASSTHROUGH
+                           |
+                           | final answer / stop / cancel
+                           v
+                       TRANSPARENT
 ```
 
-Replay compares every meaningful conversational event with the prepared Replay Plan.
+### Transparent
 
-Transport traffic is ignored.
+Replay forwards unmatched traffic to Lumen without recording, classifying or comparing it.
 
----
+### Comparing
 
-## Matching Conversation
+Replay loads a prepared source recording and privately submits each recorded model request to
+Lumen. Model responses are canonicalised into objective evidence containing assistant content,
+tool names, tool arguments and finish reasons.
 
-If every event matches the recorded conversation:
+While the response matches the source response, Replay may use the next recorded cumulative request.
+That request already contains the original matching tool result, so Pi is not required while the
+model remains on the nominal path.
 
-```
-Ask
+Generated tool-call identifiers are ignored during matching. Tool names and canonical JSON
+arguments are compared because they describe the behavioural action.
 
-↓
+### Fork Point
 
-Tool Call
+The first different model response is the Fork Point. Replay records:
 
-↓
+- run identifier;
+- source recording and prepared replay identifiers;
+- number of matching model steps;
+- first divergent step;
+- expected response summary;
+- observed response summary;
+- detection timestamp.
 
-Tool Result
+The observed divergent response is returned unchanged through Trace to Pi. Replay then becomes a
+transparent pass-through. Pi supplies tools and Lumen continues the same live conversation.
 
-↓
+### Match completion
 
-Answer
-```
+When all recorded model responses match, Replay records a matched run and returns a concise command
+result to Pi. The already-recorded nominal conversation is not emitted again through Trace.
 
-Replay records:
+## Explicit commands
 
-```
-MATCH
-```
+Replay consumes these commands rather than forwarding them to Lumen:
 
-The replay completes.
-
-No data is forwarded to Trace.
-
-No tooling is required from Pi.
-
----
-
-## Fork Point
-
-Replay continuously compares the live conversation against the recorded Replay Plan.
-
-The first meaningful behavioural difference is known as the **Fork Point**.
-
-Examples include:
-
-- different tool selected
-- different tool arguments
-- additional tool calls
-- omitted tool calls
-- different assistant response
-
-Replay records:
-
-- last matching step
-- first divergent step
-- expected event
-- observed event
-
-Replay has now completed its experimental objective.
-
----
-
-## Phase 2
-
-Following the Fork Point Replay becomes transparent.
-
-```
-Pi
-    ↓
-Trace
-    ↓
-Replay
-    ↓
-Lumen
+```text
+\obt replay
+\obt replay start <replay-id>
+\obt replay status
+\obt replay stop
 ```
 
-Replay no longer attempts comparison.
+Prepared sessions continue to be created through the Replay engineering UI or REST API.
 
-Replay simply forwards traffic.
+## Persistence
 
-Trace begins recording.
+Replay-owned runtime evidence is stored in `replay_runs`. Trace-owned collections remain read-only.
 
-Pi provides tools.
+## Known boundary
 
-Lumen continues the conversation normally until completion.
-
-Replay records execution metadata only.
-
----
-
-# Why Replay Stops Comparing
-
-Replay exists to answer one question.
-
-> How far does the model reproduce the original behavioural path before choosing a different one?
-
-Everything after the Fork Point represents a new behavioural path.
-
-Continuing comparison no longer provides meaningful information.
-
-Instead Replay allows the new conversation to complete naturally.
-
-Assess later evaluates the significance of that new path.
-
----
-
-# Replay Outputs
-
-Replay produces:
-
-- Replay Plan
-- Replay Result
-- Fork Point
-- Matching Steps
-- Divergent Step
-- Replay Metadata
-
-Replay deliberately does **not** produce behavioural judgements.
-
----
-
-# Architectural Principle
-
-Trace captures what happened.
-
-Replay reproduces what mattered.
-
-Assess determines what it means.
-
-These responsibilities should remain independent throughout future development.
+Replay currently buffers upstream responses so it can compare complete OpenAI-compatible JSON or
+SSE evidence before deciding whether to suppress a nominal response or expose a Fork Point. A later
+runtime-hardening milestone may introduce bounded disk-backed buffering for very large streams.

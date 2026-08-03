@@ -6255,3 +6255,211 @@ Once that question has been answered, Replay deliberately steps aside and allows
 This keeps Replay focused, deterministic and independently testable while leaving behavioural assessment to Lumen Assess.
 
 ---
+
+## 2026-08-03 – Replay Becomes the Experiment Controller
+
+Today's work marked a significant architectural milestone for Lumen Replay (Repetere). Although a considerable amount of engineering effort was spent implementing the Replay Runtime, the most important outcome was not code but a much clearer understanding of Replay's responsibility within the wider Lumen ecosystem.
+
+### The Original Question
+
+Initially Replay appeared to be evolving into an engine capable of replaying an entire recorded conversation, including tool execution.
+
+Further discussion exposed a fundamental problem.
+
+The moment the model chooses a different reasoning path—for example selecting a different tool or issuing a different tool call—Replay no longer possesses the recorded tool results required to continue faithfully reproducing the original conversation.
+
+Attempting to solve this by implementing Pi's complete runtime inside Replay would duplicate significant functionality, increase complexity and blur product boundaries.
+
+It became clear that this was the wrong architectural direction.
+
+---
+
+### Replay is an Experiment Controller
+
+Replay's purpose was redefined.
+
+Replay is no longer viewed as an attempt to reproduce an identical conversation.
+
+Instead, Replay reproduces the **original opportunity to solve the problem**.
+
+Given identical:
+
+- system prompt
+- assistant prompt
+- user prompt
+- model
+- environment
+- available tools
+
+Replay asks a single research question:
+
+> **How long does the model continue to follow the original behavioural path before choosing a different one?**
+
+This simple question provides considerably more value than attempting to force a deterministic replay.
+
+---
+
+### The Fork Point
+
+An important new concept emerged during today's discussions.
+
+The first meaningful difference between the recorded conversation and the live replay becomes the **Fork Point**.
+
+Replay compares the recorded conversation with the live conversation while they remain behaviourally identical.
+
+The first difference may be:
+
+- a different tool
+- different tool arguments
+- additional tool calls
+- omitted tool calls
+- a different assistant response
+- a different final answer
+
+Replay records:
+
+- last matching step
+- first divergent step
+- expected event
+- observed event
+
+At this point Replay has answered its experimental question.
+
+---
+
+### Replay Does Not Become Pi
+
+One of today's most important architectural decisions was that Replay will never attempt to become another implementation of Pi.
+
+Replay does not need:
+
+- Bash
+- filesystem access
+- editors
+- Git
+- Docker
+- Python
+- development tooling
+
+Replay simply observes.
+
+When the Fork Point is reached Replay immediately becomes transparent.
+
+Traffic flows normally.
+
+Pi provides tools.
+
+Trace resumes recording.
+
+Lumen continues orchestrating the conversation.
+
+This preserves the new behavioural path while avoiding duplication of responsibilities.
+
+---
+
+### Transparent Proxy by Default
+
+Replay now has two distinct operating modes.
+
+During normal operation Replay is simply a transparent proxy.
+
+```
+Pi
+    ↓
+Trace
+    ↓
+Replay
+    ↓
+Lumen
+```
+
+Replay performs no comparison.
+
+Replay records nothing.
+
+Replay simply forwards traffic.
+
+Replay only becomes active following an explicit replay command.
+
+For example:
+
+```
+\obt replay start
+```
+
+This allows Replay to remain permanently deployed within the request chain without affecting ordinary AI conversations.
+
+---
+
+### Replay Runtime
+
+During a replay experiment Replay owns the conversation privately.
+
+Replay continually compares the live model behaviour with the prepared Replay Plan.
+
+If every conversational event matches the recorded behaviour, Replay completes successfully without involving either Trace or Pi.
+
+If a Fork Point occurs Replay immediately transitions into transparent pass-through mode.
+
+From that point onward:
+
+- Trace records the new behaviour.
+- Pi provides tools.
+- Lumen continues managing the conversation.
+- Replay records execution metadata only.
+
+---
+
+### Clear Product Responsibilities
+
+Today's discussions produced perhaps the clearest separation of responsibilities across the Lumen engineering products to date.
+
+**Trace (Vestigare)**
+
+Capture reality.
+
+Record everything.
+
+Never interpret.
+
+**Replay (Repetere)**
+
+Conduct controlled experiments.
+
+Determine the Fork Point.
+
+Never assess behaviour.
+
+**Assess (Aestimare)**
+
+Determine whether behavioural differences matter.
+
+Evaluate answer quality, tool usage, checkpoint evolution and model capability.
+
+**Servire**
+
+Provide the operational experience and orchestrate the wider engineering ecosystem.
+
+---
+
+### Architectural Principles
+
+Several important principles emerged during today's work.
+
+> Trace captures what happened.
+
+> Replay reproduces what mattered.
+
+> Assess determines what it means.
+
+Perhaps the most significant observation of the day was:
+
+> **The replay is not of the original conversation. The replay is of the original opportunity to solve the problem.**
+
+This distinction fundamentally changes Replay from being an HTTP replay engine into a controlled experimentation framework for AI systems.
+
+Replay is no longer attempting to recreate the past.
+
+Replay is determining exactly where a model begins to create a different future.
+
+This is expected to become one of the defining concepts underpinning the future Lumen research programme.
