@@ -5923,3 +5923,335 @@ which will use Trace recordings to investigate model behaviour, replay determini
 
 ---
 
+## 2026-08-02 – Lumen Replay reaches Operator UI
+
+Today marked an important transition in the Lumen Replay project.
+
+Although only five milestones have been completed, Replay has evolved beyond being a collection of API endpoints into the beginnings of an operator-facing engineering tool.
+
+### Milestone 5 Completed
+
+Replay now provides:
+
+- Operator Dashboard
+- Runtime configuration display
+- MongoDB connectivity verification
+- Target (Lumen) connectivity verification
+- Trace recording catalogue
+- Replay session preparation
+- Live health status
+- Configuration loading from `config.yml`
+
+The application now starts using a single authoritative `config.yml`, with environment variables available as overrides where appropriate.
+
+The target configuration has also been generalised from a Lumen-specific endpoint to a generic `target` section, allowing Replay to remain independent of any particular model provider or execution environment.
+
+Current port allocation is:
+
+- Trace — 11435
+- Lumen — 11436
+- Replay — 11437
+
+This provides a clean and memorable development layout.
+
+---
+
+### Product Direction
+
+During development an important realisation emerged.
+
+Replay is not simply a replay engine.
+
+Replay is becoming an engineering workbench for AI experiments.
+
+Rather than hiding implementation details, Replay should expose them.
+
+The operator should be able to understand:
+
+- what was recorded
+- what will be replayed
+- what is currently happening
+- what happened
+- why it happened
+
+This philosophy aligns naturally with the rest of the Lumen product family:
+
+- **Trace** records reality.
+- **Replay** reproduces reality under controlled conditions.
+- **Assess** evaluates the outcome.
+- **Servire** orchestrates the complete workflow.
+
+---
+
+### UI Philosophy
+
+A new design document, **UI_PRINCIPLES.md**, was introduced to establish the long-term direction of the Replay user interface.
+
+Its core principle is:
+
+> Never hide what the system is doing.
+
+The document defines five guiding questions that every Replay screen should help answer:
+
+1. What was recorded?
+2. What is about to happen?
+3. What is happening now?
+4. What happened?
+5. Why?
+
+This provides a consistent framework for future development decisions.
+
+---
+
+### Looking Ahead
+
+The next milestone will not focus on replay execution.
+
+Instead, development will concentrate on building the **Recording Explorer**.
+
+The Recording Explorer will become the primary interface for understanding recorded conversations, allowing operators to inspect recordings, timelines, exchanges, checkpoints, metadata and individual messages before any replay is executed.
+
+Execution will remain a later milestone.
+
+The emphasis continues to be on visibility, provenance and operator confidence rather than simply transmitting requests to the target system.
+
+Replay is steadily evolving into a debugger for AI conversations rather than merely a mechanism for replaying HTTP traffic.
+
+---
+
+## 2026-08-03 – Clarifying the Architectural Boundaries between Trace, Replay and Assess
+
+Today proved to be one of the most valuable design sessions since development of Lumen Replay began.
+
+While investigating a very small recording ("Simply Test Math"), Replay initially appeared to expose only three model conversations hidden amongst approximately 176 HTTP exchanges. This prompted a deeper investigation into exactly what Trace had recorded and, more importantly, where the responsibilities of Trace, Replay and Assess should begin and end.
+
+### Trace is behaving correctly
+
+After examining the captured request bodies it became clear that Trace is faithfully recording the complete interaction between Pi and Lumen.
+
+The recording contains:
+
+- complete HTTP requests
+- complete HTTP responses
+- OpenAI-compatible chat completion payloads
+- cumulative conversation history
+- assistant messages
+- tool calls
+- tool results
+- system prompts
+- user prompts
+
+Nothing has been filtered or interpreted.
+
+This reinforces one of the original architectural principles:
+
+> **Trace records reality.**
+
+Trace should remain entirely passive and immutable.
+
+It should never attempt to determine what is important or meaningful.
+
+---
+
+### Replay is not an assessment engine
+
+Initially there was discussion around Replay presenting conversation evolution and showing the semantic differences between successive reasoning steps.
+
+Although technically interesting, it became clear that this responsibility belongs elsewhere.
+
+Replay's responsibility is considerably narrower.
+
+Replay exists to derive a faithful replayable conversation from the complete Trace recording.
+
+This means removing transport artefacts that have no bearing on the experiment while preserving everything required to reproduce the original interaction.
+
+Typical transport artefacts include:
+
+- heartbeat messages
+- operation polling
+- checkpoint polling
+- health requests
+- connection keep-alives
+- other observation-only traffic
+
+Replay should retain:
+
+- user requests
+- assistant responses
+- tool calls
+- tool results
+- control messages required for replay
+- continuity information where necessary to reproduce the original behaviour
+
+The result is a **Replay Plan**, not an interpretation of the conversation.
+
+Replay therefore performs reconstruction rather than analysis.
+
+---
+
+### Assess owns interpretation
+
+The discussion also clarified the role of Lumen Assess.
+
+Assess is responsible for determining whether one replay differs from another and whether one outcome is objectively better or worse.
+
+Replay deliberately avoids this responsibility.
+
+Each replay execution will generate a new Lumen session.
+
+The Replay Result will therefore retain the newly created Lumen session identifier together with execution metadata.
+
+Assess will later use this identifier to retrieve evidence directly from Lumen, including:
+
+- checkpoints
+- summaries
+- model state
+- context window evolution
+- tool usage
+- final answers
+- execution timings
+
+Assess can then combine:
+
+- the immutable Trace recording
+- Replay execution results
+- Lumen session evidence
+
+to qualify:
+
+- answer quality
+- consistency
+- tool usage
+- checkpoint evolution
+- reasoning behaviour
+- model performance
+
+This creates a clean separation between replaying an experiment and evaluating its outcome.
+
+---
+
+### Updated Product Responsibilities
+
+The architectural responsibilities are now defined as:
+
+**Trace (Vestigare)**
+
+Capture everything that transpires between Pi and Lumen.
+
+No interpretation.
+
+No modification.
+
+No filtering.
+
+**Replay (Repetere)**
+
+Remove transport noise.
+
+Reconstruct the actual replayable conversation.
+
+Execute the experiment repeatedly under controlled conditions.
+
+Record the results.
+
+No assessment.
+
+**Assess (Aestimare)**
+
+Combine Replay results with Lumen session evidence.
+
+Compare executions.
+
+Determine behavioural differences.
+
+Evaluate answer quality.
+
+Assess model performance.
+
+**Servire**
+
+Coordinate and orchestrate the complete workflow.
+
+---
+
+### Architectural Principle
+
+An important design principle emerged from today's discussion:
+
+> **Trace captures what happened. Replay reproduces what mattered. Assess determines what it means.**
+
+This succinctly defines the responsibility boundaries across the three products and provides a useful reference for future development.
+
+Maintaining these clear boundaries will help ensure that each component remains focused, cohesive and independently testable as the Lumen ecosystem continues to grow.
+
+
+---
+
+## 2026-08-03 – Defining the Replay Runtime
+
+Today's design discussion fundamentally changed the understanding of what Replay should become.
+
+Originally Replay was viewed as an engine capable of reproducing an entire recorded conversation.
+
+Further investigation revealed an important problem.
+
+If the model follows a different reasoning path during replay, Replay cannot continue using recorded tool results because those tool results belong to the original conversation rather than the newly generated one.
+
+Attempting to recreate Pi's complete runtime inside Replay would dramatically increase complexity while duplicating functionality that already exists elsewhere.
+
+A simpler and architecturally cleaner solution emerged.
+
+Replay should compare the original conversation with the live conversation only while both remain behaviourally identical.
+
+The first meaningful difference between the original and live conversations became known as the **Fork Point**.
+
+Replay records:
+
+- last matching step
+- first divergent step
+- expected event
+- observed event
+
+At that moment Replay has completed its experimental objective.
+
+Rather than attempting to continue the conversation itself, Replay transitions into transparent pass-through mode.
+
+Traffic is forwarded unchanged.
+
+Trace resumes recording.
+
+Pi resumes providing tools.
+
+Lumen continues managing the model conversation.
+
+The remainder of the conversation therefore executes exactly as a normal production conversation while preserving the new behavioural path for later analysis.
+
+This produces a very clean separation of responsibilities.
+
+Trace records everything.
+
+Replay determines where behaviour first diverges.
+
+Assess later determines whether that divergence mattered.
+
+An important architectural principle emerged during today's discussion:
+
+> Trace captures what happened.
+>
+> Replay reproduces what mattered.
+>
+> Assess determines what it means.
+
+This is expected to become one of the defining architectural principles of the entire Lumen engineering ecosystem.
+
+Perhaps most importantly, Replay no longer attempts to become another agent runtime.
+
+Replay has a single cohesive responsibility:
+
+**Determine how long a model reproduces the original behavioural path before choosing a different one.**
+
+Once that question has been answered, Replay deliberately steps aside and allows the existing Pi, Trace and Lumen architecture to complete the conversation naturally.
+
+This keeps Replay focused, deterministic and independently testable while leaving behavioural assessment to Lumen Assess.
+
+---
