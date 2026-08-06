@@ -6544,3 +6544,704 @@ This concept is intentionally parked for future consideration.
 Current development effort remains focused on completing and maturing the existing Lumen extensions before introducing additional architectural components.
 
 This diary entry exists simply to preserve the idea, its rationale and the initial branding direction for future review.
+
+--- 
+
+# Engineering Diary
+
+## Lumen Beyond LLMs
+
+One thought that continues to strengthen is that Lumen should not be viewed as an orchestration layer solely for Large Language Models.
+
+Its real purpose is to provide **trust, continuity, provenance, explainability, coordination, and verification** for any system capable of autonomous reasoning and decision-making.
+
+Initially, that means LLMs and AI agents, but the same principles apply equally to robotics, autonomous vehicles, industrial control systems, and future intelligent devices.
+
+The value increasingly shifts away from simply having an intelligent model and towards being able to answer questions such as:
+
+* Why was this decision made?
+* What evidence was used?
+* Can the reasoning be replayed?
+* Is the behaviour reproducible?
+* Who or what approved the action?
+* Can the decision be trusted?
+
+Whether the "worker" is a chatbot, a software agent, or a robot replacing a fuse in a customer's home is largely irrelevant—the need for continuity, provenance, and verifiable reasoning remains the same.
+
+**Placeholder:** Explore positioning Lumen as a **Reasoning Assurance Platform**, independent of the underlying model or embodiment. LLMs are simply the first generation of systems that expose this need.
+
+---
+
+# Engineering Diary
+
+## 2026-08-05 — Replay Becomes a Behaviour Replay Engine
+
+Today proved to be one of the most significant architectural days since Replay was introduced.
+
+Although the immediate objective was to improve Replay command handling and diagnose a replay failure, the investigation ultimately resulted in a fundamental redesign of what Replay actually is.
+
+---
+
+# Objective
+
+Continue development of Lumen Replay (future product name: **Lumen Repetere**) by improving command routing, replay observability and replay correctness.
+
+---
+
+# Initial Problem
+
+Replay successfully intercepted:
+
+```text
+\obt replay start <replay-id>
+```
+
+and entered replay mode correctly.
+
+However, after Replay entered transparent mode, Pi eventually displayed:
+
+```text
+[Lumen command not recognised]
+
+Use \obt help to list available commands.
+The command was not sent to the model.
+```
+
+Initially it appeared that Replay had incorrectly forwarded something back to Lumen.
+
+Extensive logging and tracing proved otherwise.
+
+---
+
+# Replay Logging
+
+Replay gained two completely separate logging systems.
+
+## Operational Log
+
+The normal application log now records:
+
+- Replay session start
+- Replay completion
+- Replay cancellation
+- Replay match progression
+- Replay fork detection
+- Transition into transparent mode
+
+This provides an overall view of Replay operation.
+
+---
+
+## Command Decision Log
+
+A second dedicated log was introduced specifically for operator command routing.
+
+Each operator command records:
+
+- raw command
+- command classification
+- routing decision
+- whether Replay handled the command
+- whether the command was forwarded
+- reasoning behind the routing decision
+
+Separating routing decisions from operational logging proved extremely useful during debugging and will remain a permanent feature.
+
+---
+
+# Trace-Assisted Investigation
+
+Replay was then tested alongside Lumen Trace.
+
+Rather than relying on individual console windows, the complete interaction was captured from beginning to end.
+
+This provided:
+
+- Trace recording
+- Replay logs
+- Replay command decision log
+- Lumen logs
+- Pi interaction
+
+For the first time every stage of the pipeline could be reconstructed.
+
+---
+
+# Root Cause
+
+Replay was **not** forwarding Replay commands incorrectly.
+
+Instead, Lumen was reprocessing a historical Replay command that still existed within Pi's accumulated conversation history.
+
+Pi continually sends its complete conversation history.
+
+Lumen later reconstructs its own model context from checkpoints, but command detection was occurring **before** this reconstruction.
+
+As a result, Lumen incorrectly interpreted an old:
+
+```text
+\obt replay start ...
+```
+
+as though it were a new operator command.
+
+Replay itself was functioning correctly.
+
+---
+
+# Lumen Fix
+
+Lumen command detection was modified so that command routing only considers the current operator interaction.
+
+Historical operator commands contained within Pi's accumulated conversation history are now ignored.
+
+This prevents historical control-plane traffic from interfering with replay.
+
+Following this change:
+
+- Replay remained transparent after a fork.
+- Tool continuations successfully reached the model.
+- Historical Replay commands no longer caused command routing failures.
+
+---
+
+# Replay Validation
+
+Following the Lumen fix, the entire stack successfully completed replay.
+
+Architecture:
+
+```text
+Pi
+    ↓
+Trace
+    ↓
+Replay
+    ↓
+Lumen
+    ↓
+Qwen
+```
+
+Replay correctly:
+
+- intercepted Replay commands
+- remained transparent after the fork
+- replayed recorded tool results
+- allowed live behaviour to continue after divergence
+
+This represented the first successful end-to-end replay.
+
+---
+
+# The Important Discovery
+
+During investigation an important observation emerged.
+
+Replay was still effectively comparing conversations.
+
+That proved to be the wrong abstraction.
+
+Conversation contains many elements which are not observable behaviour:
+
+- streamed assistant text
+- reasoning summaries
+- thinking output
+- progress messages
+- heartbeats
+- Lumen checkpoints
+- formatting
+- timing
+
+None of these represent actual model behaviour.
+
+Replay could therefore fork simply because presentation differed, despite the model performing exactly the same actions.
+
+---
+
+# Replay Should Compare Behaviour
+
+Replay is now formally redefined as a behavioural replay engine.
+
+Replay is no longer interested in conversational presentation.
+
+Replay compares observable model behaviour.
+
+For Pi this consists of:
+
+```text
+Model Tool Call
+
+↓
+
+Pi executes tool
+
+↓
+
+Recorded Tool Result
+
+↓
+
+Model Tool Call
+
+...
+
+↓
+
+Final Model Response
+```
+
+Everything else becomes diagnostic information only.
+
+It may be logged.
+
+It never causes a Replay Fork.
+
+---
+
+# New Replay Behaviour
+
+Replay now operates according to the following principles.
+
+1. Replay loads a Replay Plan derived from a Trace recording.
+
+2. Replay observes model output.
+
+3. If the model emits a tool call:
+
+   - Compare the tool with the next expected tool call.
+   - Compare canonical tool arguments.
+
+4. If they match:
+
+   - Return the recorded tool result.
+   - Advance to the next Replay Plan event.
+   - Continue replay privately.
+
+5. If they differ:
+
+   - Record:
+     - last matching event
+     - expected event
+     - observed event
+   - Declare a Replay Fork.
+   - Become a transparent proxy.
+   - Allow the live interaction to continue through Trace.
+
+Replay no longer compares conversational wording.
+
+Replay compares observable behaviour.
+
+---
+
+# Behaviour versus Presentation
+
+Today's most important engineering principle became apparent naturally.
+
+> **Replay compares behaviour, not presentation.**
+
+Behaviour consists of:
+
+- tool selection
+- tool arguments
+- tool ordering
+- tool results
+- final outcome
+
+Presentation consists of:
+
+- streamed text
+- reasoning
+- formatting
+- timing
+- checkpoints
+- progress updates
+
+Presentation differences do not represent behavioural differences.
+
+---
+
+# Relationship to Lumen Assess
+
+This discovery also clarified the relationship between Replay and Assess.
+
+Replay answers:
+
+> **Did behaviour change?**
+
+Assess will later answer:
+
+> **Was the new behaviour better, worse, equivalent or simply different?**
+
+The separation between Replay and Assess is now considerably cleaner.
+
+---
+
+# Model Behaviour
+
+Once Replay infrastructure was functioning correctly, the remaining divergence proved to be entirely model behaviour.
+
+The recorded experiment expected the model to:
+
+```text
+Write file
+
+↓
+
+Read file
+```
+
+Instead the replayed model attempted:
+
+```text
+Read file
+
+↓
+
+Read file again
+
+↓
+
+Terminate
+```
+
+without ever creating the file.
+
+Replay correctly identified the behavioural divergence.
+
+This represents exactly the type of experiment Replay is intended to support.
+
+---
+
+# Quality Gates
+
+Replay now achieves:
+
+- 136 pytest tests passing
+- Ruff clean
+- mypy clean
+
+Coverage currently remains slightly below the 95% engineering target and will be addressed independently of the Replay behavioural redesign.
+
+---
+
+# Summary
+
+Today's work fundamentally changed Replay.
+
+Replay is no longer a conversation replay system.
+
+Replay is now defined as a behavioural experiment controller.
+
+Rather than comparing conversational output, Replay observes the externally visible actions performed by the model and determines the point at which behaviour diverges.
+
+This provides a considerably stronger architectural foundation for Replay, Lumen Assess and future behavioural benchmarking work.
+
+---
+
+# Engineering Diary
+
+## 2026-08-06 — Replay Milestone 10 Complete
+
+Today marked the completion and freeze of active development on **Lumen Replay (Repetere)**.
+
+Replay is now considered functionally complete for its intended purpose. While there remain several UI enhancements that could be made in the future, the underlying architecture and behavioural replay engine are complete and have been validated through multiple live experiments.
+
+Development focus will now shift to **Lumen Servire**, which will become the operational controller for the Lumen ecosystem.
+
+---
+
+# Replay Architecture Finalised
+
+The most significant architectural change was the formal definition of Replay as a **behaviour replay engine** rather than a conversation replay engine.
+
+Earlier versions compared conversational messages and presentation.
+
+Replay now compares only **observable model behaviour**.
+
+For Pi this consists of:
+
+```text
+Model Tool Call
+
+↓
+
+Pi executes tool
+
+↓
+
+Tool Result
+
+↓
+
+Model Tool Call
+
+...
+
+↓
+
+Final Model Response
+```
+
+Replay deliberately ignores:
+
+- streamed assistant text
+- reasoning summaries
+- thinking text
+- progress updates
+- heartbeat messages
+- Lumen checkpoints
+- formatting differences
+- timing differences
+
+These remain useful diagnostic information and are logged where appropriate, but no longer cause Replay to fork.
+
+This greatly simplifies Replay while making behavioural comparison considerably more robust.
+
+---
+
+# Replay Execution Model
+
+Replay now operates as follows.
+
+1. Load the Replay Plan derived from a Trace recording.
+
+2. Observe model output.
+
+3. If the model emits a tool call:
+
+   - compare the tool name
+   - compare canonical tool arguments
+   - compare ordering
+
+4. If the tool matches:
+
+   - return the recorded tool result
+   - advance to the next Replay Plan step
+   - continue replay privately
+
+5. If the tool differs:
+
+   - record:
+     - last matching step
+     - expected tool
+     - observed tool
+   - declare a Replay Fork
+   - become a transparent proxy
+   - allow the live conversation to continue through Trace until completion
+
+Replay no longer attempts to compare conversational wording.
+
+---
+
+# Replay Logging
+
+Replay now contains two distinct logging mechanisms.
+
+## Operational Log
+
+Records:
+
+- replay start
+- replay completion
+- replay cancellation
+- replay progress
+- replay fork detection
+- transition into transparent mode
+
+## Command Decision Log
+
+Records:
+
+- operator command
+- command classification
+- routing decision
+- whether Replay handled the command
+- whether the command was forwarded
+- reasoning behind the decision
+
+This additional observability proved invaluable during debugging and will remain part of Replay.
+
+---
+
+# Lumen Integration
+
+An important issue was identified and resolved during Replay testing.
+
+Historical `\obt` commands contained within Pi's accumulated conversation history were being incorrectly reprocessed by Lumen.
+
+Lumen command routing was modified so that only the current operator interaction is considered for command processing.
+
+Historical control-plane traffic is now ignored.
+
+This cleanly separates:
+
+- operator control traffic
+- model conversational traffic
+
+and prevents historical Replay commands from interfering with model execution.
+
+---
+
+# End-to-End Validation
+
+Replay was validated using the complete stack:
+
+```text
+Pi
+    ↓
+Trace
+    ↓
+Replay
+    ↓
+Lumen
+    ↓
+Ollama
+    ↓
+Qwen
+```
+
+Replay successfully:
+
+- intercepted Replay commands
+- loaded prepared Replay Plans
+- replayed recorded tool results
+- detected behavioural divergence
+- entered transparent proxy mode after a fork
+- allowed Trace to capture the remainder of the interaction
+
+This represented the first successful end-to-end behavioural replay.
+
+---
+
+# Behavioural Observations
+
+Multiple replay experiments were performed.
+
+An interesting result emerged.
+
+Three replay runs produced two different execution strategies.
+
+Two runs diverged from the original recording, following an alternative sequence of tool usage.
+
+One run reproduced the original recorded behaviour exactly.
+
+All three runs produced the correct final outcome.
+
+This provides further evidence that modern LLMs may follow multiple valid execution strategies for the same task rather than behaving deterministically.
+
+Replay successfully distinguished between matching and divergent behaviour without interfering with execution.
+
+---
+
+# Dependency Updates
+
+The stack was updated during validation.
+
+## Ollama
+
+Updated:
+
+```text
+0.32.5 → 0.32.6
+```
+
+Validation confirmed:
+
+- OpenAI compatibility unchanged
+- tool calls unchanged
+- Replay fully operational
+
+---
+
+## Pi
+
+Updated:
+
+```text
+0.83.0 → 0.84.0
+```
+
+Validation confirmed:
+
+- tool execution unchanged
+- Replay compatibility maintained
+- Trace compatibility maintained
+- Lumen compatibility maintained
+
+No changes were required within the Lumen stack.
+
+---
+
+# Replay UI
+
+The remaining Replay UI improvements have been completed sufficiently for current development.
+
+Replay is now considered functionally complete.
+
+Future UI enhancements remain possible but are not required for ongoing research.
+
+Replay development is therefore frozen at **Milestone 10**.
+
+---
+
+# Key Engineering Principle
+
+Replay is now formally defined by a single architectural principle.
+
+> **Replay compares behaviour, not presentation.**
+
+Observable behaviour consists of:
+
+- tool selection
+- tool arguments
+- tool ordering
+- tool results
+- final outcome
+
+Presentation consists of:
+
+- streamed text
+- formatting
+- reasoning summaries
+- progress updates
+- checkpoints
+- timing
+
+Presentation differences are logged.
+
+Behavioural differences create Replay Forks.
+
+---
+
+# Looking Forward
+
+With Replay now complete, attention shifts to the next component within the Lumen ecosystem.
+
+The immediate operational challenge is no longer behavioural replay but management of the growing development stack.
+
+Current operation requires multiple independent processes, consoles and interfaces:
+
+- Pi
+- Trace
+- Replay
+- Lumen
+- Ollama
+
+The next project, **Lumen Servire**, will provide the operational control layer responsible for:
+
+- starting and stopping the stack
+- monitoring component health
+- coordinating services
+- consolidating logging
+- simplifying development workflows
+
+Unlike Replay, Servire sits **outside** the model traffic path.
+
+Replay has become the behavioural experiment controller.
+
+Servire will become the operational controller.
+
+Together they establish the foundations for the next major phase of the Lumen ecosystem.
+
+---
