@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/research-ecosystem/replay/LUMEN_REPLAY_RUNTIME_GUIDE.md",
+                "file": "docs/lumen-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "LUMEN_REPLAY_RUNTIME_GUIDE"
+              "title": "LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 527.5
   },
   "right": {
     "id": "e20d1542776cf182",
@@ -185,40 +185,43 @@
   },
   "active": "bba0fffa5f94f3ef",
   "lastOpenFiles": [
-    "docs/research-ecosystem/servire/ENGINEERING_DIARY_2026-08-08_SERVIRE_M7_COMPLETE.md",
-    "docs/research-ecosystem/servire/ENGINEERING_DIARY_2026-08-07_SERVIRE_M1_COMPLETE.md",
-    "docs/research-ecosystem/servire/ENGINEERING_DIARY_2026-08-06_SERVIRE_DIRECTION.md",
-    "docs/research-ecosystem/servire/LUMEN_SERVIRE_MILESTONES.md",
-    "docs/research-ecosystem/servire/LUMEN_SERVIRE_INIT_PLAN.md",
-    "docs/research-ecosystem/replay/LUMEN_REPLAY_ARCHITECTURE.md",
-    "docs/research-ecosystem/assess/LUMEN_ASSESS_BEHAVIOURAL_EVALUATION.md",
-    "docs/research-ecosystem/assureance/LUMEN_FIDUCIA_OVERVIEW.md",
-    "docs/research-ecosystem/assureance",
-    "docs/research-ecosystem/New folder",
-    "EVOLUTION_OF_LIMEN_THINKING_ENHANCED-2026-08-03.md",
-    "EVOLUTION_OF_LIMEN_THINKING-2026-08-03.md",
-    "LUMEN_STORY-2026-08-03.md",
-    "docs/research-ecosystem/replay/LUMEN_REPLAY_RUNTIME_GUIDE.md",
-    "README.MD",
-    "docs/VISION-UI.md",
-    "version-notes/RELEASE-NOTES-v3.2.8.md",
-    "docs/ARCHITECTURE-APPENDUM-2.md",
-    "docs/MODEL_BEHAVIOUR_AND_PROMPT_OPTIMISATION.md",
-    "docs/MODEL_BEHAVIOUR_AND_PROMPT_OPTIMISATION-2.md",
-    "version-notes/RELEASE-NOTES-v3.2.7.md",
-    "version-notes/README-VERSION-NOTES.md",
-    "version-notes/RELEASE-NOTES-v3.2.6.md",
-    "version-notes/RELEASE-NOTES-v3.1.md",
-    "version-notes/RELEASE-NOTES-v3.2.5.md",
-    "version-notes/RELEASE-NOTES-v3.2.4.md",
-    "version-notes/RELEASE-NOTES-v3.2.3.md",
-    "version-notes/RELEASE-NOTES-v3.2.2.md",
-    "version-notes",
-    "New folder",
-    "docs/Unconfirmed 848314.crdownload",
-    "Lumen Checkpoints/v3.2.4/Lumen-Continuity-Partial.pdf",
-    "Lumen Checkpoints/v3.2.4",
-    "Lumen Checkpoints/New folder",
-    "Lumen Checkpoints"
+    "LUMEN_PROJECT_STATUS_AND_ROADMAP_2026-08-08_UPDATED.md",
+    "LUMEN_PROJECT_STATUS_AND_ROADMAP_2026-08-08.md",
+    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_ARCHITECTURE_V1.0.md",
+    "docs/digests/html/Lumen_Engineering_Digest_Vol1_v4.html",
+    "docs/digests/html/Lumen-Illuminate-One-Logo.png",
+    "docs/digests/html/Illuminates.One-Corporate-Brand.png",
+    "docs/digests/html",
+    "docs/digests/pdf/Lumen_Engineering_Digest_Vol1_v4.pdf",
+    "docs/digests/pdf",
+    "docs/digests",
+    "docs/New folder",
+    "docs/research-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
+    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_MILESTONES.md",
+    "docs/lumen-ecosystem/trace/LUMEN_TRACE_OVERVIEW.md",
+    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_OVERVIEW.md",
+    "docs/lumen-ecosystem/trace/LUMEN_TRACE_ARCHITECTURE.md",
+    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_ROADMAP_MILESTONES_8-12.md",
+    "docs/lumen-ecosystem/servire/ENGINEERING_DIARY_2026-08-06_SERVIRE_DIRECTION.md",
+    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_INIT_PLAN.md",
+    "docs/lumen-ecosystem/servire/ENGINEERING_DIARY_2026-08-07_SERVIRE_M1_COMPLETE.md",
+    "docs/lumen-ecosystem/replay/LUMEN_REPLAY_ARCHITECTURE.md",
+    "docs/lumen-ecosystem/servire/LUMEN_ARCHITECTURE_PROPOSAL_SERVIRE_AS_UNIFIED_CONSOLE.md",
+    "docs/lumen-ecosystem/servire/ENGINEERING_DIARY_2026-08-08_SERVIRE_M7_COMPLETE.md",
+    "docs/lumen-ecosystem/replay/LUMEN_REPLAY_RUNTIME_GUIDE.md",
+    "docs/lumen-ecosystem/assess/LUMEN_ASSESS_OVERVIEW.md",
+    "docs/lumen-ecosystem/replay/LUMEN_REPLAY_OVERVIEW.md",
+    "docs/lumen-ecosystem/assess/LUMEN_ASSESS_BEHAVIOURAL_EVALUATION.md",
+    "docs/lumen-ecosystem/assureance/LUMEN_FIDUCIA_OVERVIEW.md",
+    "docs/lumen-ecosystem/trace",
+    "docs/lumen-ecosystem/servire",
+    "docs/lumen-ecosystem/LUMEN_RESEARCH_ECOSYSTEM.md",
+    "docs/lumen-ecosystem/replay",
+    "docs/lumen-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
+    "docs/lumen-ecosystem/assureance",
+    "docs/lumen-family-version-notes/Lumen/RELEASE-NOTES-v3.2.14.2.md",
+    "docs/lumen-family-version-notes/Lumen/RELEASE-NOTES-v3.2.14.1.md",
+    "docs/lumen-family-version-notes/Lumen/RELEASE-NOTES-v3.2.13.md",
+    "docs/lumen-family-version-notes/Lumen/RELEASE-NOTES-v3.2.13.1.md"
   ]
 }

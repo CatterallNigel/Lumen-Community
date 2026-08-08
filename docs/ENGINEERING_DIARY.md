@@ -7703,3 +7703,102 @@ Servire no longer feels like a utility used to launch services. It now feels lik
 The underlying components remain independent, preserving clear ownership and separation of responsibilities, while operators gain a unified, coherent environment from which to observe, manage and interact with the complete system.
 
 That represents a significant architectural milestone for the Lumen++ project.
+
+---
+
+# Engineering Diary
+## 2026-08-08
+
+Today marked an important architectural waypoint for the Lumen++ ecosystem.
+
+## Servire
+
+Development of Servire has been intentionally frozen following completion of its original objectives.
+
+Servire now provides a fully operational control plane for the Lumen++ ecosystem, including:
+
+- Managed service lifecycle
+- Dependency validation
+- External availability checking
+- Dynamic configuration
+- Operational logging and filtering
+- Lifecycle state management
+- Unified navigation across Operations, Checkpoints, Replay and Trace
+
+Although additional ideas remain, none are currently considered essential for completing the first operational version of the platform.
+
+Rather than continuing to add features, development has been paused to allow experience gained from operating the platform to guide future enhancements.
+
+Several future architectural documents were produced to capture longer-term direction, including:
+
+- Servire Architecture
+- Servire Roadmap (Milestones 8–12)
+- Servire as the Unified Lumen++ Workbench
+- Overall Lumen++ Project Status and Roadmap
+
+These documents establish the architectural direction without committing to immediate implementation.
+
+## Architectural Reflection
+
+One observation became increasingly clear during today's discussions.
+
+The Lumen++ ecosystem is no longer a collection of individual projects.
+
+It has matured into a coherent platform where each major component has a distinct responsibility.
+
+Current architectural responsibilities are now clearly defined as:
+
+- **Lumen** — AI orchestration and continuity
+- **Trace** — Behaviour recording
+- **Replay** — Behaviour reproduction
+- **Assess** — Behaviour evaluation (planned)
+- **Servire** — Platform operations
+
+This separation of responsibilities continues to be one of the strongest architectural characteristics of the project.
+
+## Replay and Trace
+
+Attention now shifts back to Replay and Trace before beginning Assess.
+
+Several remaining improvements were identified:
+
+- Automatic Trace lifecycle management during Replay.
+- Automatic naming of Replay-generated Trace recordings.
+- Trace deletion support.
+- Recovery of orphaned or incomplete recordings.
+- Replay iteration support for repeated behavioural experiments.
+- Investigation into improving recording lifecycle robustness rather than simply deleting failed recordings.
+
+These improvements are intended to produce higher quality behavioural evidence for Assess rather than simply adding new functionality.
+
+## Future Discussion
+
+A significant architectural proposal also emerged today.
+
+Rather than Pi continuing to own both the user interface and tool execution, Servire may eventually evolve into the unified Lumen++ Workbench.
+
+Under this proposal:
+
+- Servire becomes the primary user interface.
+- Lumen remains the orchestration engine.
+- Pi evolves into a Tool Provider.
+- Additional tool providers could be introduced in the future (MCP, enterprise tools, hosted services, etc.).
+- Multiple tool providers could operate simultaneously without affecting the user experience.
+
+This proposal remains intentionally deferred until after Replay, Trace and Assess have matured.
+
+## Current Project Status
+
+The project has effectively completed its first major phase.
+
+The platform itself now exists.
+
+The next engineering objective is no longer to build infrastructure, but to build evidence.
+
+Replay and Trace will produce that evidence.
+
+Assess will evaluate it.
+
+Only after those foundations have matured will broader platform expansion resume.
+
+This feels like an appropriate point to pause, document the current architecture, and begin the next chapter of the Lumen++ project.
