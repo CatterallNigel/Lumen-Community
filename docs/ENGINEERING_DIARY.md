@@ -7802,3 +7802,165 @@ Assess will evaluate it.
 Only after those foundations have matured will broader platform expansion resume.
 
 This feels like an appropriate point to pause, document the current architecture, and begin the next chapter of the Lumen++ project.
+
+---
+
+# Engineering Diary
+## 2026-08-09
+
+## Summary
+
+Today represented one of the most significant architectural milestones in the development of Lumen Pontis.
+
+The original assumption was that ACP would act as the conversational transport between Servire and Pi. During development and experimentation this assumption was shown to be incorrect.
+
+Instead, ACP is used to establish and manage the Pi session, while Pi immediately returns to its normal OpenAI-compatible HTTP interface when communicating with its configured model provider.
+
+Since Pi's configured model provider is now Pontis/Lumen, Pontis simultaneously becomes both:
+
+- an ACP client of Pi
+- the HTTP endpoint that Pi believes is its model provider
+
+This dual-plane architecture proved considerably simpler and more elegant than the original design.
+
+---
+
+## Milestone 3
+
+Milestone 3 concentrated on understanding ACP behaviour rather than simply implementing protocol support.
+
+Development included:
+
+- ACP transport implementation.
+- Pi ACP adapter.
+- Session bridge between Servire/Lumen session IDs and ACP session IDs.
+- Extensive protocol diagnostics.
+- Runtime logging.
+- ACP smoke testing.
+- HTTP proxy integration.
+
+A key architectural discovery was made:
+
+ACP starts conversations.
+
+HTTP carries conversations.
+
+This distinction fundamentally changed the implementation of Pontis.
+
+---
+
+## Milestone 3.4
+
+A significant hypothesis was proposed.
+
+Rather than expecting Pi to return model responses over ACP, Pontis would:
+
+1. Bootstrap Pi via ACP.
+2. Allow Pi to initiate normal HTTP model traffic.
+3. Transparently proxy all HTTP traffic.
+4. Continue receiving conversational updates over ACP.
+
+Testing confirmed exactly this behaviour.
+
+Pi immediately initiated:
+
+POST /v1/chat/completions
+
+towards Pontis after receiving the ACP bootstrap prompt.
+
+This validated the proposed dual communication planes.
+
+---
+
+## Milestone 3.5
+
+With Lumen connected downstream the architecture was validated end-to-end.
+
+Observed behaviour:
+
+- ACP successfully created Pi sessions.
+- Pi transitioned onto HTTP.
+- Pontis transparently proxied all HTTP traffic.
+- Lumen forwarded requests to Qwen.
+- Multiple HTTP request/response cycles occurred during a single ACP prompt.
+- Pi executed tool calls.
+- Final conversational output returned over ACP.
+
+This demonstrated the complete Servire → Pontis → Pi → Lumen → Model lifecycle.
+
+---
+
+## Milestone 4
+
+Pontis moved from prototype to operational component.
+
+Implemented:
+
+- Long-lived ACP runtime.
+- Operational HTTP proxy.
+- Managed session lifecycle.
+- Session state tracking.
+- Multi-session support.
+- Runtime management.
+- Failure recovery.
+- Graceful shutdown.
+- Servire management interface.
+
+Acceptance testing demonstrated:
+
+- Multiple simultaneous ACP sessions.
+- Independent session isolation.
+- Continued operation after closing one session.
+- Clean runtime shutdown.
+
+Milestone 4 is considered operationally complete.
+
+---
+
+## Important Architectural Discovery
+
+Pontis bridges two independent communication planes.
+
+ACP exists purely for orchestration.
+
+HTTP exists purely for model communication.
+
+This separation dramatically simplifies the responsibilities of Pontis.
+
+Pontis never understands model traffic.
+
+Pontis never understands Pi tools.
+
+Pontis simply manages sessions and transparently proxies HTTP.
+
+---
+
+## Future Investigation
+
+An unexpected behaviour was observed during ACP initiated conversations.
+
+Lumen prepended the following text before the model response:
+
+Commands beginning with \obt are handled by Lumen...
+
+This should not occur under normal operation because Lumen only responds to explicit user-entered commands beginning with "\obt".
+
+This behaviour requires investigation before development of Lumen Assess.
+
+The investigation should determine exactly what HTTP payload reaches Lumen during ACP-initiated conversations and identify why Lumen believes an \obt command has been issued.
+
+---
+
+## Next Development
+
+The next phase of development will integrate Pontis into Servire.
+
+Rather than operating Pontis independently, Servire will become the operational front-end for the managed Lumen++ stack.
+
+This introduces the next major objective:
+
+- Add Pontis to Servire.
+- Implement the Servire operational console.
+- Use Servire as the single control surface for the entire Lumen++ environment.
+
+This represents the original architectural vision for Servire.

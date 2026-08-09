@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/lumen-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
+                "file": "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_OVERVIEW.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS"
+              "title": "LUMEN_PONTIS_OVERVIEW"
             }
           }
         ]
@@ -185,6 +185,12 @@
   },
   "active": "bba0fffa5f94f3ef",
   "lastOpenFiles": [
+    "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_ARCHITECTURE.md",
+    "docs/lumen-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
+    "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_OVERVIEW.md",
+    "docs/lumen-ecosystem/bridge",
+    "docs/lumen-ecosystem/New folder",
+    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_ROADMAP_MILESTONES_8-12_ADDENDUM.md",
     "LUMEN_DOCUMENTATION_ARCHITECTURE.md",
     "lumen-site/LUMEN_MICROSITE_CONTENT_PLAN.md",
     "lumen-site/LUMEN_MICROSITE_VISION.md",
@@ -216,12 +222,6 @@
     "docs/lumen-ecosystem/replay/LUMEN_REPLAY_RUNTIME_GUIDE.md",
     "docs/lumen-ecosystem/assess/LUMEN_ASSESS_OVERVIEW.md",
     "docs/lumen-ecosystem/replay/LUMEN_REPLAY_OVERVIEW.md",
-    "docs/lumen-ecosystem/assess/LUMEN_ASSESS_BEHAVIOURAL_EVALUATION.md",
-    "docs/lumen-ecosystem/assureance/LUMEN_FIDUCIA_OVERVIEW.md",
-    "docs/lumen-ecosystem/trace",
-    "docs/lumen-ecosystem/servire",
-    "docs/lumen-ecosystem/LUMEN_RESEARCH_ECOSYSTEM.md",
-    "docs/lumen-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
-    "docs/lumen-family-version-notes/Lumen/RELEASE-NOTES-v3.2.14.2.md"
+    "docs/lumen-ecosystem/assess/LUMEN_ASSESS_BEHAVIOURAL_EVALUATION.md"
   ]
 }
