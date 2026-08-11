@@ -7964,3 +7964,860 @@ This introduces the next major objective:
 - Use Servire as the single control surface for the entire Lumen++ environment.
 
 This represents the original architectural vision for Servire.
+
+---
+
+# Lumen Engineering Diary
+## 2026-08-10
+
+### Summary
+
+Today's work materially clarified the next stage of the Lumen architecture.
+
+The main outcome was a stronger definition of **Lumen as the complete ecosystem**, rather than the name of the orchestration component alone. This led to the decision to rename the existing orchestrator **Lumen Moderari** and to standardise the existing codebase and Servire around that model before beginning Rogare development.
+
+The roadmap was also revised so that **Fiducia now follows Rogare and precedes Assess**.
+
+This was not simply a sequencing change. It resulted from identifying that repeated replay execution and scheduling do not belong in Repetere itself. Repetere should execute one replay experiment per invocation; Fiducia should decide when and how many times those experiments are run.
+
+---
+
+### Lumen Becomes the Family Name
+
+The architecture has reached the point where using “Lumen” both for the complete system and for its orchestration component is becoming ambiguous.
+
+The decision today was:
+
+> **Lumen is the complete family/stack.**
+
+The existing orchestration component will become:
+
+> **Lumen Moderari**
+
+This gives the core orchestrator the same explicit identity as the other components and makes the overall architecture easier to describe.
+
+The family is now forming around:
+
+- Moderari — orchestration and continuity;
+- Servire — operational control plane;
+- Pontis — protocol/session bridge;
+- Vestigare — tracing and recording;
+- Repetere — replay execution;
+- Rogare — conversational client;
+- Fiducia — evidence/replay orchestration and calibrated trust;
+- Aestimare — behavioural assessment.
+
+Before Rogare development starts, the current codebase and Servire should be standardised around this naming and component model.
+
+---
+
+### Existing Stack Standardisation Before Rogare
+
+The immediate next work is therefore a short architecture/standardisation phase.
+
+This includes:
+
+- renaming the current Lumen service/component to Moderari where appropriate;
+- updating Servire to represent Lumen as the family rather than a single service;
+- aligning configuration, labels, logs, UI and documentation;
+- completing Pontis integration;
+- moving Trace/Vestigare from port `11435` to `11438`.
+
+The intended service allocation is now:
+
+- Pontis — `11435`
+- Moderari — `11436`
+- Repetere — `11437`
+- Vestigare — `11438`
+
+This work should be completed before Rogare is introduced so that Rogare is built against the intended architecture rather than forcing another rename/refactor immediately afterwards.
+
+---
+
+### Rogare Responsibility Clarified
+
+Rogare remains the next new component after the standardisation work.
+
+The important distinction is that Rogare is a **client**, not a tool provider and not another orchestration layer.
+
+Rogare should submit a conversation through Pontis in the same conceptual manner as another external client.
+
+Rogare itself declares or owns no tools.
+
+If the model requires tools, Pontis establishes the ACP relationship with Pi, obtains the available tool definitions and ensures tool calls are routed to the actual provider.
+
+This preserves the desired separation:
+
+- Rogare asks;
+- Moderari/model reasons;
+- Pi provides tools;
+- Pontis bridges the session/protocol boundary.
+
+An open question remains around cross-vendor tool equivalence. Equivalent capabilities cannot be assumed to share names or schemas between providers. This may eventually require a capability abstraction or normalisation layer.
+
+---
+
+### Repetere Responsibility Reduced
+
+A useful architectural correction emerged today around Replay/Repetere.
+
+Previous planning included a requirement for Replay to support repeated execution — for example, “run this replay X times.”
+
+On review, this conflicts with the single-responsibility architecture.
+
+Repetere's responsibility should simply be:
+
+> **Execute one replay run.**
+
+It should know how to reconstruct the experiment, compare live behaviour with the recorded path, detect the fork point and produce the resulting replay evidence.
+
+It should not decide:
+
+- when the replay runs;
+- how frequently it runs;
+- how many times it runs.
+
+Those are orchestration concerns.
+
+The repeated-run requirement should therefore be removed from the Repetere specification.
+
+---
+
+### Fiducia Moves Before Assess
+
+This led directly to the most significant roadmap adjustment of the day.
+
+The sequence becomes:
+
+> **Rogare → Fiducia → Assess**
+
+Fiducia's first implementation responsibility will be **Replay orchestration**.
+
+It should schedule Repetere executions and specify how many executions are required.
+
+This gives a clean separation:
+
+> **Repetere performs the experiment. Fiducia decides when and how often the experiment is performed.**
+
+It also gives Fiducia a practical first implementation that naturally develops toward its larger purpose.
+
+---
+
+### Fiducia and Calibrated Trust
+
+The architectural role of Fiducia became clearer today.
+
+A useful statement retained for Fiducia is:
+
+> **Replace constant verification with calibrated trust built from evidence.**
+
+And the broader Lumen principle remains:
+
+> **Trust isn't the absence of verification. Trust is what accumulated evidence allows you to stop verifying every time.**
+
+Repeated replay execution is therefore not merely automation.
+
+It is evidence gathering.
+
+If the same behaviour is repeatedly tested and remains stable, the system begins to accumulate evidence about that behaviour. Fiducia can eventually use that evidence to determine how much verification is appropriate rather than mechanically verifying everything forever.
+
+This makes the Repetere/Fiducia boundary particularly important.
+
+Repetere should remain the experiment mechanism.
+
+Fiducia becomes the beginning of the evidence and trust mechanism.
+
+---
+
+### Relationship Between Fiducia and Assess
+
+Moving Fiducia before Assess does not remove the eventual relationship between them.
+
+The first Fiducia implementation can operate using replay outcomes and execution history.
+
+Once Assess exists, the evidence becomes richer.
+
+The longer-term flow can become:
+
+`Repetere → behavioural evidence → Assess → assessment → Fiducia → calibrated trust`
+
+This means Fiducia can be developed incrementally rather than waiting for the complete assessment architecture.
+
+---
+
+### Checkpoints Remain Important for Assess
+
+The earlier checkpoint discussion remains an explicit prerequisite for Assess.
+
+Some checkpoint behaviour already exists in Moderari/Lumen, but it needs to be reviewed.
+
+The important question is whether checkpoints should represent more than a technical context-window rollover mechanism.
+
+For Assess, a checkpoint may need to represent a snapshot of the model's current working understanding at meaningful points in a conversation.
+
+That would allow Assess to examine not only the final answer but the state from which the answer emerged.
+
+This should be reviewed immediately before Assess development.
+
+---
+
+### Pontis and Protocol Boundary
+
+Today's architectural work also continues to reinforce the Pontis invariant.
+
+Pontis is infrastructure.
+
+It bridges clients, sessions and protocols. It does not become a conversational agent merely because it is capable of terminating traffic during standalone development.
+
+In normal Lumen operation it should transparently carry requests into the downstream stack.
+
+This distinction becomes even more important once Rogare exists because Pontis will mediate the relationship between a tool-less Lumen client and a tool-capable ACP provider such as Pi.
+
+---
+
+### Architectural Observation
+
+A recurring pattern is becoming increasingly visible across the Lumen development work.
+
+Whenever a component starts accumulating an additional responsibility, it is worth asking whether that responsibility actually belongs elsewhere.
+
+Today's Replay/Fiducia discussion is a good example.
+
+Adding “run X times” to Replay would have been straightforward technically. Architecturally, however, it would make Replay responsible for both performing an experiment and orchestrating experiments.
+
+Moving that responsibility to Fiducia produces a cleaner system and simultaneously gives Fiducia a concrete starting point.
+
+The same principle is visible elsewhere:
+
+- Lumen becomes the family; Moderari becomes the orchestrator.
+- Rogare becomes the client rather than embedding a console into the orchestrator.
+- Pontis owns protocol bridging rather than Lumen or Rogare.
+- Pi remains the tool provider.
+- Servire remains the operational control plane rather than implementing the services it controls.
+
+The architecture is becoming more modular not because modularity is itself the objective, but because the responsibilities are becoming better understood.
+
+---
+
+### Revised Near-Term Development Order
+
+The current order is now:
+
+1. Complete Trace/Vestigare port change and Pontis/Servire integration.
+2. Standardise the existing stack around the Lumen family naming model.
+3. Rename the current orchestrator to Lumen Moderari.
+4. Develop Rogare.
+5. Develop Fiducia, beginning with replay scheduling and repeated execution orchestration.
+6. Review checkpoint semantics and remaining protocol/content issues.
+7. Develop Assess.
+8. Integrate Assess evidence with Fiducia.
+9. Develop the public Lumen site and interactive demonstration once Assess is sufficiently mature.
+
+---
+
+### End-of-Day Position
+
+The principal progress today was architectural rather than a large feature implementation, but it materially reduces ambiguity in the work ahead.
+
+The Lumen family now has a clearer vocabulary, clearer component boundaries and a stronger development sequence.
+
+Most importantly, the architecture continues to move away from a monolithic “AI orchestrator” toward a collection of deliberately bounded mechanisms for orchestration, observation, replay, evidence, assessment and trust.
+
+That distinction increasingly describes what Lumen is actually becoming:
+
+> **A reasoning-assurance platform in which trust is earned from observable evidence rather than assumed from a successful response.**
+
+---
+
+# Lumen Engineering Diary --- 2026-08-10/11
+
+## Replay, Trace, Pontis and Servire Integration
+
+### Summary
+
+This development session completed a substantial integration pass across
+**Lumen Servire, Pontis, Trace and Replay**. The work moved Pontis from
+a standalone bridge into the managed Lumen++ runtime, strengthened
+Servire as the operational control plane, corrected several routing and
+lifecycle defects exposed by real Replay execution, and ultimately
+demonstrated a successful end-to-end divergent Replay that continued
+through Pi via ACP and reached a terminal model response.
+
+The most important architectural outcome is that the component
+boundaries remain intact:
+
+-   **Servire operates the stack.**
+-   **Pontis owns communication and provider-session attachment.**
+-   **Trace records traffic.**
+-   **Replay reproduces and compares behaviour.**
+-   **Lumen orchestrates model behaviour.**
+-   **Pi remains the current tool provider.**
+
+Replay does **not** call Pontis, and Trace does not depend on Replay.
+Replay depends on Trace for recorded behavioural evidence, but after a
+fork Replay becomes a transparent proxy and ordinary stack traffic
+continues unchanged.
+
+------------------------------------------------------------------------
+
+## Servire --- Pontis Integration
+
+Pontis was integrated into Servire as a fully managed service.
+
+Pontis now:
+
+-   starts and stops under Servire process control;
+-   participates in Lumen++ validation and health monitoring;
+-   is started as the final managed service in the current stack startup
+    sequence;
+-   contributes its logs to the unified Servire Operational Log;
+-   appears as a normal Servire component even though it currently has
+    no dedicated UI;
+-   reports its running state in the Pontis workspace rather than
+    presenting an unavailable-page message.
+
+The Servire Operational Log source filter was also updated so **Lumen
+Pontis** can be selected independently.
+
+This preserves the Servire design principle that the operator should
+interact with one operational control plane while the underlying Lumen++
+components remain independently responsible services.
+
+------------------------------------------------------------------------
+
+## Servire --- Operational Log Export
+
+A significant operational improvement was added to Servire: the unified
+**Operational Log can now be exported**.
+
+This is particularly valuable now that the execution path crosses
+several independently logged components. Instead of correlating separate
+Lumen, Replay, Trace and Pontis log files manually, a single Servire
+export provides the events in common chronological order.
+
+This proved immediately useful during the integration work described
+below.
+
+The exported log therefore becomes an important debugging and
+behavioural-evidence artefact for future Lumen++ development.
+
+------------------------------------------------------------------------
+
+## Port and Routing Corrections
+
+The introduction of Pontis required finalising the runtime port layout:
+
+``` text
+Pontis  : 11435
+Lumen   : 11436
+Replay  : 11437
+Trace   : 11438
+Ollama  : 11434
+```
+
+Several stale assumptions from Trace's former port were identified and
+corrected.
+
+A particularly important Servire configuration error was found where
+**Lumen Operations** and **Lumen Checkpoints** were still configured
+through Trace on port `11438`. This caused Servire health/operational
+traffic to appear inside Trace recordings.
+
+Those interfaces belong directly to Lumen and were corrected to use port
+`11436`.
+
+This reinforced an important Trace invariant:
+
+> Trace records traffic travelling through the Lumen execution stack.
+> Servire is outside that execution path and its own operational traffic
+> must not be injected into behavioural recordings.
+
+------------------------------------------------------------------------
+
+## Replay UI and Runtime State Improvements
+
+Replay's UI behaviour was tightened considerably.
+
+When **Run** or **Run again** is selected:
+
+-   the Replay card immediately enters a running state;
+-   **Run again** is disabled while execution is active;
+-   **Unstage** is disabled while execution is active;
+-   stale fork/divergence text from a previous run is cleared
+    immediately;
+-   the UI no longer requires a tab change or refresh before showing the
+    correct state.
+
+The Replay start mechanism was also changed so UI-initiated execution
+enters the **real Lumen++ ingress path** rather than using a private
+internal shortcut.
+
+Conceptually:
+
+``` text
+Replay UI
+    |
+    |  \obt replay start ...
+    v
+Pontis
+    |
+    v
+Trace
+    |
+    v
+Replay
+    |
+    v
+Lumen
+```
+
+This was critical because a replay started by an operator must exercise
+the same architecture as the stack it is intended to reproduce.
+
+------------------------------------------------------------------------
+
+## Replay Fork Semantics Reconfirmed
+
+A central architectural invariant was tested and reaffirmed:
+
+> **Forking terminates replay comparison. It does not terminate
+> traffic.**
+
+When Replay detects the first meaningful divergence:
+
+1.  the fork is recorded;
+2.  comparison stops;
+3.  Replay becomes a transparent proxy;
+4.  the model response that caused the fork continues northbound
+    unchanged.
+
+Replay must not:
+
+-   invoke Pi;
+-   create an ACP session;
+-   call Pontis;
+-   execute a tool itself;
+-   or use a private back-channel as a substitute for normal stack
+    traffic.
+
+The fork-causing response follows the ordinary path:
+
+``` text
+Lumen
+  |
+  v
+Replay   -- detects fork, then becomes transparent
+  |
+  v
+Trace
+  |
+  v
+Pontis
+```
+
+This is important because Replay may not always be present in a deployed
+stack, and Pontis must not require knowledge of Replay in order to
+manage conversations.
+
+------------------------------------------------------------------------
+
+## Pontis --- Lazy Provider Session Attachment
+
+The most substantial architectural work concerned what happens when a
+UI-initiated Replay forks and produces a tool call.
+
+At the start of such a Replay there may be no live Pi conversation
+associated with the Replay session. Once the replay forks, however, the
+divergent model behaviour must be allowed to continue normally.
+
+The responsibility belongs to **Pontis**, not Replay.
+
+The resulting rule is:
+
+> When Pontis receives northbound conversational traffic for a session
+> that has no attached northbound/provider destination, Pontis may
+> lazily establish the required provider session.
+
+For the current implementation the provider is Pi and the provider-side
+protocol is ACP.
+
+The successful flow is:
+
+``` text
+Replay fork response
+        |
+        v
+      Trace
+        |
+        v
+      Pontis
+        |
+        | no provider attachment
+        v
+ Create Pi ACP session
+        |
+        v
+ Deliver divergent response
+        |
+        v
+ Pi handles tool call
+        |
+        | subsequent HTTP conversation traffic
+        v
+      Pontis
+        |
+        v
+      Trace
+        |
+        v
+ Replay (transparent)
+        |
+        v
+      Lumen
+```
+
+This is deliberately a **Pontis provider-session capability**, not a
+Replay-specific capability. The same mechanism can later support Rogare
+and other clients.
+
+------------------------------------------------------------------------
+
+## Initial `\obt` Session Semantics
+
+Testing exposed an important distinction between a request that
+**initiates a control operation** and a request that establishes a
+conversational client binding.
+
+Replay UI starts a replay using:
+
+``` text
+\obt replay start ...
+```
+
+If Pontis treated the HTTP caller of this request as the conversational
+northbound consumer, the eventual fork response was simply returned to
+the Replay UI rather than causing provider attachment.
+
+A narrow rule was therefore introduced:
+
+> **Only when the first user message of a previously unknown session
+> begins with `\obt` does Pontis suppress creation of the HTTP
+> northbound conversational binding.**
+
+This rule is intentionally limited.
+
+A later `\obt` command inside an already-established conversation does
+**not** detach or replace that conversation's existing binding.
+
+This allows operator/control commands to enter through the real stack
+without falsely making their HTTP initiator the owner of the resulting
+conversation.
+
+------------------------------------------------------------------------
+
+## ACP Working Directory Fallback
+
+Once lazy Pi attachment was reached successfully, another integration
+requirement became visible: Pi ACP requires a working directory when a
+new provider session is created.
+
+Pontis configuration now provides:
+
+``` yaml
+acp:
+  default_cwd: "C:/Development"
+```
+
+The intended precedence is:
+
+``` text
+session-specific cwd
+        |
+        | absent
+        v
+acp.default_cwd
+        |
+        | absent
+        v
+configuration/runtime failure
+```
+
+This provides a safe general fallback while still allowing future
+clients such as Rogare to supply a more specific project working
+directory.
+
+------------------------------------------------------------------------
+
+## Successful End-to-End Divergent Replay
+
+After the routing, session and ACP fixes, the complete divergent Replay
+path was successfully exercised.
+
+The observed behaviour was:
+
+1.  Replay was started from its UI.
+2.  The start command entered Pontis.
+3.  Pontis recognised the initial `\obt` control initiation without
+    binding the UI as the conversational consumer.
+4.  Traffic passed through Trace and Replay to Lumen.
+5.  Replay detected divergence.
+6.  Replay became transparent.
+7.  The fork response travelled normally through Trace to Pontis.
+8.  Pontis detected that the session required a provider attachment.
+9.  Pontis created a Pi ACP session using the configured default working
+    directory.
+10. Pi received and executed the tool interaction.
+11. Pi's subsequent HTTP conversation traffic returned through Pontis →
+    Trace → Replay → Lumen.
+12. Lumen produced the terminal model answer.
+13. The final response travelled northbound normally.
+14. Trace completed the recording automatically.
+
+This demonstrates that the architecture can transition from **private
+behavioural reproduction** into a **live divergent conversation**
+without Replay taking ownership of provider or tool execution.
+
+That is a significant integration milestone.
+
+------------------------------------------------------------------------
+
+## Trace Recording Lifecycle
+
+Several Trace lifecycle issues were corrected during the work.
+
+Trace recording must continue across a Replay fork. A fork is not a
+terminal condition.
+
+For a Replay-owned recording, Trace stops when:
+
+-   Replay matches completely; or
+-   a divergent branch subsequently reaches its terminal conversational
+    response; or
+-   the replay fails and its owned recording must be cleaned up.
+
+Cleanup was also made more tolerant of races where Trace has already
+completed a recording naturally before Replay performs its final stop
+request. An already-completed recording should be treated as an
+idempotent lifecycle outcome rather than a meaningful operational
+failure.
+
+------------------------------------------------------------------------
+
+## Trace Recording Deletion
+
+The Replay UI exposed another ownership-boundary defect when deleting
+Trace recordings.
+
+Replay was correctly attempting to call Trace directly, but Trace did
+not yet expose the required deletion endpoint. The DELETE request
+therefore fell through Trace's transparent proxy and travelled
+incorrectly toward Lumen, where it returned `404`.
+
+The fix was made in the correct component: **Trace now owns a recording
+deletion API**.
+
+The deletion operation:
+
+-   removes the Trace recording;
+-   removes its associated recorded messages;
+-   returns `204 No Content` on successful deletion;
+-   returns `404` for an unknown recording;
+-   protects an active recording from inappropriate deletion.
+
+The final runtime test confirmed the correct path:
+
+``` text
+Replay UI
+    |
+    | DELETE recording
+    v
+Trace :11438
+    |
+    | owns deletion
+    v
+MongoDB
+```
+
+No deletion request needs to pass through Lumen.
+
+This maintains the component ownership rule:
+
+> **Trace owns Trace data.**
+
+------------------------------------------------------------------------
+
+## Replay Result Semantics
+
+A further UI/lifecycle distinction was corrected.
+
+A divergent replay that subsequently reaches a valid terminal answer is
+still **divergent**. Successful continuation of the conversation after
+the fork must not convert the replay result into a match.
+
+Replay therefore now preserves the divergence outcome after post-fork
+completion.
+
+This distinction will become especially important for Assess, because
+successful completion and behavioural equivalence are separate
+measurements.
+
+------------------------------------------------------------------------
+
+## Content Boundary Observation
+
+During the successful run, Pontis also demonstrated the previously
+introduced provider content boundary by removing Lumen operational
+assistant text before provider-facing conversation traffic continued.
+
+This supports the broader rule that Lumen operational/control material
+must not accidentally become conversational model/provider content.
+
+The earlier appearance of `\obt` material in Pi traffic was therefore
+treated as a communication-boundary problem rather than model behaviour.
+
+------------------------------------------------------------------------
+
+## Validation and Quality
+
+The development was repeatedly validated using the standard project
+quality gates:
+
+``` text
+pytest
+ruff check .
+mypy src tests
+```
+
+The final Trace changes passed all tests, Ruff and mypy.
+
+Replay's functional suite also passed, along with Ruff and mypy.
+Replay's coverage percentage remains a separate housekeeping item to
+restore above the configured 95% gate; this does not change the
+successful runtime integration result.
+
+Most importantly, the final runtime tests demonstrated the behaviour
+under the actual managed Lumen++ stack rather than only through isolated
+unit tests.
+
+------------------------------------------------------------------------
+
+## Architectural Outcomes
+
+Several architectural principles were strengthened by this work.
+
+### 1. Replay Does Not Call Pontis
+
+This remains an explicit invariant.
+
+Replay knows how to replay and compare behaviour. It does not know how
+provider sessions are created.
+
+### 2. Fork Means Transparent
+
+Once divergence occurs, Replay comparison is finished and Replay behaves
+as an ordinary transparent proxy for the remainder of that conversation.
+
+### 3. Pontis Owns Communication
+
+Pontis decides how an unattached conversation acquires a provider-side
+session.
+
+Today that means Pi via ACP. Future providers may use different
+protocols without changing Replay.
+
+### 4. Trace Owns Recording
+
+Trace owns recording creation, completion, persistence and deletion.
+
+Replay may request lifecycle operations because Replay depends on Trace,
+but it does not own Trace's persistence.
+
+### 5. Servire Remains Outside the Behaviour Path
+
+Servire operates and observes the stack. Its health checks and UI
+traffic must not become part of Trace behavioural recordings.
+
+### 6. The Stack Remains Composable
+
+The architecture continues to avoid assumptions that every component is
+always present.
+
+Replay depends on Trace for replay evidence, but:
+
+-   Trace does not depend on Replay;
+-   Pontis does not depend on Replay;
+-   Lumen does not depend on Replay;
+-   Pontis provider attachment does not require Replay to exist.
+
+This remains fundamental to the Lumen++ component model.
+
+------------------------------------------------------------------------
+
+## Operational Reflection
+
+This session demonstrated why the Servire Operational Log is becoming an
+important engineering tool.
+
+The faults encountered were not isolated implementation mistakes. They
+occurred at boundaries between:
+
+-   control traffic and conversation traffic;
+-   replay comparison and transparent proxying;
+-   HTTP sessions and ACP sessions;
+-   operational health traffic and behavioural traffic;
+-   component ownership and generic proxy fallback.
+
+Having the logs from all managed services merged chronologically made
+those boundary transitions visible and materially reduced the difficulty
+of diagnosing them.
+
+The debugging process also validated the project's preference for
+preserving architectural responsibility rather than applying local
+shortcuts. Several tempting fixes would have made Replay explicitly
+aware of Pontis or Pi. Those were rejected in favour of fixing session
+semantics where they belong: inside Pontis.
+
+------------------------------------------------------------------------
+
+## Current State
+
+At the end of this work:
+
+-   Pontis is a managed Servire service.
+-   Pontis participates in stack startup, shutdown, health and logging.
+-   Servire can export the unified Operational Log.
+-   Replay UI starts enter through the real Lumen++ ingress.
+-   Replay running-state UI behaviour is immediate and consistent.
+-   stale fork information is cleared on a new run.
+-   Replay correctly becomes transparent after divergence.
+-   Pontis can lazily attach Pi via ACP when divergent traffic has no
+    provider attachment.
+-   initial `\obt` control requests no longer incorrectly establish a
+    conversational HTTP binding.
+-   ACP provider creation has a configured default working directory.
+-   divergent Replay conversations can execute tools and continue to a
+    terminal model response.
+-   Trace remains active across the fork and completes at the terminal
+    response.
+-   Replay preserves the divergent outcome after successful post-fork
+    completion.
+-   Trace recording deletion is owned and handled by Trace.
+-   Replay can successfully delete completed Trace recordings through
+    the Trace API.
+-   the complete behaviour has been exercised successfully under the
+    managed Lumen++ stack.
+
+## Conclusion
+
+This was an important integration session because it moved Replay, Trace
+and Pontis beyond individually functioning components and demonstrated
+their intended **composed behaviour**.
+
+The resulting execution path preserves the Lumen++ single-responsibility
+model while supporting a difficult transition: a deterministic Replay
+can diverge, surrender comparison responsibility, attach a live tool
+provider through Pontis, continue as a normal conversation, and still
+retain a complete Trace of what occurred.
+
+That provides a considerably stronger foundation for the next stages of
+Lumen++ development, particularly Rogare, Fiducia and later Assess.
