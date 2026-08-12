@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_OVERVIEW.md",
+                "file": "docs/lumen-ecosystem/LUMAN_FAMILY_NAMES.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "LUMEN_PONTIS_OVERVIEW"
+              "title": "LUMAN_FAMILY_NAMES"
             }
           }
         ]
@@ -185,6 +185,15 @@
   },
   "active": "bba0fffa5f94f3ef",
   "lastOpenFiles": [
+    "docs/lumen-ecosystem/LUMEN_OFFLINE_CLEAR_LOGS_STANDARD.md",
+    "LUMEN_POST_ROGARE_DEVELOPMENT_ROADMAP_2026-08-11_UPDATED.md",
+    "LUMEN_POST_ROGARE_DEVELOPMENT_ROADMAP_2026-08-11.md",
+    "LUMEN_INSTALLATION_AND_DISTRIBUTION_ARCHITECTURE.md",
+    "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_OVERVIEW.md",
+    "docs/lumen-ecosystem/LUMAN_FAMILY_NAMES.md",
+    "docs/Lumem-Family.txt",
+    "docs/lumen-ecosystem/orchestrator",
+    "docs/lumen-ecosystem/New folder",
     "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_LAZY_PROVIDER_SESSION_ATTACHMENT.md",
     "LUMEN_PROJECT_STATUS_AND_ROADMAP_2026-08-10_UPDATED.md",
     "docs/lumen-ecosystem/console/LUMEN_ROGARE_PONTIS_CAPABILITY_ROUTING_DESIGN_2026-08-10.md",
@@ -193,10 +202,8 @@
     "docs/lumen-ecosystem/assess/LUMEN_ASSESS_REFINED_ROLE_REASONING_ASSURANCE_2026-08-10.md",
     "docs/lumen-ecosystem/console/LUMEN_ROGARE_PONTIS_CAPABILITY_ROUTING_DESIGN.md",
     "docs/lumen-ecosystem/console",
-    "docs/lumen-ecosystem/New folder",
     "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_ARCHITECTURE.md",
     "docs/lumen-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
-    "docs/lumen-ecosystem/bridge/LUMEN_PONTIS_OVERVIEW.md",
     "docs/lumen-ecosystem/bridge",
     "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_ROADMAP_MILESTONES_8-12_ADDENDUM.md",
     "LUMEN_DOCUMENTATION_ARCHITECTURE.md",
@@ -212,16 +219,9 @@
     "docs/digests/html/Illuminates.One-Corporate-Brand.png",
     "docs/digests/html",
     "docs/digests/pdf/Lumen_Engineering_Digest_Vol1_v4.pdf",
-    "docs/digests/pdf",
-    "docs/digests",
     "docs/research-ecosystem/LUMEN_REPLAY_TRACE_FINALISATION_BEFORE_ASSESS.md",
     "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_MILESTONES.md",
     "docs/lumen-ecosystem/trace/LUMEN_TRACE_OVERVIEW.md",
-    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_OVERVIEW.md",
-    "docs/lumen-ecosystem/trace/LUMEN_TRACE_ARCHITECTURE.md",
-    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_ROADMAP_MILESTONES_8-12.md",
-    "docs/lumen-ecosystem/servire/ENGINEERING_DIARY_2026-08-06_SERVIRE_DIRECTION.md",
-    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_INIT_PLAN.md",
-    "docs/lumen-ecosystem/servire/ENGINEERING_DIARY_2026-08-07_SERVIRE_M1_COMPLETE.md"
+    "docs/lumen-ecosystem/servire/LUMEN_SERVIRE_OVERVIEW.md"
   ]
 }

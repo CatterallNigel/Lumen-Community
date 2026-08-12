@@ -8821,3 +8821,493 @@ retain a complete Trace of what occurred.
 
 That provides a considerably stronger foundation for the next stages of
 Lumen++ development, particularly Rogare, Fiducia and later Assess.
+
+---
+
+# Lumen Engineering Diary --- 2026-08-11
+
+## Moderari Migration, Servire Standardisation and Stack Regression
+
+This morning completed an important architectural transition in the
+Lumen ecosystem: the original Lumen orchestrator has become **Lumen
+Moderari**, while **Lumen** now unambiguously names the complete
+reasoning-assurance ecosystem.
+
+### Lumen Moderari
+
+The former `ollama-tool-wrapper` codebase was migrated into a new
+canonical **Lumen-Moderari** project and repository. The historical
+repository has been retained rather than renamed in place, preserving
+the development lineage while giving Moderari a clean component
+boundary.
+
+The implementation was standardised as a first-class Python
+service/module under `lumen_moderari`, with canonical startup through:
+
+`python -m lumen_moderari`
+
+The service identity, configuration, logger namespace, operational UI,
+health metadata and log naming were updated for Moderari. The existing
+orchestration responsibility was deliberately left unchanged.
+
+The migration also exposed and resolved several useful cleanup issues:
+
+-   Ruff and Mypy findings inherited during the codebase move were
+    corrected.
+-   Profile-directory resolution was made deterministic after startup
+    validation incorrectly searched `src/profiles`.
+-   Model profile YAML files were explicitly treated as package data.
+-   A restored-session message-path issue discovered during cleanup was
+    corrected.
+-   The old hard-coded `[Lumen v3.2.12]` control banner was replaced
+    with a version sourced from the Moderari package identity.
+
+The resulting baseline passed:
+
+-   **159 pytest tests**
+-   **Ruff --- all checks passed**
+-   **Mypy --- no issues in 43 source files**
+
+A new Git repository was then created and pushed for **Lumen-Moderari**.
+
+### Live Moderari Verification
+
+Moderari was first run independently on port `11436` while the previous
+Servire-managed Lumen process was stopped.
+
+The live stack was exercised through Pi. Normal prompts were correctly
+processed and answered, and a Replay was successfully driven through
+divergence/fork behaviour.
+
+The complete path therefore remained operational after the identity
+migration:
+
+`Pi → Pontis → Vestigare → Repetere → Moderari → model`
+
+including Pontis provider/session behaviour, tool execution, post-fork
+transparent traffic, terminal model response and Trace completion.
+
+The Moderari rename has therefore been demonstrated as an
+identity/module standardisation rather than a behavioural change.
+
+### Servire Standardisation
+
+Servire was then updated to reflect the new component model.
+
+Its configuration now points to the new `C:\Development\Lumen-Moderari`
+project and launches the orchestrator as the `lumen_moderari` module
+rather than the historical Lumen script.
+
+Top-level component navigation was standardised around:
+
+-   **Servire --- Service**
+-   **Moderari --- Orchestrator**
+-   **Repetere --- Replay**
+-   **Vestigare --- Trace**
+-   **Pontis --- Bridge**
+
+The former top-level **Lumen Operations** and **Lumen Checkpoints**
+entries were removed. Operations and Checkpoints are now capabilities
+inside the **Moderari --- Orchestrator** workspace, reinforcing the
+distinction between components and the capabilities owned by those
+components.
+
+The Servire dashboard was also reorganised so that **Operational Log**
+sits between **Stack Actions** and **Managed Services / External
+Dependencies**. The operational-log toolbar was adjusted so its Pause,
+Export and Clear controls remain together at normal desktop widths
+rather than moving Clear onto a second line as the log fills.
+
+The Servire regression baseline passed:
+
+-   **95 pytest tests**
+-   **95.29% coverage**
+-   **Ruff clean after formatting cleanup**
+-   **Mypy clean**
+
+Normal Pi traffic through the Servire-managed stack was subsequently
+verified.
+
+### Replay Regression and Integrity Finding
+
+A Replay initially failed after the Servire work. Investigation showed
+that this was **not** a Moderari or Servire regression.
+
+The Prepared Replay referenced a Trace recording that had previously
+been deleted. Repetere consequently raised `RecordingNotFoundError`
+while attempting to construct the replay run.
+
+A fresh valid Replay was tested and Replay is operating correctly.
+
+The failure did expose an integrity rule that now needs to be formalised
+after Rogare:
+
+> A Trace recording referenced by a Prepared Replay must be protected
+> from deletion until the dependent Prepared Replay is unstaged/deleted.
+
+Repetere must also gracefully handle historical missing-source states
+rather than allowing an unhandled HTTP 500.
+
+The terminology was reviewed at the same time. **Experiment** is too
+broad for the core Replay lifecycle. The preferred vocabulary is now:
+
+`Trace Recording → Prepared Replay → Replay Run → Replay Result`
+
+with **Fork Point** retained for the first behavioural divergence.
+
+### Servire Follow-up Findings
+
+Two operational improvements were identified and deliberately deferred
+until after Rogare.
+
+First, Servire needs to distinguish startup validation from ongoing
+runtime health. A stack whose managed processes are still alive should
+not remain reported as fully healthy if a required dependency such as
+Ollama or MongoDB disappears.
+
+The intended runtime states are:
+
+-   **HEALTHY**
+-   **DEGRADED**
+-   **STOPPED**
+-   **FAILED**
+
+Loss of Ollama or MongoDB should make a running stack **DEGRADED**, not
+automatically stop it. Recovery of the dependency should allow Servire
+to return the stack to HEALTHY.
+
+Second, each Lumen service should own a standard **Clear Logs API**.
+Servire should request log clearing through the component API rather
+than directly manipulating another service's log files. Existing
+components will be retrofitted after Rogare; Rogare should implement the
+convention from its initial development.
+
+The Replay investigation also showed that Servire's operational log
+needs proper multiline exception capture. Recording only
+`Exception in ASGI application` without the associated traceback is not
+sufficient operational evidence.
+
+These items have been captured in the post-Rogare development roadmap.
+
+## End-of-Morning Position
+
+The architectural standardisation preceding Rogare is now effectively
+complete.
+
+**Lumen** is the ecosystem.\
+**Moderari** is the orchestrator.\
+**Servire** is the operational control plane.\
+**Pontis** is the bridge.\
+**Vestigare** records behaviour.\
+**Repetere** performs a single Replay.
+
+The existing stack has been regression-tested through real Pi traffic
+and Replay behaviour following the Moderari and Servire changes.
+
+The project is now ready to begin **Lumen Rogare** development.
+
+---
+
+# Engineering Diary — 2026-08-12
+
+## Lumen Repetere / Pontis Integration and Replay Operational Hardening
+
+Today’s work focused primarily on stabilising and completing the current **Lumen Repetere (Replay) M10.5** operational flow, while also validating the recently completed **Lumen Pontis M6** tool-bridge behaviour through real Replay fork scenarios.
+
+### Pontis M6 validation
+
+Pontis M6 was exercised against live Replay traffic after the ACP diagnostics work completed successfully.
+
+The M6 implementation was confirmed to:
+
+- start and maintain the Pontis HTTP proxy path;
+- initialise the Pi ACP adapter at runtime;
+- identify model tool calls arriving from the Lumen stack;
+- create/use an ACP interaction with Pi where required;
+- accept provider re-entry over the existing HTTP path;
+- avoid repeatedly creating new ACP/tool cycles for traffic already associated with a known session;
+- allow Replay to remain a transparent proxy after divergence.
+
+Several early test runs exposed feedback-loop behaviour where HTTP replies could be reintroduced repeatedly into the tool path. Pontis session/tool-cycle handling was tightened so that known HTTP sessions are recognised and provider re-entry does not recursively spawn further tool cycles.
+
+The resulting forked Replay path now behaves as intended:
+
+```text
+Replay compares recorded behaviour
+        ↓
+first behavioural divergence
+        ↓
+Replay becomes transparent
+        ↓
+message continues through Trace → Pontis
+        ↓
+Pontis handles required Pi/tool interaction
+        ↓
+result returns through the Lumen stack
+        ↓
+model continues
+        ↓
+final model answer
+```
+
+The important architectural rule remains unchanged: **Pi is a tool provider, not the owner of the conversation.** The client ↔ model conversation remains intact through Moderari, while Pontis mediates the tool-provider path.
+
+---
+
+## Replay M10.5 — Trace lifecycle correction
+
+A significant amount of work was completed around automatic Trace lifecycle management during Replay.
+
+A previous defect caused Replay to attempt to stop Trace before the final HTTP response had completely unwound through the active Trace exchange. This produced misleading errors such as:
+
+```text
+Automatic Trace recording could not be stopped
+```
+
+even though Vestigare subsequently completed the recording successfully.
+
+The fix changed divergent finalisation so that a terminal model response becomes a **terminal candidate** rather than causing an immediate Trace stop.
+
+Replay now waits for the response to complete and allows a short continuation-settle period. If further continuation traffic appears, the initial finalisation attempt is superseded.
+
+The confirmed divergent lifecycle is now:
+
+```text
+Replay starts
+    ↓
+Trace starts recording
+    ↓
+Replay matches behaviour
+    ↓
+fork detected
+    ↓
+Replay becomes transparent
+    ↓
+tool / provider continuation continues
+    ↓
+final model answer observed
+    ↓
+terminal candidate recorded
+    ↓
+continuation settles
+    ↓
+Trace stops
+    ↓
+Replay marked divergent · completed
+```
+
+This preserves the key rule that **Trace must record the complete divergent conversation through the final model answer**, not merely up to the fork.
+
+Full-match behaviour remains simpler:
+
+```text
+all meaningful Replay steps match
+    ↓
+terminal answer received
+    ↓
+Trace completes
+    ↓
+Replay marked matched · completed
+```
+
+Both paths were operationally verified today.
+
+---
+
+## Replay operator UI state model
+
+The Replay operator interface was significantly hardened so that the UI reflects the real runtime lifecycle rather than forcing the operator to infer state from buttons or from the Trace screen.
+
+Replay cards now distinguish **behavioural outcome** from **execution lifecycle**.
+
+Examples:
+
+```text
+RUNNING · RUNNING
+DIVERGENT · COMPLETED
+MATCHED · COMPLETED
+```
+
+During a run:
+
+- `Matched steps` resets immediately to `0`;
+- **Run again** is disabled;
+- **Unstage** is disabled;
+- a clear running message is shown;
+- the UI polls a lightweight Replay-status endpoint.
+
+For a divergent Replay, the UI now explicitly transitions from a continuing state to a completed state once the live branch settles and Trace has completed.
+
+The completed divergent card retains:
+
+- the number of matched steps before the fork;
+- the fork step;
+- expected behaviour;
+- observed behaviour;
+- the final `divergent · completed` outcome.
+
+A defensive runtime invariant was also added: **once a Replay run becomes divergent, that run cannot later be reclassified as matched.**
+
+---
+
+## Replay UI result-classification fixes
+
+Several misleading operator messages were identified and corrected.
+
+A downstream HTTP `404` or an already-running `409` could previously be mapped to messages such as:
+
+```text
+replay-not-found
+replay-not-ready
+```
+
+even though the staged Replay existed and was already executing.
+
+The result mapping was corrected so that:
+
+- `replay-not-found` is reserved for a genuine local staged-Replay lookup failure;
+- an already-active Replay is represented as running rather than as an operational failure;
+- downstream provider/control errors do not overwrite an already-established Replay runtime outcome;
+- a divergent Replay remains divergent even if later continuation traffic returns an HTTP error.
+
+---
+
+## Trace-recording housekeeping and referential integrity
+
+The Trace recordings section of Replay also received several operator-quality improvements.
+
+The recording table is now contained in a fixed-height scrollable area, making large recording histories manageable without making the Replay page excessively long.
+
+A completed Trace recording that has been staged for Replay is now represented by a single operational status:
+
+```text
+staged for replay
+```
+
+rather than simultaneously showing both `completed` and `staged for replay`.
+
+While a Trace recording is referenced by a staged Replay:
+
+- **Stage** is disabled;
+- **Delete** is disabled;
+- the staged Replay relationship is visible;
+- backend deletion is also rejected, preventing orphaned Replay definitions.
+
+Unstaging the Replay releases the recording so it can again be staged or deleted.
+
+---
+
+## Replay log housekeeping
+
+Replay now supports the standard module-level log-clearing command:
+
+```cmd
+python -m lumen_replay clear-logs
+```
+
+The command:
+
+- clears Replay-owned log files only;
+- preserves the log directory;
+- refuses to clear logs while the Replay service is running.
+
+This follows the service-log lifecycle convention being established across the Lumen components.
+
+---
+
+## Test and quality status
+
+The final Replay validation gate reached a clean result:
+
+```text
+202 tests passed
+Coverage: 95.06%
+ruff check . : passed
+mypy src tests : passed
+```
+
+The 95% coverage requirement was retained throughout. Coverage was recovered by adding meaningful regression tests rather than weakening the threshold or excluding new code.
+
+New tests cover, among other things:
+
+- deferred divergent terminal finalisation;
+- continuation traffic superseding an earlier finalisation candidate;
+- Trace-control failure paths;
+- Replay UI runtime-status polling;
+- active versus completed Replay presentation;
+- staged recording presentation and restrictions;
+- duplicate-stage prevention;
+- backend deletion protection for staged recordings;
+- Replay result classification;
+- divergence immutability.
+
+---
+
+## Operational verification
+
+Two representative Replay outcomes were verified through Servire.
+
+### Full-match Replay
+
+The run progressed through:
+
+```text
+completed
+→ start
+→ running
+→ three matched behavioural steps
+→ terminal model answer
+→ Trace stopped
+→ matched · completed
+```
+
+The UI correctly reset `Matched steps` on start, disabled operator actions while running, then restored them after completion.
+
+### Divergent Replay
+
+A separate run produced a genuine fork after one matched step.
+
+The final UI correctly showed:
+
+```text
+DIVERGENT · COMPLETED
+Matched steps: 1
+Fork at step 2
+```
+
+with the expected and observed tool-call differences preserved.
+
+The operational log confirmed that Replay did not stop Trace at the fork. The live continuation completed, the final model answer was received, continuation traffic settled, Trace completed with the full recording, and only then was the Replay finalised as divergent.
+
+This is the intended Repetere behaviour.
+
+---
+
+## Remaining observation
+
+The historical `\obt` banner remains visible in some Moderari conversation traffic. This has already been identified as a Moderari/session-handling issue rather than a Replay defect.
+
+It did not prevent Replay from matching or diverging correctly during today’s tests, but it remains a separate item for investigation before later Assess work.
+
+---
+
+## End-of-session position
+
+The current Replay M10.5 work can now be considered **operationally verified for both primary execution outcomes**:
+
+```text
+full match
+→ matched · completed
+
+first fork
+→ transparent live continuation
+→ final model answer
+→ Trace completion
+→ divergent · completed
+```
+
+Replay now has clearer operator state, safer Trace lifecycle handling, staged-recording integrity, log housekeeping, and a clean automated quality gate.
+
+Pontis M6 is also successfully participating in the fork/tool-provider path without breaking Replay’s transparent-proxy responsibility.
+
+---
