@@ -9311,3 +9311,293 @@ Replay now has clearer operator state, safer Trace lifecycle handling, staged-re
 Pontis M6 is also successfully participating in the fork/tool-provider path without breaking Replay’s transparent-proxy responsibility.
 
 ---
+
+## 2026-08-13 — Rogare / Pontis / Servire Integration
+
+### Summary
+
+Completed the first operational integration of Lumen Rogare into the managed Lumen stack.
+
+Rogare is now operating as the Lumen-native conversational console, with Pontis providing provider/session arbitration and Pi acting as the external tool provider through ACP.
+
+Servire has been extended to recognise and manage Rogare as a first-class Lumen service.
+
+### Servire-managed stack
+
+The managed startup sequence now successfully brings the complete operational stack online:
+
+1. Lumen Moderari — Orchestrator
+2. Lumen Repetere — Replay
+3. Lumen Vestigare — Trace
+4. Lumen Pontis — Bridge
+5. Lumen Rogare — Console
+
+External dependencies remain:
+
+- Ollama — model provider
+- Pi — tool/client provider
+- MongoDB — persistence
+
+Servire successfully validates the stack and reaches READY with all five managed services running.
+
+### Rogare operational validation
+
+Rogare successfully establishes a conversational session through Pontis.
+
+The provider binding correctly exposes:
+
+- Pontis state
+- provider state
+- provider capabilities
+- model
+- ACP session identity
+
+A full multi-tool conversational test was successfully completed.
+
+The test exercised:
+
+- `bash`
+- `read`
+- continued model/tool interaction
+- ACP tool execution through Pi
+- HTTP provider re-entry through Pontis
+- Moderari model interaction
+- Repetere transparent pass-through
+- Vestigare transparent pass-through
+
+Pontis correctly recognised provider re-entry during an active ACP prompt and preserved the transparent HTTP response path.
+
+The existing ACP provider session was reused for subsequent tool activity rather than creating a new ACP session.
+
+This confirms the intended architecture:
+
+Rogare
+  ↓
+Pontis
+  ↓
+Vestigare
+  ↓
+Repetere
+  ↓
+Moderari
+  ↓
+Model
+
+with tool execution arbitrated by:
+
+Pontis ↔ Pi (ACP)
+
+### Servire / Rogare workspace
+
+Rogare has been added to the Servire workspace as:
+
+**Rogare — Console**
+
+The Rogare UI can be embedded directly within Servire and can also be opened as a separate pop-out window.
+
+The pop-out mechanism has been successfully tested.
+
+This provides a useful operational arrangement in which Rogare can occupy one display/window while Servire remains visible alongside it for stack state and operational logging.
+
+### Remaining UI decision
+
+One usability issue remains with pop-out operation.
+
+At present, opening Rogare in a separate window leaves another independent-looking Rogare interface embedded in Servire. This is potentially confusing because the two surfaces appear equivalent while their UI/session state is not necessarily synchronised.
+
+Two possible approaches remain:
+
+1. Synchronise the embedded and pop-out Rogare interfaces so both represent the same active state/session.
+
+2. Preferred simpler approach: when Rogare is operating in a pop-out window, replace the embedded Servire Rogare UI with a status panel indicating that Rogare is currently open externally, with an appropriate action to return/open/focus the console.
+
+This should be resolved before considering the Rogare/Servire integration complete.
+
+### Milestone status
+
+The core Rogare architecture is now operational end-to-end.
+
+Confirmed:
+
+- Rogare conversational console
+- Pontis session/provider arbitration
+- persistent ACP provider session
+- Pi tool execution
+- multi-tool conversations
+- transparent HTTP provider re-entry
+- full Lumen stack traversal
+- Servire-managed Rogare lifecycle
+- Servire Rogare workspace integration
+- Rogare pop-out operation
+
+The remaining work is predominantly Servire/Rogare UI lifecycle and presentation rather than core protocol architecture.
+
+---
+
+## 2026-08-13 — Replay Fork End-to-End Validation
+
+### Summary
+
+Completed an end-to-end validation of Lumen Repetere replay behaviour through the current integrated stack:
+
+**Pontis → Vestigare → Repetere → Moderari → Model**
+
+with Pontis providing the ACP bridge to Pi when model-requested tools are required.
+
+Two executions of the same staged Replay experiment were observed:
+
+1. A **full behavioural match**
+2. A **behavioural divergence / fork**
+
+Both completed successfully and demonstrated the intended Replay lifecycle.
+
+### Full-Match Validation
+
+The first execution followed the recorded behavioural path.
+
+Repetere successfully matched the meaningful tool-call sequence and allowed the execution to proceed to its terminal model response.
+
+At completion:
+
+- Replay reported a **full match**.
+- The automatically-created Vestigare recording was stopped.
+- The Trace recording was marked `completed`.
+- The Replay experiment transitioned to `MATCHED · COMPLETED`.
+- The UI correctly exposed the completed result.
+
+The operational log explicitly recorded:
+
+`Replay outcome: full match; automatic Trace recording completed`
+
+This confirms the normal Replay path is functioning correctly end-to-end.
+
+### Fork / Divergence Validation
+
+A second execution of the same experiment produced a genuine behavioural divergence.
+
+The recorded tool call used:
+
+`echo $((3 * 9 / 6))`
+
+while the new execution produced:
+
+`echo $(( (3 * 9) / 6 ))`
+
+Although the commands are semantically equivalent and produce the same result, their representations differ.
+
+Under the current Replay policy this is intentionally treated as behavioural divergence. Replay is responsible for identifying observable behavioural differences, not deciding semantic equivalence. Semantic interpretation remains a future responsibility of Aestimare.
+
+Repetere therefore correctly identified the first divergent step and recorded the Replay as:
+
+`DIVERGENT · COMPLETED`
+
+with the expected and observed calls visible in the operator UI.
+
+### Post-Fork Behaviour
+
+The most important validation was the behaviour after divergence.
+
+On detecting the fork, Repetere:
+
+1. Ended behavioural comparison.
+2. Recorded the fork point.
+3. Switched to transparent passthrough.
+4. Allowed the new model behaviour to continue.
+5. Did **not** stop the active Trace recording at the fork.
+
+Pontis subsequently handled the model's tool requirement through the ACP connection to Pi.
+
+The divergent execution therefore continued through the normal operational stack rather than being constrained by the original Replay path.
+
+This validates the architectural principle:
+
+> **A Replay fork ends comparison, not execution.**
+
+### Trace Lifecycle
+
+Vestigare remained active throughout the divergent continuation.
+
+This is an important confirmation of the Replay/Trace lifecycle design.
+
+Trace must not stop merely because Replay has detected a fork. The new behaviour after the fork is precisely the behaviour that needs to be preserved.
+
+Once the divergent branch reached its terminal state, Repetere automatically stopped the associated Trace recording and recorded the completed divergent outcome.
+
+The resulting Trace contained the continuation beyond the original behavioural fork.
+
+### Pontis / ACP Validation
+
+The fork test also exercised the newer Pontis tool-provider path.
+
+After divergence:
+
+- Pontis detected the model tool request.
+- An ACP session with Pi was established.
+- The Lumen/Pontis session was bound to the ACP session.
+- The tool request was delivered through Pi.
+- Tool results were returned to the model path.
+- Repetere remained transparent during this continuation.
+
+This provides useful end-to-end evidence that Pontis can support tool execution during a divergent Replay branch without Replay assuming responsibility for tool execution.
+
+### Operator UI
+
+The Repetere operator UI now provides a particularly useful side-by-side representation of the two possible Replay outcomes.
+
+The same staged experiment visibly shows:
+
+- `MATCHED · COMPLETED`
+- `DIVERGENT · COMPLETED`
+
+For the divergent execution the UI also exposes:
+
+- the fork step;
+- expected behaviour;
+- observed behaviour;
+- completion state.
+
+This makes the distinction between deterministic replay and behavioural observation immediately understandable from the operator interface.
+
+### Observation
+
+A `404 Not Found` was observed late in the divergent continuation path through Pontis.
+
+This did not prevent Replay from completing correctly:
+
+- continuation traffic was recognised;
+- premature terminal finalisation was deferred;
+- the branch subsequently settled;
+- Trace was stopped and completed correctly;
+- the Replay was persisted as divergent/completed.
+
+The 404 should therefore be investigated separately, but is not considered a failure of the Replay lifecycle demonstrated by this test.
+
+### Validation Result
+
+**PASS — Full behavioural match**
+
+**PASS — Behavioural divergence detection**
+
+**PASS — Fork-point capture**
+
+**PASS — Transparent passthrough after divergence**
+
+**PASS — Pontis ACP/Pi tool execution during divergent continuation**
+
+**PASS — Trace remains active after fork**
+
+**PASS — Automatic Trace completion after divergent branch settles**
+
+**PASS — Correct MATCHED / DIVERGENT presentation in Repetere UI**
+
+### Significance
+
+This test provides the first clear end-to-end demonstration of the intended Replay fork architecture operating across the integrated Lumen stack.
+
+Repetere is now demonstrating its intended responsibility cleanly:
+
+> **Replay observes whether a previous behavioural path is reproduced. If that path diverges, Replay records where it diverged and then gets out of the way.**
+
+The resulting divergent behaviour remains observable through Vestigare and available for subsequent analysis by Aestimare.
+
+This establishes a strong foundation for behavioural comparison and later repeated experimentation under Fiducia.
