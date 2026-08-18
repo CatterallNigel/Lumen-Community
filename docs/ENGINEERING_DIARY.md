@@ -9601,3 +9601,1569 @@ Repetere is now demonstrating its intended responsibility cleanly:
 The resulting divergent behaviour remains observable through Vestigare and available for subsequent analysis by Aestimare.
 
 This establishes a strong foundation for behavioural comparison and later repeated experimentation under Fiducia.
+
+---
+
+# Lumen Engineering Diary --- 15 August 2026
+
+## Rogare, Moderari/Pontis Backchannel and Vestigare Operational Work
+
+Today's work concentrated on completing the operational feedback path
+into Lumen's conversational clients, finishing the current Rogare
+milestone, and standardising Vestigare's log-management behaviour before
+moving on to Servire.
+
+### Moderari → Pontis Backchannel
+
+The Moderari backchannel design was proven end-to-end.
+
+Moderari now sends heartbeat and progress events directly to Pontis over
+the dedicated backchannel rather than allowing those operational
+messages to travel through the normal Vestigare → Repetere → Moderari
+conversational route.
+
+This preserves the architectural separation we wanted:
+
+-   operational feedback does not enter Replay/Repetere;
+-   Vestigare does not need to understand heartbeat or progress events;
+-   the normal model response remains independent of operational status;
+-   Pontis becomes the rendezvous point between Moderari operational
+    events and whichever client is actually present.
+
+The Pi path was successfully tested. Pontis multiplexes incoming
+Moderari progress events onto Pi's still-open client response, allowing
+progress to appear as it is emitted rather than being buffered and
+delivered with the final model answer.
+
+This resolved the earlier behaviour where all progress messages appeared
+together only when the model completed.
+
+### Rogare Backchannel Integration
+
+Rogare was then connected to the same Pontis backchannel infrastructure.
+
+Unlike Pi, Rogare does not require Pontis to push events directly into
+its conversational response. Pontis retains session-correlated
+backchannel events and Rogare polls for new events while a request is
+active.
+
+This proved to be the better architectural choice for Rogare. Rogare is
+an optional Lumen client and must not become a dependency of Pontis or
+the wider Lumen stack. A deployment may use Pi, Rogare, another console,
+or a third-party client.
+
+The resulting relationship is deliberately:
+
+``` text
+Moderari ──push──► Pontis
+                   ▲
+                   │ poll
+                 Rogare
+```
+
+Rogare displays heartbeat and progress information in its transient
+**Lumen is working** operational area rather than adding those messages
+to conversational history.
+
+The implementation was successfully tested with a long-running model
+request. Progress appeared live in Rogare while the model continued
+working, and the eventual assistant answer arrived normally.
+
+A follow-up optimisation set Rogare's backchannel polling cadence to
+five seconds. With Moderari heartbeats currently emitted every twenty
+seconds, this remains responsive while avoiding unnecessary polling
+traffic.
+
+### Rogare Session and Operator Improvements
+
+The remaining planned Rogare work was implemented after the backchannel
+had been proven.
+
+Rogare now provides an explicit **New Session** operation for starting
+with genuinely clean conversational context.
+
+New sessions are automatically named using a timestamp-based convention:
+
+``` text
+session-rogare-YYYYMMDD-HHMMSS
+```
+
+The generated name remains editable by the user.
+
+Bootstrap and internal control material is kept out of the visible
+conversational surface. In particular, the legacy Moderari `\obt`
+startup/banner material is no longer relied upon for Rogare
+presentation.
+
+Instead, Rogare provides its own persistent UI guidance explaining that
+`\obt` commands are handled by Moderari rather than being sent to the
+model.
+
+Rogare also gained direct Vestigare recording controls. Trace recording
+can now be started and stopped from the Rogare interface while Vestigare
+remains responsible for the actual recording lifecycle.
+
+The working/progress presentation was tidied so that Moderari's progress
+message remains the primary operational information while Rogare
+maintains its own elapsed-time indication separately.
+
+Finally, a **Cancel** control was added beside **Send**. This allows an
+active conversation to be cancelled rather than requiring the user to
+wait for a long-running model operation to finish. Cancellation
+terminates the active Rogare request, stops the associated backchannel
+polling, clears the working state, and leaves the session available for
+another prompt.
+
+At this point the current Rogare operational milestone is considered
+complete.
+
+### Vestigare Clear-Logs Standardisation
+
+Attention then moved to Vestigare for the remaining log-management
+standardisation work.
+
+Vestigare now supports the component-owned offline command:
+
+``` text
+python -m lumen_trace clear-logs
+```
+
+The implementation follows the same safety model being adopted across
+the Lumen services:
+
+-   only Vestigare-owned files beneath its `logs` directory are cleared;
+-   the log directory itself is preserved;
+-   a configured logging path outside the component-owned log directory
+    is rejected;
+-   the operation refuses to run while Vestigare is actively listening
+    on its configured port;
+-   MongoDB, FastAPI, proxying and recording infrastructure are not
+    initialised simply to perform log maintenance.
+
+The first implementation added six focused tests for this behaviour.
+
+The full local validation subsequently completed successfully:
+
+``` text
+pytest
+53 passed
+
+ruff check .
+All checks passed!
+```
+
+One final mypy incompatibility remained between the concrete `AppConfig`
+and the structural configuration protocol used by the log-cleanup
+command. This was corrected by defining the nested `server` and
+`logging` protocol members as read-only properties, allowing the
+concrete configuration types to satisfy the protocol without changing
+runtime behaviour.
+
+Vestigare's clear-log implementation is therefore complete pending the
+final local mypy confirmation after that small typing correction.
+
+## Architectural Outcome
+
+Today's work reinforces an important separation within Lumen:
+
+``` text
+                 operational events
+Moderari ─────────────────────────────► Pontis
+                                         │
+                         ┌───────────────┴───────────────┐
+                         │                               │
+                    Pi live stream                 Rogare polling
+                         │                               │
+                         ▼                               ▼
+                    Pi console                     Rogare UI
+
+
+Normal conversational path:
+
+Client → Pontis → Vestigare → Repetere → Moderari → Model
+```
+
+Operational status no longer needs to contaminate the
+recorded/replayable conversational path.
+
+Rogare also remains what it should be: a first-party Lumen console that
+provides the fullest integrated experience, but is **not required** for
+Lumen operation.
+
+## Status at End of Session
+
+-   Moderari direct backchannel to Pontis --- **complete and proven**
+-   Pontis live progress delivery to Pi --- **complete and proven**
+-   Pontis retained backchannel events for optional clients ---
+    **complete and proven**
+-   Rogare heartbeat/progress display --- **complete and proven**
+-   Rogare five-second backchannel polling --- **complete**
+-   Rogare New Session lifecycle --- **complete**
+-   Rogare automatic editable session naming --- **complete**
+-   Rogare bootstrap/control-message presentation --- **complete**
+-   Rogare Vestigare Start/Stop controls --- **complete**
+-   Rogare `\obt` UI guidance --- **complete**
+-   Rogare working/progress UX --- **complete**
+-   Rogare conversation Cancel --- **complete**
+-   Vestigare clear-logs command --- **implemented and tested**
+-   Vestigare pytest --- **53 passed**
+-   Vestigare Ruff --- **clean**
+-   Vestigare final mypy typing issue --- **corrected; local
+    confirmation required**
+
+## Next
+
+With the current Moderari, Pontis, Rogare and Vestigare work now
+consolidated, the next development focus is **Lumen Servire**.
+
+Servire can now be updated against a considerably cleaner set of
+component responsibilities and operational interfaces rather than
+compensating for functionality elsewhere in the stack.
+
+---
+
+# Lumen Engineering Diary --- 15 August 2026
+
+## Servire, Moderari, Pontis, Rogare and Vestigare Operational Standardisation
+
+Today's development completed a substantial operational-standardisation
+pass across the Lumen stack. The work began around back-channel progress
+visibility and component lifecycle consistency, and concluded with
+Servire able to manage component log maintenance through a common
+interface.
+
+### Moderari Back Channel
+
+Moderari's heartbeat and progress reporting was moved onto the dedicated
+Pontis back channel rather than attempting to send operational messages
+through the normal Vestigare/Repetere conversational route.
+
+The configured relationship is:
+
+``` yaml
+backchannel:
+  enabled: true
+  pontis_url: "http://127.0.0.1:11435"
+```
+
+This preserves the distinction between conversational/model traffic and
+operational progress traffic.
+
+The behaviour was validated with Pi: progress messages are now delivered
+while the model is working rather than being accumulated and returned
+with the final answer.
+
+### Pontis Back-Channel Delivery
+
+Pontis was updated to accept Moderari back-channel events and make them
+available to clients independently of the normal chat-completion
+response path.
+
+This was important because heartbeat/progress messages are not model
+answers and should not pass through Replay or Vestigare simply to reach
+the client.
+
+The implementation was validated first with Pi and then with Rogare.
+
+### Rogare Progress and Heartbeat Integration
+
+Rogare was updated to consume the Pontis back channel and display
+operational progress while a conversation is active.
+
+Polling was retained deliberately rather than changing the architecture
+to require a pushed connection from Pontis. Rogare is an optional Lumen
+client, so Pontis must not depend upon Rogare being present.
+
+The polling interval was set to a more appropriate cadence for the
+20-second Moderari heartbeat rather than polling every second.
+
+Additional Rogare work completed during the pass included the previously
+planned session/UI improvements and conversation controls. A future
+small addition remains to provide a **Cancel** action beside Send so an
+active conversation can be stopped by the user.
+
+### Vestigare Standardisation
+
+Vestigare received the standard offline log-cleanup capability and its
+command-line startup behaviour was corrected so that:
+
+``` text
+python -m lumen_vestigare
+```
+
+uses the host and port defined by Vestigare's own configuration.
+
+This removes the need for Servire to supply special `--host` and
+`--port` arguments.
+
+The Python package/module naming was also standardised from the
+historical `lumen_trace` name to:
+
+``` text
+lumen_vestigare
+```
+
+The completed Vestigare validation reached:
+
+``` text
+55 tests passed
+Ruff clean
+mypy clean
+```
+
+### Repetere Naming Standardisation
+
+Repetere's runtime module was similarly standardised from the historical
+`lumen_replay` naming to:
+
+``` text
+lumen_repetere
+```
+
+Servire can therefore launch both recorder and replay components through
+their canonical Lumen names rather than retaining legacy implementation
+names.
+
+### Servire Vocabulary and Configuration Standardisation
+
+Servire configuration was aligned with the current Lumen component
+vocabulary and canonical module names.
+
+In particular, managed launch targets now use:
+
+``` text
+lumen_vestigare
+lumen_repetere
+```
+
+rather than the historical Trace/Replay module names.
+
+The current full-stack dependency model remains in place for now.
+
+A separate future Servire design was documented for **Deployment
+Profiles and Dynamic Topology**. This will eventually allow Servire to
+distinguish the full Lumen stack from reduced deployments such as:
+
+``` text
+Pontis → Moderari
+```
+
+and potentially recalculate routing when optional components are
+deliberately disabled.
+
+For example, disabling Vestigare in a future profile-aware Servire could
+also make Repetere unavailable and deliberately reroute Pontis directly
+to Moderari.
+
+The important future principle recorded today is:
+
+> **Servire should manage the topology of Lumen, not merely the
+> processes that happen to make up one fixed topology.**
+
+### Model Provider Architecture --- Lumen Praebere
+
+Discussion of adding Ollama lifecycle control directly to Servire
+exposed a cleaner architectural boundary.
+
+Rather than making Servire understand Ollama-specific operations, a new
+first-class Lumen component was defined:
+
+## Lumen Praebere --- Model Provider
+
+Praebere will provide the model-provider abstraction in a similar
+architectural spirit to Pontis at the client/tool-provider boundary.
+
+Its first milestone will deliberately support only:
+
+-   Ollama;
+-   the configured Qwen model;
+-   provider status;
+-   provider start;
+-   model load;
+-   model unload;
+-   provider stop.
+
+Ollama lifecycle will remain separate from Lumen Stack Start/Stop.
+Servire will eventually manage Praebere, while Praebere owns the
+provider-specific operations.
+
+Future Praebere development can add model discovery and selection for
+Rogare, integration with Moderari, and additional providers such as LM
+Studio.
+
+The Praebere architecture was documented separately for implementation
+after the current Servire work.
+
+### Servire Clear Logs
+
+Servire itself gained the standard offline maintenance command:
+
+``` text
+python -m lumen_servire clear-logs
+```
+
+More importantly, Servire's operational UI was extended with **Clear
+Logs** actions.
+
+Each managed component now has:
+
+``` text
+Start
+Stop
+Restart
+Clear Logs
+```
+
+The component Clear Logs action is disabled while that component is
+running.
+
+The Stack Actions panel also has **Clear Logs**, enabled only when all
+managed Lumen components are stopped.
+
+Servire does not directly delete another component's log files. Instead
+it invokes the component-owned maintenance contract:
+
+``` text
+python -m <component_module> clear-logs
+```
+
+This preserves component ownership and keeps Servire generic.
+
+Servire's own active log is deliberately excluded from the Stack Clear
+Logs action because Servire must remain running to service the UI
+request. Its own logs are cleared offline using its CLI command.
+
+Servire validation after this work reached:
+
+``` text
+116 passed
+1 skipped
+95.31% coverage
+Ruff clean
+mypy clean
+```
+
+### Moderari and Pontis Clear-Logs Contract
+
+Stack Clear Logs testing exposed two remaining inconsistencies.
+
+Moderari still used its older `--clean-log` convention and Pontis did
+not yet expose the standard maintenance command.
+
+Both were brought into the common contract:
+
+``` text
+python -m lumen_moderari clear-logs
+python -m lumen_pontis clear-logs
+```
+
+Pontis now owns its own safe offline cleanup implementation.
+
+Moderari required one additional Windows-specific correction. Its
+application module was opening `interaction.log` before the cleanup
+operation ran, causing:
+
+``` text
+PermissionError: [WinError 32]
+```
+
+when Servire attempted Stack Clear Logs.
+
+The cleanup path was therefore separated from application startup.
+Moderari now performs `clear-logs` through a lightweight maintenance
+module **before importing the FastAPI application or configuring its
+file handlers**.
+
+Regression compatibility was retained for the existing application
+cleanup seam and the legacy Moderari startup flags.
+
+Final operational testing confirmed that the complete Servire Stack
+Clear Logs workflow now works across the managed components.
+
+## Architectural Outcome
+
+Several useful boundaries became clearer during today's work:
+
+1.  **Operational progress is not conversational traffic.**\
+    Moderari sends heartbeat/progress events directly to Pontis through
+    the back channel.
+
+2.  **Clients remain optional.**\
+    Rogare polls Pontis for operational events; Pontis does not require
+    Rogare to exist.
+
+3.  **Components own their maintenance behaviour.**\
+    Servire requests `clear-logs`; each component decides how its own
+    logs are safely cleared.
+
+4.  **Components own their runtime configuration.**\
+    Servire should launch canonical modules rather than duplicate
+    host/port knowledge where the component already owns it.
+
+5.  **External providers are not the Lumen stack.**\
+    Ollama lifecycle is being separated into Praebere rather than
+    coupled to Stack Start/Stop.
+
+6.  **Servire is moving toward topology management.**\
+    The current fixed full-stack graph remains appropriate now, but
+    deployment profiles and dynamic topology are documented as future
+    work.
+
+## End-of-Day Position
+
+The current Servire standardisation and Clear Logs work is complete and
+operational.
+
+The relevant stack now has a consistent component-owned maintenance
+contract, canonical Vestigare/Repetere module names, functioning
+Moderari → Pontis back-channel progress delivery, and Rogare visibility
+of those events.
+
+The next new component planned after the remaining current work is:
+
+**Lumen Praebere --- Model Provider**, beginning with Ollama and the
+configured Qwen model.
+
+---
+
+# Engineering Diary --- 15 August 2026
+
+## Lumen Praebere M1/M1.1 and End-to-End Lumen Integration
+
+Development and integration of **Lumen Praebere --- Model Provider** was
+completed today, establishing the model-provider abstraction within the
+Lumen architecture.
+
+Praebere now owns the external model-provider lifecycle rather than
+exposing Ollama-specific behaviour elsewhere in the stack. Its initial
+Ollama adapter supports provider status, startup, configured-model
+availability, model loading/unloading, provider ownership detection and
+controlled shutdown.
+
+An important lifecycle rule was established during testing: **Praebere
+will only stop an Ollama instance that it started and therefore owns.**
+An externally running Ollama instance may be used, but Praebere will not
+terminate it.
+
+Praebere was subsequently integrated into Servire as a first-class
+Managed Lumen Component. The architectural boundary remains deliberately
+strict:
+
+> **Servire requests lifecycle operations; Praebere knows how to perform
+> them.**
+
+Servire therefore contains no knowledge of Ollama, Qwen, model loading
+or unloading. From Servire's perspective Praebere exposes the same
+operational controls as other managed components: **Start, Stop, Restart
+and Clear Logs**.
+
+For the managed lifecycle, Praebere interprets Start as ensuring the
+provider is running and the configured model is loaded and ready. Stop
+unloads the configured model and shuts down the provider when the
+provider process is owned by Praebere.
+
+Praebere was placed ahead of Moderari in the managed startup sequence so
+that the model-provider capability is established before Moderari
+performs its own provider validation. Moderari's startup health timeout
+was also increased to accommodate cold model startup.
+
+Full cold-stack testing was then performed through Servire. Servire
+successfully started Praebere, Praebere started Ollama and loaded
+`qwen2.5-coder:14b-32k`, Moderari validated the provider/model, and the
+remaining Lumen components started successfully until Servire reported
+the complete stack **READY**.
+
+The first Rogare session exposed significant cold-session latency while
+Pontis established the ACP provider session and the newly loaded model
+handled its first generation. The operation initially appeared stalled,
+but Moderari heartbeats showed that processing remained alive. The
+provider session ultimately completed successfully with Pontis ready,
+six Pi capabilities discovered, the correct Qwen model bound and an ACP
+session established.
+
+The final end-to-end functional test was deliberately simple:
+
+**User:** `Calculate the answer to 2 + 2`
+
+**Lumen:** `The answer to 2 + 2 is 4.`
+
+This successfully exercised the operational path from the Lumen-native
+conversational interface through the managed stack and model provider.
+
+The resulting operational architecture is now:
+
+**Servire → Praebere → Ollama/Qwen → Moderari → Repetere → Vestigare →
+Pontis ↔ Pi/ACP → Rogare**
+
+From the user's perspective, Ollama and Pi no longer require separate
+operational consoles. The complete environment can be started through
+Servire and used through Rogare.
+
+## Milestone
+
+This is the first validated **end-to-end Lumen** operation under the
+unified Lumen operational model.
+
+Two non-blocking UX improvements were identified for later work:
+
+-   Servire managed components should expose transitional `starting` and
+    `stopping` states while lifecycle operations are in progress.
+-   Rogare should provide clearer feedback while a cold provider/model
+    session is being initialized.
+
+**Status: PASS --- End-to-end Lumen operational.**
+
+---
+
+## 2026-08-16 — Rogare Heartbeat, Session Continuity and Servire Lifecycle Refinement
+
+### Summary
+
+Today's work focused on completing the remaining Rogare heartbeat investigation, correcting cross-path session identity through Pontis, improving Rogare UI session continuity, and refining Servire's operational UI and shutdown lifecycle.
+
+The complete Lumen stack continues to operate end-to-end through Servire, with Praebere managing the Ollama/Qwen model provider.
+
+---
+
+### Rogare — Heartbeat and Progress Investigation
+
+The outstanding Rogare heartbeat/backchannel behaviour was investigated using cold-model startup and long-running conversational requests.
+
+The investigation confirmed that the underlying heartbeat transport was functioning correctly:
+
+- Moderari generates heartbeat and progress events during long-running requests.
+- Pontis accepts the events into its session backchannel.
+- Rogare polls the Pontis backchannel and displays the events.
+- Heartbeat/progress messages continue to arrive shortly before the final model response.
+- `client_streams=0` in Pontis does not indicate failure for Rogare, because Rogare uses the polling backchannel rather than a persistent client stream.
+
+The principal issue was therefore presentation/state semantics rather than heartbeat transport.
+
+Rogare now presents request-relative progress more clearly, including:
+
+- current request elapsed time;
+- model progress information;
+- estimated context utilisation;
+- heartbeat activity;
+- time since the most recently received heartbeat.
+
+During provider/session establishment, heartbeat information is not currently displayed. This is intentional for now: Rogare's session-start request remains outstanding while the provider is being established, so backchannel polling begins only once startup completes. The session-start UI already provides an elapsed-time indication and does not require additional asynchronous complexity purely to display bootstrap heartbeats.
+
+---
+
+### Pontis — Originating Session Propagation
+
+Cold-start testing exposed an important session-identity issue.
+
+A Rogare conversation has two legitimate session domains:
+
+1. the logical Lumen/Rogare conversation session;
+2. the ACP session used between Pontis and Pi for tool-provider interaction.
+
+These sessions must remain distinct.
+
+However, when Pi re-entered the model path during ACP provider initialisation, Moderari did not receive the originating Rogare session identity and consequently created a separate conversation-root UUID.
+
+Pontis is the only component with visibility of both sides of this relationship and is therefore the correct location for correlation.
+
+Pontis was updated to retain the originating Lumen session while an ACP provider prompt is active and propagate that identity when Pi re-enters the model path.
+
+The downstream request now carries the originating session identity, allowing Moderari to associate provider bootstrap activity with the correct Rogare/Lumen conversation.
+
+The ACP session remains independent.
+
+Cold-start testing confirmed that Moderari subsequently generated bootstrap heartbeat/progress events against the correct:
+
+`session-rogare-*`
+
+identity.
+
+This establishes the architectural rule:
+
+> Pontis owns correlation between the logical Lumen client session and its associated provider/ACP session. Moderari does not need to understand ACP session identities.
+
+---
+
+### Rogare — Session Reattachment
+
+A regression was identified when switching Rogare between its pop-out window and the Servire embedded workspace.
+
+Opening a fresh Rogare UI instance unconditionally prepared a new autogenerated session. Consequently:
+
+- the original Lumen session remained intact;
+- its Moderari context remained intact;
+- its Pontis provider binding remained intact;
+- but the newly embedded Rogare UI detached itself from that session and displayed a new empty session.
+
+Rogare startup was changed to recover an existing active Rogare session when one is available rather than always creating a new one.
+
+The intended lifecycle is now:
+
+`embedded → pop-out → embedded`
+
+without changing the underlying logical conversation.
+
+The existing conversation is restored when the UI reattaches, while the Lumen/Moderari session context remains the authoritative conversational state.
+
+`New Session` remains an explicit user action and establishes a genuine new conversation boundary.
+
+End-to-end testing confirmed that session reattachment works correctly.
+
+---
+
+### Servire — Workspace UI Alignment
+
+Servire's workspace navigation was refined to improve consistency as the number and descriptive length of Lumen components has increased.
+
+Component tabs now use a two-line presentation:
+
+- Latin component name;
+- English responsibility beneath it.
+
+Examples:
+
+`Moderari`
+`Orchestrator`
+
+`Pontis`
+`Communication Bridge`
+
+`Rogare`
+`Conversational Client`
+
+The text is centred within each tab.
+
+Servire and its embedded component workspaces now use a common outer workspace width.
+
+The Servire operational dashboard retains its narrower centred internal layout, while embedded applications such as Moderari and Rogare continue to use the wider workspace available to them. This provides visual alignment without unnecessarily compressing information-dense component interfaces.
+
+---
+
+### Servire — Operational Log
+
+The Servire Operational Log viewport was increased to provide at least approximately twelve visible log rows.
+
+The log retains its existing internal scrolling behaviour for larger volumes of output.
+
+This makes the operational log substantially more useful while observing stack startup, shutdown and runtime activity.
+
+---
+
+### Servire — Credential Redaction
+
+The Servire External Dependencies display was found to expose MongoDB credentials embedded in the configured connection URI.
+
+Credential-bearing URIs are now sanitised before presentation.
+
+Authentication remains visible without exposing the actual credentials.
+
+For example:
+
+`mongodb://username:password@host:27017/?authSource=admin`
+
+is displayed as:
+
+`mongodb://****:******@host:27017/?authSource=admin`
+
+The runtime configuration itself is unchanged.
+
+This redaction is a presentation concern only and does not alter the connection URI used by Lumen.
+
+---
+
+### Servire — Graceful Stack Shutdown
+
+Previously, terminating Servire from its command-line process using `Ctrl+C` cleanly shut down the Servire/Uvicorn application but left the managed Lumen stack running.
+
+This could leave Praebere, Ollama and the loaded model active after Servire had exited.
+
+Servire shutdown now invokes the managed stack shutdown lifecycle before terminating the Servire application.
+
+The shutdown sequence follows reverse dependency order and ultimately reaches Praebere, allowing Praebere to shut down its managed model provider.
+
+A final process-controller cleanup remains in place so that a failed component shutdown cannot prevent Servire itself from terminating.
+
+Testing identified that Praebere's provider lifecycle shutdown exhausted the previous 180-second lifecycle timeout.
+
+The Praebere lifecycle allowance in Servire was therefore increased to 300 seconds, and lifecycle timeout diagnostics were improved so that future failures explicitly report the timeout reached.
+
+If Praebere continues to approach or exceed this allowance, investigation should move into Praebere/Ollama provider shutdown rather than further extending Servire's timeout.
+
+---
+
+### Validation
+
+Servire final validation after the changes:
+
+- `pytest`: **129 passed, 1 skipped**
+- coverage: **95.05%**
+- `mypy src tests`: **clean**
+- Ruff issues identified after the credential-display work were corrected.
+
+The final Ruff corrections were formatting-only `E501` fixes in `ui/routes.py` and did not alter behaviour.
+
+---
+
+### Current Position
+
+The Rogare heartbeat investigation is effectively complete.
+
+The work established that:
+
+- heartbeat/backchannel transport is operational;
+- Rogare request-relative heartbeat presentation is working;
+- Pontis now correctly correlates ACP provider activity with its originating Lumen/Rogare session;
+- Rogare sessions survive embedded/pop-out UI transitions;
+- Servire has a more consistent operational workspace;
+- Servire no longer exposes dependency credentials in its UI;
+- command-line termination of Servire now initiates managed Lumen stack shutdown.
+
+The principal remaining observation is Praebere/Ollama shutdown duration. This should be monitored during the next full-stack shutdown test to determine whether provider termination itself requires further refinement.
+
+---
+
+---
+
+## M4 — Recurring Scheduling
+
+Implemented recurring execution as an extension of the M3 execution mechanism.
+
+A recurring schedule represents the cadence at which Fiducia creates new executions, while `runs_per_execution` independently controls the number of Replay Runs within each occurrence.
+
+For each recurring occurrence Fiducia now:
+
+1. identifies the due schedule
+2. atomically claims the occurrence
+3. records the occurrence as `last_run_at`
+4. advances `next_run_at`
+5. creates a new Fiducia Execution
+6. performs the configured number of Replay Runs
+7. persists the resulting execution and Replay Run relationships
+8. leaves the recurring schedule active for its next occurrence
+
+This establishes the execution hierarchy:
+
+```text
+Recurring Schedule
+        │
+        ├── Execution 1
+        │      ├── Replay Run 1
+        │      └── Replay Run 2
+        │
+        ├── Execution 2
+        │      ├── Replay Run 1
+        │      └── Replay Run 2
+        │
+        └── Execution 3
+               ├── Replay Run 1
+               └── Replay Run 2
+```
+
+The schedule frequency and number of Replay Runs remain deliberately independent:
+
+> **The schedule determines when Fiducia creates an execution.**
+>
+> **`runs_per_execution` determines how many Replay Runs that execution requests from Repetere.**
+
+### Missed-Occurrence Policy
+
+A deliberate **no-backfill policy** was implemented for recurring schedules.
+
+If Fiducia is unavailable across one or more scheduled occurrences, it does not automatically execute all historical occurrences when the service restarts.
+
+Instead Fiducia:
+
+- identifies elapsed occurrences
+- records the number in `missed_occurrences`
+- records `last_missed_at`
+- advances `next_run_at` to the next future occurrence
+- resumes normal scheduling from that point
+
+This prevents an operational restart from unexpectedly producing a burst of historical Replay Runs and behavioural evidence.
+
+Restart recovery was also added for incomplete Fiducia Executions.
+
+### M3 → M4 MongoDB Index Migration
+
+Live upgrade testing identified an important MongoDB schema migration requirement.
+
+M3 created the `schedule_due_state` index as:
+
+```text
+status
+next_run_at
+```
+
+M4 requires:
+
+```text
+status
+enabled
+next_run_at
+```
+
+MongoDB correctly rejected creation of the changed index while an index with the same name and the previous key specification already existed.
+
+Fiducia was therefore updated to own this schema migration.
+
+During startup Fiducia now:
+
+- detects the exact legacy M3 index
+- removes that index
+- creates the required M4 index
+- leaves an existing correct M4 index untouched
+- refuses to automatically remove an unknown conflicting index definition
+
+This allows an existing Fiducia database to be upgraded without manual MongoDB maintenance while retaining safe failure behaviour for unexpected database states.
+
+### MongoDB Datetime Persistence Correction
+
+Live restart testing exposed a second persistence-boundary issue.
+
+MongoDB BSON datetimes were being returned by PyMongo as offset-naive Python `datetime` objects, while Fiducia's scheduler uses timezone-aware UTC datetimes.
+
+This resulted in:
+
+```text
+TypeError: can't compare offset-naive and offset-aware datetimes
+```
+
+during recurring schedule recovery.
+
+The MongoDB persistence boundary was corrected so PyMongo now performs timezone-aware UTC datetime decoding.
+
+This establishes the Fiducia invariant:
+
+> **Scheduler and persisted runtime datetimes are timezone-aware UTC values.**
+
+The correction applies consistently to schedules, executions and retained Replay Run relationships.
+
+### M4 Live Acceptance Test
+
+A recurring schedule was configured using the Prepared Replay:
+
+`Replay-Test-1-SimpleMath-M5-3`
+
+with:
+
+```text
+Schedule type:       recurring
+Recurrence:          every 5 minutes
+Runs per execution:  2
+Enabled:             true
+```
+
+Three consecutive scheduled occurrences were observed.
+
+#### Occurrence 1 — 17:50
+
+Fiducia scheduled the occurrence and immediately advanced the next execution time:
+
+```text
+scheduled_for=17:50
+next_run_at=17:55
+runs=2
+```
+
+The execution completed successfully:
+
+```text
+execution-ef0e24d5459040d2af367c5cd27a6641
+
+status=completed
+completed=2
+failed=0
+```
+
+#### Occurrence 2 — 17:55
+
+The same recurring schedule generated a new Fiducia Execution:
+
+```text
+scheduled_for=17:55
+next_run_at=18:00
+runs=2
+```
+
+The execution completed successfully:
+
+```text
+execution-3ffe709e3c6b437791ad2145510af066
+
+status=completed
+completed=2
+failed=0
+```
+
+#### Occurrence 3 — 18:00
+
+A third independent execution was generated:
+
+```text
+scheduled_for=18:00
+next_run_at=18:05
+runs=2
+```
+
+The execution completed successfully:
+
+```text
+execution-af46e18b51ab449c951ef70da5d8a241
+
+status=completed
+completed=2
+failed=0
+```
+
+The resulting recurring progression was therefore:
+
+```text
+17:50 → completed=2 failed=0 → next 17:55
+17:55 → completed=2 failed=0 → next 18:00
+18:00 → completed=2 failed=0 → next 18:05
+```
+
+One recurring Fiducia schedule therefore produced:
+
+- 3 independent Fiducia Executions
+- 6 requested Replay Runs
+- 6 successfully completed Replay Runs
+- 0 failed Replay Runs
+
+### Repetere / Trace Confirmation
+
+The Replay Runs generated by Fiducia also appeared in the **Repetere UI Trace Recordings**.
+
+This provided independent operational confirmation that Fiducia's scheduled executions travelled through the normal Replay and Trace execution path.
+
+The observed relationship is:
+
+```text
+Fiducia
+    │
+    │ decides when and how many
+    ↓
+Repetere
+    │
+    │ executes individual Replay Runs
+    ↓
+normal Lumen execution path
+    ↓
+Trace Recordings
+```
+
+This confirms the intended responsibility boundary:
+
+**Fiducia orchestrates Replay; it does not implement Replay.**
+
+### Recurring Schedule Disable Test
+
+Following the successful recurring execution test, the schedule was explicitly disabled.
+
+Its persisted state became:
+
+```text
+enabled:            false
+status:             disabled
+next_run_at:        null
+last_run_at:        2026-08-17T01:00:00Z
+missed_occurrences: 0
+cancelled_at:       null
+```
+
+This confirms the intended distinction between **disabled** and **cancelled**.
+
+The recurring schedule remains persisted and valid, but no further executions are scheduled while it is disabled.
+
+### M4 Outcome
+
+The live M4 acceptance test demonstrated:
+
+- recurring schedule persistence
+- recurring due-time detection
+- atomic occurrence claiming
+- correct advancement of `next_run_at`
+- independent Fiducia Execution creation for every occurrence
+- multiple sequential Replay Runs per occurrence
+- successful retention of Repetere Run relationships
+- continued active state between recurring occurrences
+- clean disabling of an active recurring schedule
+- MongoDB upgrade handling
+- timezone-safe persisted scheduling
+- visible resulting Trace recordings through Repetere
+
+The test also confirmed the core architectural distinction:
+
+```text
+Schedule cadence
+       │
+       │ determines HOW OFTEN
+       ↓
+Fiducia Execution
+       │
+       │ runs_per_execution determines HOW MANY
+       ↓
+Replay Run
+Replay Run
+...
+```
+
+**M4 — Recurring Scheduling: COMPLETE.**
+
+---
+
+## Fiducia Status at End of 2026-08-16
+
+Lumen Fiducia has progressed from a new independent service to an operational persistent Replay orchestration layer.
+
+Completed milestones:
+
+- **M0 — Service Foundation**
+- **M1 — Repetere Discovery**
+- **M2 — Schedule Definition and Persistence**
+- **M3 — Execution Orchestration**
+- **M4 — Recurring Scheduling**
+
+Fiducia can now answer two independent orchestration questions:
+
+> **How often should this Replay experiment occur?**
+>
+> **How many Replay Runs should be performed each time it occurs?**
+
+The architectural responsibilities remain deliberately separated:
+
+```text
+Repetere
+    Executes one Replay Run
+
+Fiducia
+    Decides when, how often and how many
+    Replay Runs should occur
+
+Aestimare
+    Determines what the resulting
+    behavioural evidence means
+```
+
+Fiducia therefore controls the production of repeated behavioural evidence without acquiring responsibility for either Replay execution or behavioural assessment.
+
+**Fiducia M0–M4 operational.**
+
+--
+
+# Engineering Diary — 2026-08-17 — Lumen Fiducia M5–M7
+
+## Fiducia Development Continued
+
+Development continued from the successful completion of Fiducia M4, where recurring Replay orchestration had been demonstrated end-to-end.
+
+The work since that point has taken Fiducia from a functioning orchestration service to its first stable capability and then integrated it into Servire as a first-class managed Lumen component.
+
+The architectural responsibility remains:
+
+> **Repetere executes one Replay Run.**  
+> **Fiducia decides when, how often and how many Replay Runs should occur.**  
+> **Aestimare determines what the resulting behavioural evidence means.**
+
+This separation has been preserved throughout the implementation.
+
+---
+
+## M5 — Standalone Fiducia UI
+
+Implemented the first usable standalone Fiducia operational interface.
+
+The UI provides three principal areas:
+
+1. **Available Prepared Replays**
+2. **Schedule Configuration / Scheduled Work**
+3. **Execution Status**
+
+This established a usable operational surface for Fiducia before Servire integration, following the agreed Lumen component development pattern:
+
+> **Core capability → standalone UI → Servire integration → continued capability development**
+
+### Prepared Replay Discovery
+
+Prepared Replays exposed by Repetere are displayed as selectable cards.
+
+The interface allows a Prepared Replay to be selected and used as the basis for a Fiducia schedule without Fiducia taking ownership of the Replay definition.
+
+Repetere remains authoritative for Prepared Replays.
+
+An important lifecycle condition was also addressed:
+
+If a Replay already referenced by a Fiducia schedule is subsequently unstaged in Repetere, Fiducia retains the schedule but identifies the Replay as unavailable.
+
+The UI reports this explicitly as:
+
+```text
+⚠ Prepared Replay unavailable
+```
+
+This preserves Fiducia's orchestration history without pretending that the underlying Replay remains executable.
+
+### UI Refresh Behaviour
+
+The initial implementation refreshed the complete Fiducia page during polling. This caused visible screen blinking and unnecessarily refreshed static areas of the interface.
+
+The refresh architecture was changed so that only dynamic operational areas are refreshed:
+
+- Available Prepared Replays
+- Execution Status
+
+The complete page is no longer periodically reloaded.
+
+Automatic refresh can also be enabled or disabled by the user.
+
+This improves usability while preventing unnecessary UI activity.
+
+### Operational Polling
+
+Polling behaviour was reviewed to avoid excessive operational noise.
+
+The distinction was reinforced between:
+
+- meaningful operational events that belong in the component log;
+- routine UI polling that should not swamp those events.
+
+The objective is for Fiducia's operational log to remain useful for understanding orchestration behaviour rather than becoming dominated by routine status requests.
+
+### Scheduled Work Presentation
+
+Cancelled schedules were removed from the active **Scheduled Work** view.
+
+Cancellation therefore represents removal from active operational work while preserving the persisted historical state where appropriate.
+
+The UI containers were also changed from fixed-height layouts to `max-height` layouts with scrolling only when required.
+
+For Prepared Replays, the layout was adjusted to make better use of available screen width, supporting approximately four cards per row on a typical desktop display and approximately two visible rows before scrolling.
+
+### UI Standardisation
+
+Fiducia's standalone UI branding was brought into line with the other Lumen component interfaces.
+
+The component now follows the established:
+
+```text
+Lumen Fiducia
+```
+
+presentation rather than using a visually distinct Fiducia-specific header treatment.
+
+This improves consistency across the growing Lumen service family.
+
+---
+
+## M6 — First Stable Capability
+
+M6 was treated as the stabilisation boundary for standalone Fiducia.
+
+The objective was not to introduce another major feature but to harden the capability developed through M0–M5 before integrating it into Servire.
+
+### API Hardening
+
+Fiducia API error handling was standardised around stable error envelopes.
+
+For example:
+
+```json
+{
+  "detail": {
+    "code": "repetere_unavailable",
+    "message": "Repetere is unavailable"
+  }
+}
+```
+
+Internal MongoDB, HTTP client and implementation exception details are no longer exposed as public API behaviour.
+
+The standalone UI was updated to consume the same stable error contract.
+
+### Scheduler Resilience
+
+Scheduler behaviour was hardened against transient persistence failures.
+
+A schedule-storage polling failure is now recorded as:
+
+```text
+SCHEDULER_POLL_FAILED
+```
+
+without terminating the scheduler background task.
+
+Race-condition behaviour around schedule claiming was also tested.
+
+If two scheduler paths observe the same due schedule, the atomic persistence claim remains authoritative and prevents duplicate execution ownership.
+
+### Restart Recovery
+
+Restart behaviour was strengthened for incomplete executions and persisted schedules.
+
+Recovery now occurs before normal scheduler operation resumes.
+
+A recovered execution is classified according to the evidence successfully reconciled:
+
+```text
+completed
+completed_with_failures
+failed
+```
+
+A fully reconciled successful execution therefore returns to `completed` rather than being incorrectly classified as a partial failure.
+
+PID cleanup and failed-startup behaviour were also explicitly tested.
+
+### Dependency Degradation
+
+Dedicated coverage was added for dependency degradation, including:
+
+- Repetere unavailable;
+- Prepared Replay no longer available;
+- persistence failures;
+- invalid Repetere response contracts.
+
+These conditions are handled as controlled operational states rather than uncontrolled exceptions.
+
+### Clear Logs Hardening
+
+Fiducia's component-owned Clear Logs capability was hardened.
+
+The architectural rule remains:
+
+> **Every Lumen component owns its own logs. Servire must never manipulate another component's log files directly.**
+
+A failure to clear Fiducia's logs now produces a controlled API failure rather than leaking filesystem or implementation details.
+
+### Quality Gate
+
+The M6 verification suite reached:
+
+```text
+107 tests passed
+Ruff clean
+mypy clean
+Coverage >= 90%
+```
+
+This established **Lumen Fiducia v0.7.0** as the first stable standalone Fiducia capability.
+
+At this point feature development was deliberately paused and work moved immediately to Servire integration.
+
+---
+
+## M7 — Servire Integration
+
+Fiducia was integrated into Lumen Servire as a first-class managed component.
+
+This completes the intended first development cycle:
+
+> **Core capability → standalone UI → Servire integration**
+
+Servire does not implement Fiducia scheduling or Replay orchestration logic.
+
+It provides operational lifecycle management and access to Fiducia in the same architectural manner as the other managed Lumen services.
+
+### Fiducia Runtime Configuration
+
+Fiducia is currently located at:
+
+```text
+C:\Development\Lumen-Fiducia
+```
+
+and runs using its own Python virtual environment:
+
+```text
+.venv\Scripts\python.exe
+```
+
+with:
+
+```text
+python -m lumen_fiducia
+```
+
+Fiducia listens on:
+
+```text
+127.0.0.1:11430
+```
+
+### Servire Workspace
+
+A new Servire workspace was introduced:
+
+```text
+Fiducia — Replay Orchestration
+```
+
+The existing Fiducia standalone UI is embedded directly into Servire rather than being reimplemented.
+
+This preserves the standalone capability while allowing Servire to act as the unified Lumen operational control plane.
+
+### Managed Lifecycle
+
+Fiducia is now included in Servire's managed component catalogue and lifecycle operations.
+
+An important dependency consideration emerged from Fiducia's architecture:
+
+> **The Fiducia scheduler becomes operational when Fiducia starts.**
+
+Fiducia must therefore not start before the Replay execution path on which it depends is available.
+
+The Servire topology consequently treats Fiducia as dependent on:
+
+- Repetere
+- Pontis
+- MongoDB
+
+The effective managed startup sequence is:
+
+```text
+Praebere
+Moderari
+Repetere
+Vestigare
+Pontis
+Rogare
+Fiducia
+```
+
+Shutdown occurs in reverse order.
+
+This means Fiducia is stopped before the Replay path is dismantled, preventing its scheduler from attempting to initiate work against a partially stopped Lumen stack.
+
+### Component-Owned Clear Logs
+
+Servire integration preserves the component-owned logging rule.
+
+While Fiducia is running, Servire requests log clearing through Fiducia's API:
+
+```text
+POST /api/logs/clear
+```
+
+Servire does **not** directly delete, truncate or otherwise manipulate Fiducia's log files.
+
+This establishes the required pattern for component maintenance as the Lumen service architecture continues to expand.
+
+### Servire Role
+
+A Fiducia-specific Servire role was introduced:
+
+```text
+replay_orchestrator
+```
+
+This distinguishes Fiducia's responsibility from Repetere's Replay execution role.
+
+The terminology reflects the architectural separation:
+
+```text
+Repetere  → Replay execution
+Fiducia   → Replay orchestration
+Aestimare → behavioural assessment
+```
+
+### Servire Quality Gate
+
+Following the M7 integration, the complete Servire verification suite produced:
+
+```text
+142 passed
+1 skipped
+Coverage: 95.08%
+Ruff: clean
+mypy: clean
+```
+
+The final mypy cleanup concerned test typing only and required no Servire runtime changes.
+
+---
+
+## Current Fiducia Position
+
+Fiducia has now progressed through:
+
+```text
+M0  Service Foundation
+M1  Repetere Discovery
+M2  Schedule Definition and Persistence
+M3  Execution Orchestration
+M4  Recurring Scheduling
+M5  Standalone UI
+M6  First Stable Capability
+M7  Servire Integration
+```
+
+The original first development target has therefore been achieved.
+
+Fiducia can now:
+
+- discover Prepared Replays from Repetere;
+- create persistent one-time schedules;
+- create persistent recurring schedules;
+- independently configure schedule frequency and Replay Runs per execution;
+- execute multiple Replay Runs through Repetere;
+- persist execution and Replay Run relationships;
+- recover schedules across restart;
+- reconcile incomplete execution state;
+- enable, disable and cancel schedules;
+- identify schedules whose Prepared Replay is no longer available;
+- expose operational status through its standalone UI;
+- operate as a managed component inside Servire;
+- own and expose maintenance of its own operational logs.
+
+---
+
+## Architectural Significance
+
+M7 marks an important point beyond simply adding another Lumen service.
+
+The operational architecture now supports a clear three-layer progression around behavioural evidence:
+
+```text
+Repetere
+    │
+    │ executes Replay Runs
+    ▼
+Fiducia
+    │
+    │ orchestrates repeated behavioural experiments
+    ▼
+Aestimare
+    │
+    │ interprets the resulting evidence
+    ▼
+Behavioural Assessment
+```
+
+Repetere has moved Replay from recording into reproducible execution.
+
+Fiducia has now moved Replay from individual execution into **repeatable orchestration**.
+
+The next architectural step is Aestimare, where the resulting population of Replay evidence can begin to be interpreted rather than merely executed and retained.
+
+This is the transition from:
+
+> **Can Lumen reproduce and repeat behaviour?**
+
+towards:
+
+> **What does the observed variation in that behaviour tell us?**
+
+---
+
+## Milestone Summary
+
+The completion of M7 closes the first major Fiducia development cycle.
+
+The Lumen stack now has distinct components responsible for:
+
+- capturing behavioural evidence;
+- reproducing individual behaviour;
+- orchestrating repeated behavioural runs;
+- preserving the resulting execution relationships.
+
+This provides the operational foundation required for the next stage of Lumen's Reasoning Assurance architecture: **Aestimare and behavioural assessment**.

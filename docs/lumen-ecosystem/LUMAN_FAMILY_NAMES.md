@@ -8,3 +8,4 @@
 | **Rogare**    | Console                | **Rogare — Console**        |
 | **Aestimare** | Assess                 | **Aestimare — Assess**      |
 | **Fiducia**   | Trust                  | **Fiducia — Trust**         |
+| **Praebere**  | Provider               | **Praebere - Provider**     |
