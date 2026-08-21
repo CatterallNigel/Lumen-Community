@@ -1,0 +1,441 @@
+# Lumen Brand Guide
+
+**Version:** 1.0  
+**Status:** Draft  
+**Author:** Nigel Catterall  
+**Project:** Lumen @ Illuminates.One
+
+---
+
+# Overview
+
+Lumen is the primary product.
+
+Everything else exists to extend Lumen's capabilities.
+
+The visual identity should always reinforce this relationship.
+
+The objective is for customers to immediately recognise:
+
+> **One platform. Multiple specialised extensions.**
+
+---
+
+# Brand Architecture
+
+```
+                    LUMEN
+          AI Continuity Platform
+
+             Lumen Extensions
+
+        Vestigare   Repetere
+        Aestimare   Servire
+```
+
+There is only one platform:
+
+**Lumen**
+
+The remaining products are **Lumen Extensions**.
+
+---
+
+# Product Family
+
+## Lumen
+
+**Tagline**
+
+> Orchestrates Continuity.
+
+Purpose:
+
+The AI Continuity Platform providing orchestration, continuity, understanding and provenance across AI systems.
+
+---
+
+## Lumen Extensions
+
+Extensions enhance Lumen.
+
+They are not standalone products.
+
+Each extension provides a specialised capability while maintaining a consistent visual identity with the platform.
+
+Current extensions are:
+
+| Extension | Purpose |
+|-----------|---------|
+| Vestigare | Trace and provenance |
+| Repetere | Deterministic replay |
+| Aestimare | Assessment and decision quality |
+| Servire | Production continuity services |
+
+---
+
+# Product Positioning
+
+## Lumen Vestigare
+
+Purpose
+
+Capture complete interaction provenance.
+
+Provides:
+
+- Trace capture
+- Context recording
+- Provenance
+- Interaction history
+
+Marketing description
+
+> Understand every AI interaction.
+
+---
+
+## Lumen Repetere
+
+Purpose
+
+Replay captured interactions under identical conditions.
+
+Provides:
+
+- Deterministic replay
+- Model comparison
+- Regression testing
+- Repeatable experiments
+
+Marketing description
+
+> Replay exactly what happened.
+
+---
+
+## Lumen Aestimare
+
+Purpose
+
+Evaluate AI behaviour and decision quality.
+
+Provides:
+
+- Assessment
+- Scoring
+- Benchmarking
+- Decision quality analysis
+
+Marketing description
+
+> Measure what matters.
+
+---
+
+## Lumen Servire
+
+Purpose
+
+Provide production continuity services for Lumen deployments.
+
+Provides:
+
+- Service orchestration
+- Operational continuity
+- Runtime capabilities
+- Platform services
+
+Marketing description
+
+> Deliver continuity in production.
+
+---
+
+# Naming Convention
+
+Always use:
+
+**Lumen Vestigare**
+
+not
+
+Vestigare by Lumen
+
+or
+
+Lumen Trace
+
+Similarly:
+
+- Lumen Repetere
+- Lumen Aestimare
+- Lumen Servire
+
+---
+
+# Visual Identity
+
+## Core Principles
+
+Every extension should immediately be recognisable as belonging to the Lumen ecosystem.
+
+The objective is consistency rather than individual branding.
+
+---
+
+## Logo Style
+
+All extensions share:
+
+- Circular design
+- Segmented outer ring
+- Dark background
+- White typography
+- Cyan/Blue/Gold accent colours
+- Minimal glowing central icon
+- Modern geometric appearance
+
+---
+
+## Logo Structure
+
+```
+        segmented ring
+
+        central symbol
+
+          LUMEN
+
+      Extension Name
+
+     Extension Type
+```
+
+Example
+
+```
+LUMEN
+
+VESTIGARE
+
+TRACE EXTENSION
+```
+
+---
+
+# Colour Palette
+
+Primary colours
+
+- Deep Navy
+- White
+- Cyan
+- Azure Blue
+- Gold Accent
+
+Secondary colours
+
+- Soft teal
+- Light cyan glow
+
+Avoid introducing unrelated colours that break the product family identity.
+
+---
+
+# Typography
+
+Modern geometric sans-serif.
+
+Characteristics
+
+- High readability
+- Premium software appearance
+- Consistent spacing
+- Strong uppercase titles
+
+Extension names should always be significantly larger than the "LUMEN" label.
+
+---
+
+# Iconography
+
+Each extension has a unique symbol.
+
+## Vestigare
+
+Symbol
+
+Illuminated trace path.
+
+Represents:
+
+- provenance
+- exploration
+- trace
+- journey
+
+---
+
+## Repetere
+
+Symbol
+
+Replay loop.
+
+Represents:
+
+- replay
+- determinism
+- repetition
+
+---
+
+## Aestimare
+
+Symbol
+
+Stylised "A" with validation mark.
+
+Represents:
+
+- assessment
+- evaluation
+- measurement
+
+---
+
+## Servire
+
+Symbol
+
+Connected orchestration node.
+
+Represents:
+
+- service
+- orchestration
+- connectivity
+- delivery
+
+---
+
+# Brand Hierarchy
+
+The hierarchy should always remain:
+
+```
+Lumen
+
+↓
+
+Lumen Extensions
+
+↓
+
+Vestigare
+Repetere
+Aestimare
+Servire
+```
+
+Extensions must never visually compete with the Lumen platform.
+
+---
+
+# Marketing Language
+
+Preferred terminology
+
+- Lumen Platform
+- Lumen Extensions
+- Extend Lumen
+- Lumen Capability
+- AI Continuity Platform
+
+Avoid
+
+- Plugin
+- Add-on
+- Utility
+- Module (engineering terminology only)
+- Tool
+
+---
+
+# Website Structure
+
+```
+Platform
+
+    Lumen
+
+Extensions
+
+    Vestigare
+
+    Repetere
+
+    Aestimare
+
+    Servire
+```
+
+---
+
+# Brand Personality
+
+Lumen should project:
+
+- Professional
+- Intelligent
+- Trustworthy
+- Modern
+- Engineering-led
+- Enterprise-ready
+- Calm confidence
+
+Avoid:
+
+- Cartoon styling
+- Excessive animation
+- Bright consumer colours
+- Marketing clichés
+
+---
+
+# Future Extensions
+
+Future products should follow the same naming and branding conventions.
+
+Examples
+
+- Lumen Auditor
+- Lumen Memoria
+- Lumen Insight
+
+(or future Latin names)
+
+Every future extension should inherit:
+
+- Circular logo
+- Segmented ring
+- Shared colour palette
+- Consistent typography
+- Minimal iconography
+
+The family should be instantly recognisable regardless of how many extensions are introduced.
+
+---
+
+# Guiding Principle
+
+There is only one platform.
+
+**Lumen**.
+
+Everything else exists to extend its capabilities.
+
+The branding should communicate:
+
+> **One Platform. Unlimited Continuity.**
