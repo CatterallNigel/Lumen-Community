@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "REPOSITORY_STRUCTURE_AUDIT.md",
+                "file": "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "REPOSITORY_STRUCTURE_AUDIT"
+              "title": "LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP"
             }
           }
         ]
@@ -83,7 +83,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 473.5
   },
   "right": {
     "id": "adea3fd2c05a5243",
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "REPOSITORY_STRUCTURE_AUDIT.md",
+                "file": "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "REPOSITORY_STRUCTURE_AUDIT.md",
+                "file": "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "REPOSITORY_STRUCTURE_AUDIT.md",
+                "file": "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,9 +190,43 @@
   },
   "active": "478f15bb5b796634",
   "lastOpenFiles": [
-    "docs/evidence/EVIDENCE_AND_PROVENANCE_GUIDE.md",
-    "docs/architecture/extensions/INTEGRATION_CONTRACTS_OVERVIEW.md",
-    "docs/CURRENT_STATUS.md",
-    "docs/GLOSSARY_AND_NAMING_INDEX.md"
+    "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_REQUIREMENTS_AND_LIMITATIONS.md",
+    "docs/releases/M0.1/work-in-progress/README.md",
+    "docs/releases/M0.1/LUMEN_DEVELOPMENT_REQUIREMENTS_M0.1.md",
+    "docs/releases/M0.1/work-in-progress/SERVIRE_USER_MANUAL_OUTLINE.md",
+    "docs/releases/M0.1/work-in-progress/M0.1_RUNTIME_AUTHORIZATION_AND_CODE_PROTECTION.md",
+    "docs/releases/M0.1/work-in-progress/LUMEN_RESEARCH_LICENSING—WORKING_POSITION.md",
+    "docs/releases/M0.1/work-in-progress",
+    "docs/releases/M0.1/New folder",
+    "docs/architecture/ecosystem/LUMAN_FAMILY_NAMES.md",
+    "docs/releases/M0.1/LUMAN_FAMILY_NAMES.md",
+    "docs/services/aestimare/AESTIMARE_MODEL_PERFORMANCE_AS_AN_EXPERIMENTAL_DISCIPLINE.md",
+    "docs/services/aestimare/periti_assessores/README.md",
+    "docs/services/aestimare/periti_assessores/PERITI_ASSESSORES_README.md",
+    "docs/services/aestimare/periti_assessores/oeconomia/AESTIMARE_OECONOMIA—ECONOMIC_EFFICIENCY_ASSESSMENT_OVERVIEW.md",
+    "docs/services/aestimare/periti_assessores/oeconomia/AESTIMARE_OECONOMIA—ECONOMIC _FFICIENCY_ASSESSMENT_OVERVIEW.md",
+    "docs/services/aestimare/periti_assessores/oeconomia",
+    "docs/services/aestimare/periti_assessores/New folder",
+    "docs/services/aestimare/periti_assessores",
+    "docs/services/aestimare/New folder",
+    "docs/development/future/ROADMAP_OVERVIEW_2026-08-22.md",
+    "docs/releases/M0.1/SERVIRE_USER_MANUAL_OUTLINE.md",
+    "docs/releases/M0.1/M0.1_RUNTIME_AUTHORIZATION_AND_CODE_PROTECTION.md",
+    "docs/releases/M0.1/M0.1_RUNTIME_AUTHORIZATION_AND_CODE_PROTECTION(2).md",
+    "docs/licensing/COMMERCIAL_CAPABILITY_BASED_PRICING_CONCEPT.md",
+    "docs/engineering/ENGINEERING_DIARY.md",
+    "docs/engineering/ENGINEERING_DIARY_CURRENT.md",
+    "docs/engineering/ENGINEERING_DIARY_2026-08-21_22_POC_TO_MVP.md",
+    "docs/releases/M0.1/LUMEN_RESEARCH_LICENSING—WORKING_POSITION.md",
+    "docs/licensing/LUMEN_RESEARCH_LICENSING—WORKING_POSITION.md",
+    "docs/services/servire/SERVIRE_M0.1_RUNTIME_AUTHORIZATION_AND_SECURITY_DEVELOPMENT.md",
+    "docs/services/LUMEN_SERVICES_PROTECTED_CONFIGURATION_AND_RUNTIME_DELIVERY.md",
+    "docs/releases/M0.1/README.md",
+    "docs/releases/M0.1/history",
+    "docs/releases/M0.1",
+    "docs/releases/New folder",
+    "docs/releases",
+    "docs/graphics/Lumen-RAS-Logo-With-Latin.png",
+    "docs/graphics/Lumen-Service-Logos.png"
   ]
 }
