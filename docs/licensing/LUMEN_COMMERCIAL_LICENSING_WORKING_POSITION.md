@@ -7,6 +7,15 @@
 
 ---
 
+## Version History
+
+| Version | Date | Status | Changes |
+|---|---|---|---|
+| 0.1 | 2026-08-22 | Initial working draft | Initial document. |
+| 0.2 | 2026-08-26 | Working draft | Added commercial value progression for Lumen evidence, Aestimare assurance, and specialist Periti. |
+
+---
+
 ## 1. Purpose
 
 Lumen is expected to have separate Research and Commercial licensing models.
@@ -302,6 +311,34 @@ Pricing may differ according to the capability, complexity, specialisation or va
 No Assessor pricing is presently final.
 
 ---
+
+
+## 11.1 Commercial Value Progression
+
+The developing capability-based pricing work suggests a useful distinction between the commercial roles of the wider Lumen architecture, Aestimare and specialist Periti:
+
+> **Lumen creates and preserves the evidence. Aestimare makes that evidence valuable. Periti determine how specialised that value can become.**
+
+The statement should not be interpreted as implying that the core Lumen services have little value. Those services establish the continuity, provenance, reproduction and experimental evidence upon which meaningful assessment depends.
+
+Rather, it identifies a possible progression of commercial value:
+
+```text
+Lumen evidence substrate
+        |
+        v
+Aestimare assurance and interpretation
+        |
+        v
+Specialist Periti expertise
+```
+
+This may ultimately justify a commercial structure in which access to core Lumen capabilities remains deliberately accessible while Aestimare and specialised Periti carry value appropriate to the assurance and domain expertise they provide.
+
+Market-landscape research also indicates that evaluator extensibility exists in several adjacent AI observability and evaluation systems. The commercial proposition should therefore not depend on the claim that extensible evaluation is unique to Lumen. The question to preserve for later validation is whether Lumen's combination of accumulated evidence, continuity, provenance, controlled reproduction, longitudinal behavioural characterisation and independently specialised Periti creates a meaningfully different assurance model.
+
+The answer should be established through architecture, research evidence, external use and market comparison before becoming a formal commercial claim.
+
 
 ## 12. Assessor Updates
 

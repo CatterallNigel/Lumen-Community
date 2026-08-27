@@ -12272,3 +12272,312 @@ The Roadmap remains a planning instrument and is expected to evolve as implement
 > **“Plans are worthless, but planning is everything.”**  
 > — Dwight D. Eisenhower
 
+
+
+---
+
+# 2026-08-25
+
+## Nuntius M0.1 Control-Plane Foundation and First End-to-End Routing
+
+### Observation
+
+Development began on **Nuntius**, the Lumen-native messaging and control-plane service required for the M0.1 External Research Distribution.
+
+The initial implementation established Nuntius as a distinct service on port `11440` and progressed from scaffold and service-catalogue integration through to the first live end-to-end `\\obt` control request from Rogare.
+
+By the end of the session, the following path had been demonstrated operationally:
+
+```text
+Rogare
+  ↓
+Pontis
+  ↓
+Nuntius
+  ↓
+Repetere
+  ↓
+Nuntius
+  ↓
+Pontis
+  ↓
+Rogare
+```
+
+The test command was:
+
+```text
+\\obt repetere list
+```
+
+### Development Progress
+
+Nuntius was brought up as an independent FastAPI service and connected to the Servire service catalogue. As services became available, Servire catalogue-change notifications were received and applied by Nuntius, demonstrating that control-plane destination knowledge can be maintained dynamically rather than being hard-coded into clients.
+
+Pontis was then integrated with the Nuntius control boundary so that `\\obt` commands originating from the conversational surface are intercepted rather than forwarded to the language model.
+
+The command was wrapped in a correlated control envelope containing a request identifier, timestamp, session identifier, origin and command, then sent to Nuntius.
+
+Nuntius successfully:
+
+- received the control envelope;
+- resolved `repetere` from its current service catalogue;
+- selected Repetere's authoritative service endpoint;
+- forwarded the request to `http://127.0.0.1:11437/control/obt`;
+- received the service response;
+- returned that response through Pontis to Rogare while preserving request correlation.
+
+### First Live Integration Result
+
+The first complete request returned:
+
+```text
+404 Not Found
+```
+
+This was initially useful precisely because it was a failure.
+
+The `404` did not indicate a Nuntius routing failure. Repetere was successfully located, contacted and responded promptly. The response means only that Repetere does not yet implement its own `/control/obt` endpoint.
+
+The result therefore distinguishes two different failure classes:
+
+```text
+Destination reachable + unsupported control endpoint → authoritative service response (404)
+Destination unavailable / no authoritative response   → transport/control failure
+```
+
+Nuntius should preserve an authoritative response from the destination service rather than translating every unsuccessful result into a gateway error.
+
+### Architectural Evidence
+
+The test provides the first live evidence that the intended control-plane separation works across the existing conversational stack.
+
+A user can enter a Lumen-native operational command in Rogare without that command becoming model conversation. Pontis recognises the control intent, Nuntius performs service discovery and routing, and the destination service remains authoritative for the meaning and result of its own command.
+
+This preserves the intended responsibility boundary:
+
+```text
+Rogare   → conversational/control surface
+Pontis   → interception and transport boundary
+Nuntius  → control-plane discovery, routing and correlation
+Service  → authoritative command semantics and execution
+```
+
+Nuntius therefore does not need to understand how `repetere list` is implemented. It needs only to determine that the request belongs to Repetere and deliver it reliably.
+
+### Observability Boundary
+
+The integration also demonstrated the intended distinction between operational observability and control-message content.
+
+Servire's operational log exposed the existence and progress of the routed request through identifiers, session information, destination, HTTP status and timing, without requiring the full `\\obt` command payload to become part of the general operational log.
+
+Nuntius retained the complete control envelope within its own diagnostic boundary.
+
+This supports the broader M0.1 requirement that operational infrastructure can show **that** a control action occurred without unnecessarily duplicating conversational or command content across unrelated service logs.
+
+### Repetere Boundary Exposed
+
+The live test also revealed the current behaviour that N6 must replace.
+
+Because Repetere does not yet own `/control/obt`, the request falls through its existing proxy path and reaches Moderari, which also returns `404`.
+
+The next Repetere migration should make `/control/obt` a locally consumed control endpoint. Once implemented, the same test should terminate at Repetere and return its authoritative replay-list response without traversing into Moderari.
+
+Expected progression:
+
+```text
+Current:
+\\obt repetere list
+    → Repetere /control/obt
+    → proxy fall-through
+    → Moderari
+    → 404
+
+After Repetere migration:
+\\obt repetere list
+    → Repetere /control/obt
+    → local command handling
+    → replay list
+    → 200
+```
+
+### Engineering Significance
+
+Today's work moved Nuntius beyond an isolated service scaffold and demonstrated its architectural role inside the running Lumen stack.
+
+The important result is not that a replay list was returned — it was not. The important result is that the command reached the correct authoritative service through the intended control-plane route and that the service's current response propagated correctly back to the originating UI.
+
+This means the remaining `404` is now a clearly bounded implementation gap in Repetere rather than uncertainty about the Nuntius architecture.
+
+### Conclusion
+
+The Nuntius control-plane foundation and first live integration are considered successfully demonstrated.
+
+The day's stopping point is deliberately at the service boundary exposed by the integration test. The next development stage is **N6 — Repetere Migration**, where Repetere will acquire its own Nuntius-compatible control endpoint and consume its operational commands locally.
+
+The same `\\obt repetere list` command can then serve as a useful regression test: the transport path remains unchanged while only the destination service's control capability changes.
+
+> **The first end-to-end Nuntius request failed in exactly the right place.**
+
+---
+
+# 2026-08-26
+
+## Nuntius N6 Validation and N7 Moderari Control-Plane Migration
+
+### Observation
+
+Development continued from the first end-to-end Nuntius routing demonstrated on 25 August, concentrating first on validating the Repetere/Vestigare/Rogare control boundaries and then beginning **N7 — Moderari Migration**.
+
+The day's work provided further evidence that operational commands can be separated from ordinary model execution while retaining clear service ownership and useful UI state.
+
+### N6 Validation — Vestigare and Rogare
+
+The recording-control interaction between Vestigare and Rogare was exercised from both surfaces.
+
+A Rogare session was established before testing so that the recording state could be evaluated against a real conversational session rather than only against an idle UI.
+
+The test demonstrated that:
+
+- a recording started from Vestigare is reflected in Rogare;
+- while Vestigare owns the active recording, Rogare's trace start/stop controls are disabled appropriately;
+- stopping the recording in Vestigare releases the control state;
+- Rogare then re-enables **Start Trace**;
+- the completed state is reflected consistently across the two interfaces.
+
+This confirms that recording ownership is being treated as shared runtime state rather than as independent UI state.
+
+For M0.1, Vestigare remains intentionally constrained to **one active recording at a time**. This is now treated as an explicit release limitation rather than an accidental implementation characteristic.
+
+The recurring Fiducia PID/startup-state issue was again encountered during validation. It has become sufficiently disruptive that the next substantive Servire code work should address it before unrelated Servire changes are undertaken.
+
+### Servire UI Observation
+
+The planned addition of Nuntius to the Servire workspace raised a small but useful navigation decision.
+
+Service tabs should be presented alphabetically because this provides a stable, discoverable order that does not require an operator to remember service startup dependencies.
+
+**Servire is the deliberate exception and remains first**, because the UI itself is the Servire operational workspace.
+
+This should be applied when Nuntius is added to the Servire UI.
+
+### N7.1 — Moderari Control Endpoint
+
+Moderari was migrated onto the explicit control-path architecture required by Nuntius.
+
+The implementation passed the existing test suite and Moderari subsequently started successfully through Servire's **Start All** action.
+
+A live Rogare command:
+
+```text
+\obt moderari status
+```
+
+successfully returned Moderari's operational state through the Lumen control path.
+
+The response included session state, model, profile, context utilisation, checkpoint generation and configured summarisation/hard-boundary information.
+
+This established the intended route:
+
+```text
+Rogare
+  ↓
+Pontis
+  ↓
+Nuntius
+  ↓
+Moderari control endpoint
+  ↓
+Nuntius
+  ↓
+Pontis
+  ↓
+Rogare
+```
+
+The command therefore no longer depends upon ordinary model execution to obtain Moderari-owned operational information.
+
+### N7.2 — Common Control Responses and Failure Behaviour
+
+Moderari's command handling was then exercised for both valid and invalid control requests.
+
+A deliberately unsupported command:
+
+```text
+\obt moderari nonsense
+```
+
+returned an explicit HTTP `400` control response identifying the command as unrecognised and directing the operator toward `\obt help`.
+
+Importantly, the response also stated that the command was **not sent to the model**.
+
+This is a significant validation point for N7: malformed or unsupported Lumen control traffic terminates inside the control plane rather than leaking into conversational model context.
+
+The behaviour also suggests a useful future addition: harmless **Easter eggs** for selected `\obt <service> <text>` combinations. Engineers and researchers are likely to probe undocumented combinations naturally while exploring the control surface. Such responses could acknowledge that behaviour without exposing internal controls. This remains a non-essential enhancement and is not required for M0.1.
+
+### N7.3 — Servire/Nuntius Registration Behaviour
+
+Work then moved to service registration and routing behaviour.
+
+The active Servire configuration remains a temporary configuration form. When substantive Servire code work next occurs, this configuration should be migrated to YAML rather than extending the current representation further.
+
+During N7.3 testing, stopping the relevant service caused:
+
+```text
+\obt moderari status
+```
+
+to return:
+
+```text
+404 — Unknown or unroutable control service: moderari
+```
+
+After the service was started again and registration propagated, the next successful control response replaced the error in Rogare.
+
+This behaviour is considered appropriate for M0.1.
+
+Rogare is a conversational/control surface, not the authoritative diagnostic history. The persistent operational record belongs in Nuntius logs. Allowing the next successful response to replace the visible error therefore communicates that the immediate fault condition has ended without turning Rogare into an error-log viewer.
+
+### Architectural Evidence
+
+The day's testing strengthens the intended separation between three different concerns:
+
+```text
+Rogare
+    Human-facing conversational and control surface
+
+Nuntius
+    Operational control transport, routing, correlation and diagnostic history
+
+Destination service
+    Authoritative command semantics and execution
+```
+
+The destination service owns the meaning of its commands. Nuntius owns delivery and control-plane observability. Rogare presents the current result to the operator.
+
+Most importantly, historical or malformed control traffic is prevented from falling through into ordinary model context.
+
+### M0.1 Scope Discipline
+
+No new functional scope was added to M0.1 during this work.
+
+New observations were classified either as:
+
+- defects affecting the existing release requirements;
+- explicit M0.1 limitations;
+- implementation work already implied by the Nuntius migration;
+- or future/nice-to-have improvements.
+
+This preserves the current release boundary while allowing implementation evidence to refine the roadmap.
+
+### Conclusion
+
+The day's work successfully validated the N6 cross-surface recording behaviour and advanced N7 through the Moderari control endpoint, common response handling and service-registration/routing behaviour.
+
+The live system now demonstrates that Moderari-owned operational commands can travel through Nuntius, receive authoritative responses from Moderari, reject unsupported commands without model leakage, and correctly become unroutable when the service is unavailable.
+
+The remaining N7 work can continue from this demonstrated control-plane foundation.
+
+> **Control traffic is becoming an explicit system concern rather than an accidental part of conversation.**
+

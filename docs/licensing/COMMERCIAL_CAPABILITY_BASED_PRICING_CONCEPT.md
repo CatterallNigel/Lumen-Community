@@ -7,6 +7,15 @@
 
 ---
 
+## Version History
+
+| Version | Date | Status | Changes |
+|---|---|---|---|
+| 0.1 | 2026-08-22 | Initial working draft | Initial document. |
+| 0.2 | 2026-08-26 | Working draft | Added evidence/value/specialisation model, market context, and Periti extensibility discussion. |
+
+---
+
 ## 1. Background
 
 Lumen is composed of independent services rather than being a single monolithic application.
@@ -169,6 +178,70 @@ Aestimare
 This reflects the intended architecture in which individual Periti provide specialised assessment expertise rather than Aestimare operating as one monolithic assessment algorithm.
 
 ---
+
+
+## 7.1 Evidence, Value and Specialisation
+
+The emerging commercial distinction between Lumen Core, Aestimare and the Periti can be expressed succinctly:
+
+> **Lumen creates and preserves the evidence. Aestimare makes that evidence valuable. Periti determine how specialised that value can become.**
+
+This is not intended merely as a pricing statement. It describes a possible value progression within the Lumen architecture.
+
+The core Lumen services establish and preserve the evidence substrate: continuity, provenance, execution conditions, traces, replay relationships, controlled experiments and other observations required for later reasoning assurance.
+
+Aestimare sits above that evidence substrate. Its role is not simply to collect more telemetry, but to interpret accumulated evidence in order to characterise model behaviour and support assurance questions.
+
+Periti then allow that interpretation to become specialised. Different Periti may examine the same underlying evidence from different expert perspectives, with different methods and potentially very different commercial value.
+
+Conceptually:
+
+```text
+Evidence creation and preservation
+            |
+            v
+         Lumen
+            |
+            v
+Evidence interpretation and assurance
+            |
+            v
+        Aestimare
+            |
+            v
+Specialised assessment expertise
+            |
+            v
+          Periti
+```
+
+This suggests that commercial value may not be distributed evenly across the Lumen service family. Core infrastructure may be essential to creating trustworthy evidence while Aestimare and specialist Periti may represent a progressively higher-value interpretation layer.
+
+This remains a hypothesis to be tested against actual customer use and market evidence rather than an assumption to be embedded prematurely in pricing.
+
+## 7.2 Market Context and Extensibility
+
+Early market-landscape work suggests that tracing, observability, evaluation, experimentation and evaluator extension are already represented in established AI tooling. These capabilities should therefore not individually be assumed to differentiate Lumen.
+
+A potentially more significant distinction is the combination of:
+
+- independent capability-oriented Lumen services;
+- continuity and provenance across interactions;
+- controlled historical reproduction and Replay;
+- accumulated and longitudinal behavioural evidence;
+- Aestimare as an assurance layer over that evidence; and
+- Periti as independently evolvable specialist assessment expertise.
+
+The fact that other evaluation platforms expose evaluator or evaluation-extension mechanisms is commercially informative. It suggests that organisations require assessment criteria beyond a single universal evaluation model and that specialised interpretation can carry value.
+
+The Periti model should therefore be explored not merely as a collection of additional metrics, but as an extensibility boundary for specialist reasoning-assurance expertise.
+
+A future Peritus might be developed by Illuminates.One, specific to a customer or organisation, developed with a domain specialist, supplied by a third party, or designed for a particular research, regulatory or operational domain.
+
+This raises the longer-term possibility of an ecosystem in which Lumen provides the evidence and assurance architecture while specialist expertise can evolve independently around Aestimare.
+
+That possibility is deliberately exploratory. No plugin marketplace, third-party commercial model or external Peritus interface is committed by this document.
+
 
 ## 8. Specialist Periti
 

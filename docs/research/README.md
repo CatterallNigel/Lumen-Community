@@ -32,6 +32,14 @@ Research concerned with what a model is capable of doing and how that capability
 
 This area supports the broader Lumen distinction between capability and demonstrated behaviour.
 
+### Market Landscape
+
+`market-landscape/`
+
+Research concerned with products and projects that overlap with, compete with, complement, or may integrate with Lumen. The objective is to make functional overlap explicit, test Lumen's differentiation against current market evidence, and identify capabilities that should be integrated rather than unnecessarily reproduced.
+
+The market landscape is a living research stream rather than a fixed competitor list.
+
 ## Cross-Cutting Research
 
 Some research documents do not belong exclusively to one research domain.
@@ -70,7 +78,8 @@ docs/research/
 ├── MULTI-SESSION_OPERATION_AND_RESEARCH_DISTRIBUTION_ACCESS_CONTROL.md
 ├── decision-quality/
 ├── model-behaviour/
-└── model-capability/
+├── model-capability/
+└── market-landscape/
 ```
 
 The structure should evolve only when the research material justifies a new coherent area. Individual notes should not create new top-level categories unnecessarily.

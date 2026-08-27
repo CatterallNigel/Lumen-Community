@@ -10,6 +10,8 @@
 | Date | By | Version | Description |
 | --- | --- | --- | --- |
 | 2026-08-23 | Nigel Catterall | 1.0 | First reviewed release |
+| 2026-08-26 | Nigel Catterall | 1.1 | Added future external-client automatic provider/model discovery requirement. |
+| 2026-08-26 | Nigel Catterall | 1.2 | Documented M0.1 single-active Vestigare recording restriction, ownership/session binding, and completion criterion. |
 
 ## 1. Purpose
 
@@ -164,6 +166,36 @@ For M0.1, **Ollama is the only supported and validated model-provider platform**
 Ollama must be available on its default port, `11434`. Alternative Ollama ports and alternative model-provider platforms are outside the supported M0.1 release boundary unless separately validated and explicitly brought into scope.
 
 Praebere must support discovery of the available Ollama models and model selection through the common `\obt` path so that Rogare and supported external clients can use the same Lumen command mechanism.
+
+#### Future External-Client Connection Usability
+
+As a post-M0.1 usability/polish improvement, when Pontis establishes a supported external-client session it should automatically initiate provider/model discovery through the existing common control path rather than require the user to issue an initial discovery command manually.
+
+The intended flow is:
+
+```text
+External client connects
+        |
+      Pontis
+        |
+      Nuntius
+        |
+     Praebere
+        |
+ provider/model choices
+        |
+      Nuntius
+        |
+      Pontis
+        |
+ originating client/session
+```
+
+This must remain a convenience over the existing architecture, not a separate provider-discovery mechanism. Praebere remains authoritative for provider/model discovery, Nuntius remains responsible for control-plane routing, and Pontis remains responsible for the originating external-client/session correlation.
+
+The objective is that a supported external client can be presented with the available model choice immediately after connection, without requiring separate instructions telling the researcher to run a `\obt` provider/model discovery command first.
+
+This behaviour is desirable polish but is **not an M0.1 completion blocker** unless separately brought into the release scope.
 
 ### 3.8 Trace Separation
 
@@ -448,6 +480,18 @@ Temporary connectivity failure must be tolerated through the authorization lease
 
 Offline research licensing, hardware migration, key rotation, capability manifests and the complete commercial licensing system remain future work unless separately brought into M0.1.
 
+### 5.17 Single Active Vestigare Recording
+
+M0.1 supports only **one active Vestigare recording at a time** across the Lumen installation.
+
+Multiple Lumen sessions may exist concurrently, but Vestigare does not support recording multiple sessions simultaneously. When a recording is active, attempts to start another recording from Rogare, the Vestigare UI, or another supported control path must be prevented.
+
+The active recording has a single owner and, where applicable, is bound to a single Lumen session. Recording controls presented by other clients must reflect that ownership and must not permit a second recording to be started or an active recording to be stopped by a non-owning client.
+
+Traffic belonging to other concurrent sessions continues normally but is not incorporated into the active Trace merely because another session is being recorded. The active Trace remains bound to its recorded session.
+
+Support for multiple simultaneous Vestigare recordings is outside the M0.1 release boundary and remains future development.
+
 ## 6. Pre-General-Research-Release Requirement
 
 Before the Research Distribution is made generally available to external researchers, Servire should enforce a single active operator session per installation.
@@ -481,6 +525,7 @@ M0.1 can be considered complete when:
 - Moderari checkpoint/context-compaction behaviour remains observable in Trace evidence;
 - the M0.1 limitation on mid-session system-prompt changes under `Moderari Default` and `Custom` is documented;
 - concurrent-session isolation has been demonstrated;
+- Vestigare enforces the M0.1 single-active-recording restriction, binds an active recording to one session, and correctly reflects recording ownership/control state between Rogare and Vestigare;
 - the complete stack passes integration/regression validation as a single-host installation;
 - installation identity and signed runtime authorization work end-to-end;
 - authorization lease renewal and expiry behaviour have been demonstrated;
