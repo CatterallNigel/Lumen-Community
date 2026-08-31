@@ -25,6 +25,14 @@ cross-service project before returning to the main M0.1 roadmap.
                                                         migration
                                                         roadmap.
 
+  2026-08-30        Nigel Catterall   1.1               Reconciled completed
+                                                        N1--N7 implementation
+                                                        and validation;
+                                                        recorded defensive
+                                                        compatibility decision
+                                                        and N8 as the next
+                                                        active phase.
+
   -----------------------------------------------------------------------
 
 > **Versioning rule:** Multiple edits made on the same calendar day
@@ -475,8 +483,7 @@ It remains useful for:
 -   preventing accidentally retained historical control messages from
     entering model context.
 
-Removal, simplification or deprecation should happen only after the new
-path is fully validated.
+The compatibility/filtering path is retained for defensive purposes in M0.1. Its eventual retirement is future development rather than an M0.1 completion requirement.
 
 ------------------------------------------------------------------------
 
@@ -488,14 +495,14 @@ Servire becomes authoritative for the active control-plane topology.
 
 Required changes:
 
--   add `obt_enabled` to relevant service definitions;
--   define each service's `/control/obt` endpoint;
--   define service-level `listeners[]` for successful reserved `select`
+-   [x] add `obt_enabled` to relevant service definitions;
+-   [x] define each service's `/control/obt` endpoint;
+-   [x] define service-level `listeners[]` for successful reserved `select`
     state updates;
--   expose the configured `\obt services` catalogue;
--   support a successful empty catalogue;
--   validate service identities, endpoints and listener references;
--   treat presence in Servire configuration/catalogue as membership of
+-   [x] expose the configured `\obt services` catalogue;
+-   [x] support a successful empty catalogue;
+-   [x] validate service identities, endpoints and listener references;
+-   [x] treat presence in Servire configuration/catalogue as membership of
     the configured topology --- no separate `active` or `is_active` flag
     is required.
 
@@ -511,23 +518,23 @@ Nuntius M1 scaffold is complete.
 
 The remaining Nuntius implementation should include:
 
--   Servire bootstrap;
--   configured catalogue retrieval;
--   in-memory routing dictionary;
--   catalogue refresh/update;
--   common control request model;
--   request correlation;
--   routing by the service token immediately following `\obt`;
--   recognition of the reserved `select` operation;
--   targeted service routing;
--   terminal response handling;
--   configurable timeout;
--   successful `select` response-body distribution to configured
+-   [x] Servire bootstrap;
+-   [x] configured catalogue retrieval;
+-   [x] in-memory routing dictionary;
+-   [x] catalogue refresh/update;
+-   [x] common control request model;
+-   [x] request correlation;
+-   [x] routing by the service token immediately following `\obt`;
+-   [x] recognition of the reserved `select` operation;
+-   [x] targeted service routing;
+-   [x] terminal response handling;
+-   [x] configurable timeout;
+-   [x] successful `select` response-body distribution to configured
     listeners;
--   diagnostics;
--   minimal diagnostics UI;
--   health state including Servire connectivity;
--   tests proving control traffic remains outside conversational Trace.
+-   [ ] diagnostics;
+-   [ ] minimal diagnostics UI;
+-   [ ] health state including Servire connectivity;
+-   [x] tests proving control traffic remains outside conversational Trace.
 
 Nuntius must remain domain-agnostic. It understands only the destination
 service token after `\obt` and the reserved `select` operation required
@@ -537,32 +544,31 @@ It must not understand Replay semantics, model semantics, prompt
 semantics or provider semantics.
 
 ------------------------------------------------------------------------
-
 ## 5.3 Pontis
 
 Pontis requires the primary external migration.
 
 Required changes:
 
--   retain `\obt rogare start` as Pontis-owned;
--   generalise terminal-user `\obt` detection;
--   intercept non-Pontis-owned client `\obt` before normal model
+-   [x] retain `\obt rogare start` as Pontis-owned;
+-   [x] generalise terminal-user `\obt` detection;
+-   [x] intercept non-Pontis-owned client `\obt` before normal model
     routing;
--   create a command-level `request_id`;
--   attach the already established originating `session_id`;
--   identify the command origin;
--   submit the control request to Nuntius;
--   receive the authoritative terminal outcome;
--   return that outcome to the correct originating external
+-   [x] create a command-level `request_id`;
+-   [x] attach the already established originating `session_id`;
+-   [x] identify the command origin;
+-   [x] submit the control request to Nuntius;
+-   [x] receive the authoritative terminal outcome;
+-   [x] return that outcome to the correct originating external
     session/client;
--   keep live command traffic outside Repetere/Moderari/model execution;
--   before ordinary model routing, remove historical synchronous control
+-   [x] keep live command traffic outside Repetere/Moderari/model execution;
+-   [x] before ordinary model routing, remove historical synchronous control
     pairs consisting of a `user` message beginning with `\obt` and its
     immediately following `assistant` response;
--   remove an unpaired historical `\obt` user message even if no
+-   [x] remove an unpaired historical `\obt` user message even if no
     assistant response follows;
--   preserve existing ordinary model routing unchanged;
--   leave existing downstream Repetere/Moderari filtering in place as
+-   [x] preserve existing ordinary model routing unchanged;
+-   [x] leave existing downstream Repetere/Moderari filtering in place as
     defence in depth.
 
 Pontis must not acquire a hard-coded map of Repetere, Moderari, Praebere
@@ -574,18 +580,18 @@ or other command ownership.
 
 Required changes:
 
--   expose a standard `\obt` control endpoint;
--   retain Replay command parser/handler semantics where applicable;
--   accept Replay-owned commands through the explicit control path;
--   stop relying on provider/chat traversal as the primary way Replay UI
+-   [x] expose a standard `\obt` control endpoint;
+-   [x] retain Replay command parser/handler semantics where applicable;
+-   [x] accept Replay-owned commands through the explicit control path;
+-   [x] stop relying on provider/chat traversal as the primary way Replay UI
     commands reach Repetere;
--   preserve existing command-decision evidence where useful;
--   adapt diagnostics so transport lifecycle belongs to Nuntius while
+-   [x] preserve existing command-decision evidence where useful;
+-   [x] adapt diagnostics so transport lifecycle belongs to Nuntius while
     Replay-domain execution evidence remains with Repetere;
--   maintain compatibility behaviour during transition;
--   later implement session-scoped Moderari `Pass-through` orchestration
+-   [x] maintain compatibility behaviour during transition;
+-   [x] later implement session-scoped Moderari `Pass-through` orchestration
     through Nuntius;
--   require positive acknowledgement before Replay model execution.
+-   [x] require positive acknowledgement before Replay model execution.
 
 Replay-specific system-prompt fidelity remains later work on the main
 M0.1 roadmap unless needed to validate the control path itself.
@@ -596,19 +602,19 @@ M0.1 roadmap unless needed to validate the control path itself.
 
 Required changes:
 
--   expose a standard `\obt` control endpoint;
--   adapt existing Moderari-owned command handlers to the common control
+-   [x] expose a standard `\obt` control endpoint;
+-   [x] adapt existing Moderari-owned command handlers to the common control
     contract;
--   preserve terminal-message-only and command-history filtering as
+-   [x] preserve terminal-message-only and command-history filtering as
     defensive behaviour during migration;
--   remove dependence on synthetic assistant responses from the internal
+-   [x] remove dependence on synthetic assistant responses from the internal
     control contract;
--   retain compatibility handling until the Nuntius path is proven;
--   add the session-scoped `Pass-through` control command required later
+-   [x] retain compatibility handling as defence in depth; mark eventual retirement for future development;
+-   [x] add the session-scoped `Pass-through` control command required later
     by Replay;
--   return authoritative positive acknowledgement when the
+-   [x] return authoritative positive acknowledgement when the
     session-scoped policy has been applied;
--   ensure the control command itself never becomes model conversational
+-   [x] ensure the control command itself never becomes model conversational
     context.
 
 ------------------------------------------------------------------------
@@ -640,17 +646,17 @@ before returning to the main M0.1 roadmap.
 
 ## N1 --- Existing Behaviour Investigation
 
-**Status:** Complete for Moderari, Repetere and Pontis.
+**Status:** COMPLETE.
 
 Deliverables:
 
--   current command detection understood;
--   local ownership behaviour understood;
--   consume/forward convention understood;
--   existing session identity mechanism identified;
--   current response style identified;
--   model/Trace exclusion mechanisms identified;
--   `\obt rogare start` ownership decision confirmed.
+-   [x] current command detection understood;
+-   [x] local ownership behaviour understood;
+-   [x] consume/forward convention understood;
+-   [x] existing session identity mechanism identified;
+-   [x] current response style identified;
+-   [x] model/Trace exclusion mechanisms identified;
+-   [x] `\obt rogare start` ownership decision confirmed.
 
 **Exit condition:** sufficient understanding exists to migrate without
 creating a competing mechanism.
@@ -659,29 +665,29 @@ creating a competing mechanism.
 
 ## N2 --- Common Control Contract
 
-**Status:** Design agreed.
+**Status:** COMPLETE — agreed contract implemented across the migrated control path.
 
 The agreed contract defines:
 
--   `POST /control/obt` as the common control endpoint;
--   request envelope: `request_id`, UTC `timestamp`, `session_id`,
+-   [x] `POST /control/obt` as the common control endpoint;
+-   [x] request envelope: `request_id`, UTC `timestamp`, `session_id`,
     `origin`, and complete unchanged `command`;
--   routing by the service token immediately following `\obt`;
--   `select` as a reserved Nuntius control-language operation;
--   all domain content beyond the routing/service token and reserved
+-   [x] routing by the service token immediately following `\obt`;
+-   [x] `select` as a reserved Nuntius control-language operation;
+-   [x] all domain content beyond the routing/service token and reserved
     `select` semantics remains owned by the destination service;
--   Servire as topology authority without a command-ownership catalogue;
--   service-level `listeners[]` used only for successful reserved
+-   [x] Servire as topology authority without a command-ownership catalogue;
+-   [x] service-level `listeners[]` used only for successful reserved
     `select` state updates;
--   ordinary query/request responses return only to the originator;
--   one structured response representation with human-readable `message`
+-   [x] ordinary query/request responses return only to the originator;
+-   [x] one structured response representation with human-readable `message`
     and optional machine-readable `data`;
--   Pontis translation of control results to provider-compatible
+-   [x] Pontis translation of control results to provider-compatible
     assistant responses for external clients;
--   Pontis removal of historical synchronous `\obt` user/assistant
+-   [x] Pontis removal of historical synchronous `\obt` user/assistant
     control pairs before model execution;
--   existing Repetere/Moderari filtering retained as defence in depth;
--   `\obt` control exchanges excluded from Vestigare conversational
+-   [x] existing Repetere/Moderari filtering retained as defence in depth;
+-   [x] `\obt` control exchanges excluded from Vestigare conversational
     Trace.
 
 **Exit condition:** Servire, Nuntius, Pontis, Repetere, Moderari and
@@ -691,20 +697,22 @@ Praebere can implement against one agreed contract.
 
 ## N3 --- Servire Control-Plane Catalogue
 
+**Status:** COMPLETE.
+
 Implement the authoritative configured topology.
 
 Work:
 
--   `obt_enabled`;
--   `/control/obt` endpoint metadata;
--   service-level `listeners[]`;
--   `\obt services` catalogue;
--   empty healthy catalogue;
--   validation of service identities, endpoints and listener references;
--   presence in Servire configuration/catalogue defines membership of
+-   [x] `obt_enabled`;
+-   [x] `/control/obt` endpoint metadata;
+-   [x] service-level `listeners[]`;
+-   [x] `\obt services` catalogue;
+-   [x] empty healthy catalogue;
+-   [x] validation of service identities, endpoints and listener references;
+-   [x] presence in Servire configuration/catalogue defines membership of
     the configured topology;
--   no separate `active` or `is_active` field;
--   no command ownership metadata or command-specific response-target
+-   [x] no separate `active` or `is_active` field;
+-   [x] no command ownership metadata or command-specific response-target
     catalogue.
 
 **Exit condition:** Servire can authoritatively describe every
@@ -716,20 +724,22 @@ reserved `select` state updates.
 
 ## N4 --- Nuntius Routing Core
 
+**Status:** COMPLETE.
+
 Build the actual routing service against the N2/N3 contracts.
 
 Work:
 
--   bootstrap from Servire;
--   in-memory registry;
--   routing by service token;
--   reserved `select` recognition;
--   targeted dispatch;
--   request correlation;
--   terminal outcome handling;
--   timeout;
--   catalogue update/rebuild;
--   base diagnostics.
+-   [x] bootstrap from Servire;
+-   [x] in-memory registry;
+-   [x] routing by service token;
+-   [x] reserved `select` recognition;
+-   [x] targeted dispatch;
+-   [x] request correlation;
+-   [x] terminal outcome handling;
+-   [x] timeout;
+-   [x] catalogue update/rebuild;
+-   [x] base diagnostics.
 
 **Exit condition:** an internal test originator can issue a command and
 receive exactly one authoritative terminal outcome without using the
@@ -739,17 +749,19 @@ model request path.
 
 ## N5 --- Pontis External Interception
 
+**Status:** COMPLETE.
+
 Move the external client boundary onto Nuntius.
 
 Work:
 
--   preserve Pontis-owned `\obt rogare start`;
--   intercept all other client `\obt`;
--   attach stable session identity;
--   generate request correlation;
--   route to Nuntius;
--   return authoritative response to correct external session;
--   prove ordinary requests remain unaffected.
+-   [x] preserve Pontis-owned `\obt rogare start`;
+-   [x] intercept all other client `\obt`;
+-   [x] attach stable session identity;
+-   [x] generate request correlation;
+-   [x] route to Nuntius;
+-   [x] return authoritative response to correct external session;
+-   [x] prove ordinary requests remain unaffected.
 
 **Exit condition:** external `\obt` commands no longer need to travel
 through the model execution stack to reach non-Pontis owners.
@@ -758,16 +770,18 @@ through the model execution stack to reach non-Pontis owners.
 
 ## N6 --- Repetere Migration
 
+**Status:** COMPLETE for the control-plane migration; N6+ Replay-fidelity work is tracked separately.
+
 Move Replay-owned commands onto the explicit control path.
 
 Work:
 
--   standard control endpoint;
--   existing Replay command handlers behind that endpoint;
--   Servire/Nuntius service registration;
--   migrate Replay UI/operator command path;
--   retain temporary compatibility handling;
--   preserve Replay-domain logging.
+-   [x] standard control endpoint;
+-   [x] existing Replay command handlers behind that endpoint;
+-   [x] Servire/Nuntius service registration;
+-   [x] migrate Replay UI/operator command path;
+-   [x] retain defensive compatibility handling; eventual retirement is future work;
+-   [x] preserve Replay-domain logging.
 
 **Exit condition:** Replay commands are routed Pontis -\> Nuntius -\>
 Repetere and no longer depend on conversational traversal.
@@ -776,15 +790,17 @@ Repetere and no longer depend on conversational traversal.
 
 ## N7 --- Moderari Migration
 
+**Status:** COMPLETE, including the subsequent N7+ session-scoped system-prompt work.
+
 Move Moderari-owned commands onto the explicit control path.
 
 Work:
 
--   standard control endpoint;
--   existing handlers adapted to common responses;
--   Servire/Nuntius service registration;
--   compatibility behaviour retained temporarily;
--   validate historical control traffic cannot leak into model context.
+-   [x] standard control endpoint;
+-   [x] existing handlers adapted to common responses;
+-   [x] Servire/Nuntius service registration;
+-   [x] defensive compatibility behaviour retained; eventual retirement is future work;
+-   [x] validate historical control traffic cannot leak into model context.
 
 **Exit condition:** Moderari-owned external commands arrive through
 Nuntius rather than through ordinary model execution.
@@ -793,24 +809,26 @@ Nuntius rather than through ordinary model execution.
 
 ## N8 --- Nuntius Diagnostics and UI
 
+**Status:** NEXT / ACTIVE DEVELOPMENT PHASE.
+
 Complete the Nuntius operational surface.
 
 Work:
 
--   request lifecycle records;
--   origin/session/request correlation;
--   resolved owner;
--   terminal result;
--   elapsed time;
--   timeout/unconfirmed outcome;
--   late response;
--   routing/configuration errors;
--   health;
--   Servire connectivity;
--   active route count;
--   in-flight count;
--   bounded recent history;
--   Servire-exposed Nuntius diagnostics view.
+-   [ ] request lifecycle records;
+-   [ ] origin/session/request correlation;
+-   [ ] resolved owner;
+-   [ ] terminal result;
+-   [ ] elapsed time;
+-   [ ] timeout/unconfirmed outcome;
+-   [ ] late response;
+-   [ ] routing/configuration errors;
+-   [ ] health;
+-   [ ] Servire connectivity;
+-   [ ] active route count;
+-   [ ] in-flight count;
+-   [ ] bounded recent history;
+-   [ ] Servire-exposed Nuntius diagnostics view.
 
 **Exit condition:** command-routing faults can be diagnosed without
 adding detailed Nuntius traffic to the normal Servire Operations Log or
@@ -835,18 +853,18 @@ same Nuntius path and response contract.
 
 After all migrated paths are proven:
 
--   identify legacy consume-or-forward traversal code that is no longer
+-   [ ] identify legacy consume-or-forward traversal code that is no longer
     required;
--   retain defensive `\obt` model-context filtering in
+-   [ ] retain defensive `\obt` model-context filtering in
     Repetere/Moderari;
--   remove obsolete command traversal paths;
--   run cross-service regressions;
--   verify `\obt rogare start` remains Pontis-local;
--   verify no accidental command loops;
--   verify no command enters model context;
--   verify session/request correlation;
--   verify success is never inferred from silence;
--   verify normal ask/answer paths are unchanged.
+-   [ ] remove obsolete command traversal paths;
+-   [ ] run cross-service regressions;
+-   [ ] verify `\obt rogare start` remains Pontis-local;
+-   [ ] verify no accidental command loops;
+-   [ ] verify no command enters model context;
+-   [ ] verify session/request correlation;
+-   [ ] verify success is never inferred from silence;
+-   [ ] verify normal ask/answer paths are unchanged.
 
 **Exit condition:** one coherent control-plane architecture remains.
 
@@ -856,40 +874,39 @@ After all migrated paths are proven:
 
 The Nuntius cross-service project is complete when:
 
-1.  Servire authoritatively defines the configured `\obt` routing
+- [x] 1. Servire authoritatively defines the configured `\obt` routing
     topology.
-2.  Nuntius obtains and maintains that topology.
-3.  Pontis consumes Pontis-owned commands locally.
-4.  `\obt rogare start` remains Pontis-owned.
-5.  Other client-originated `\obt` commands are diverted to Nuntius
+- [x] 2. Nuntius obtains and maintains that topology.
+- [x] 3. Pontis consumes Pontis-owned commands locally.
+- [x] 4. `\obt rogare start` remains Pontis-owned.
+- [x] 5. Other client-originated `\obt` commands are diverted to Nuntius
     before model execution.
-6.  Nuntius routes each command using the service token immediately
+- [x] 6. Nuntius routes each command using the service token immediately
     following `\obt` and recognises reserved `select` semantics.
-7.  Repetere and Moderari expose the common control endpoint.
-8.  Authoritative responses return to the correct originator.
-9.  Existing Lumen session identity is preserved.
-10. Each solicited command has one terminal outcome.
-11. Pontis strips historical synchronous `\obt` user/assistant control
+- [x] 7. Repetere and Moderari expose the common control endpoint.
+- [x] 8. Authoritative responses return to the correct originator.
+- [x] 9. Existing Lumen session identity is preserved.
+- [x] 10. Each solicited command has one terminal outcome.
+- [x] 11. Pontis strips historical synchronous `\obt` user/assistant control
     pairs before normal model execution, and control traffic remains
     outside Vestigare conversational Trace.
-12. Detailed Nuntius transport activity remains outside the default
+- [x] 12. Detailed Nuntius transport activity remains outside the default
     Servire Operations Log.
-13. Nuntius diagnostics provide enough evidence to diagnose routing
+- [ ] 13. Nuntius diagnostics provide enough evidence to diagnose routing
     failures and timeouts.
-14. Praebere can use the same completed mechanism for provider/model
+- [ ] 14. Praebere can use the same completed mechanism for provider/model
     operations.
-15. Legacy conversational command traversal is no longer required as the
+- [ ] 15. Legacy conversational command traversal is no longer required as the
     normal route.
-16. Existing ordinary ask/answer execution remains regression-clean.
+- [x] 16. Existing ordinary ask/answer execution remains regression-clean.
 
 At that point, Nuntius is considered a completed foundational Lumen
 service for M0.1 purposes.
 
 ------------------------------------------------------------------------
-
 # 8. Relationship to the Main M0.1 Roadmap
 
-This project temporarily becomes the active implementation stream.
+This project remains the active implementation stream. **N1 through N7 are complete; N8 is the next active phase.**
 
 The sequence is:
 
@@ -924,9 +941,9 @@ stable control-plane dependency.
 This project does not itself attempt to complete:
 
 -   Replay Experiment structure;
--   full Replay effective-system-prompt fidelity;
--   Moderari saved Custom prompts;
--   the full Moderari system-prompt policy UI;
+-   full Replay effective-system-prompt fidelity *(subsequently advanced substantially under N6+/N7+; remaining acceptance is tracked in the Repetere addendum)*;
+-   Moderari saved Custom prompts *(subsequently completed under N7+)*;
+-   the full Moderari system-prompt policy UI *(subsequently completed under N7+)*;
 -   Fiducia repeated-experiment orchestration;
 -   Aestimare;
 -   durable messaging;

@@ -23,6 +23,32 @@
                                                         error presentation
                                                         polish and optional
                                                         \obt Easter Eggs
+
+  1.4               2026-08-27        Nigel Catterall   Added explicit legacy
+                                                        Moderari/backchannel
+                                                        compatibility retirement
+                                                        to Nuntius consolidation
+
+  1.5               2026-08-27        Nigel Catterall   Recorded M0.1 decision
+                                                        to disable the Moderari
+                                                        informational command
+                                                        announcement and defer
+                                                        its future purpose
+
+  1.6               2026-08-27        Nigel Catterall   Deferred direct \obt
+                                                        Custom policy selection
+                                                        while preserving generic
+                                                        policy status reporting
+
+  1.7               2026-08-28        Nigel Catterall   Added Rogare dynamic
+                                                        \obt command discovery
+                                                        and command-picker UX
+
+   1.8               2026-08-30        Nigel Catterall   Defined M0.1 provider/model
+                                                        selection as runtime-global
+                                                        and retained per-session
+                                                        provider/model selection as
+                                                        future development
   -----------------------------------------------------------------------
 
 **Status:** Living Document\
@@ -125,10 +151,10 @@ experimental framework for behavioural assessment.
 **Document:** M0.1 Development Requirements --- Multi-Session Isolation
 Validation / future extension
 
-Extend concurrent-session support beyond the M0.1
-shared-execution-condition model so that individual active sessions may
-independently select and retain their own provider, model and Moderari
-system-prompt condition without affecting other sessions.
+Extend concurrent-session support so that individual active sessions may
+independently select and retain their own provider and model without affecting
+other sessions. Moderari system-prompt policy is already session scoped in M0.1
+and therefore does not need to wait for this future provider/model work.
 
 Future development must define how these execution conditions are
 scoped, bound to session identity, changed safely during session
@@ -136,10 +162,11 @@ lifecycle, and released when a session ends. It should also define the
 required configuration ownership, locking or isolation semantics across
 Moderari, Praebere and the wider Lumen control path.
 
-The M0.1 rule remains deliberately simpler: concurrent sessions are
-investigated for transaction and state isolation, while the first active
-session establishes the provider, model and Moderari system-prompt
-behaviour shared by all concurrent sessions.
+The M0.1 rule remains deliberately simpler for provider/model state:
+Praebere maintains one runtime-global provider/model selection shared by all
+active sessions. A model change therefore affects subsequent model requests
+from every session. Moderari system-prompt policy is a separate execution
+condition and is already session scoped in M0.1.
 
 ## Nuntius --- Unified Internal Control, Event and Status Messaging
 
@@ -166,6 +193,73 @@ retrieval semantics, ownership and correlation, reconnect/recovery
 behaviour, and what minimal Nuntius activity---if any---should remain
 visible in Servire Operational Logs. The migration should be incremental
 and should not alter the ordinary ask/answer model path.
+
+As part of this consolidation, retain the historical Moderari compatibility
+handling defensively while supported callers may still depend upon it, but treat
+Nuntius as the authoritative path for explicit external `\obt` control traffic.
+Once remaining historical backchannel/status traffic has migrated to Nuntius,
+remove the obsolete Moderari conversational/backchannel interception and
+compatibility implementation as part of the same cleanup rather than as an
+isolated change.
+
+Before retirement, validate that retained compatibility handling cannot cause
+duplicate command execution and cannot leak historical `[Lumen Command]` or
+other operational/backchannel traffic into external-client conversational
+output, model context, or conversational Trace. The compatibility path is not an
+M0.1 usability blocker provided these safety properties hold.
+
+## Moderari --- Informational Command Announcement
+
+**Area:** Moderari / External Clients / Nuntius / Control UX\
+**Document:** N7+ --- Moderari System-Prompt Policy / future Moderari control UX
+
+The historical Moderari informational announcement that identifies the Moderari
+version and explains that commands beginning with `\obt` are handled by Lumen is
+deliberately **disabled for M0.1**.
+
+Testing during N7+ showed inconsistent client-visible presentation: the announcement
+could appear in Pi after a clean Moderari start while Rogare did not present it, and
+later sessions did not necessarily receive it. The important control-boundary
+validation found no `\obt` command leakage into ordinary model execution. Continuing
+to investigate the presentation behaviour is therefore not justified for M0.1.
+
+For M0.1 the preferred behaviour is deterministic absence: external clients should
+not receive this unsolicited informational announcement. The underlying implementation
+should be disabled rather than treated as a required M0.1 feature.
+
+Future development may reconsider whether an equivalent message has a useful,
+well-defined purpose, such as explicit client capability discovery, session metadata,
+or control-path guidance. Any reintroduction must define its lifecycle and scope
+clearly and must preserve the architectural rule that operational/control information
+cannot become model prompt or conversational context.
+
+This item is therefore **closed for M0.1 by deliberate disablement**, with any
+redesign or reintroduction deferred to future development.
+
+## Moderari --- Direct `\\obt` Selection of Custom System-Prompt Policy
+
+**Area:** Moderari / Nuntius / System-Prompt Policy / Control UX\
+**Document:** Future Moderari system-prompt control design
+
+M0.1 provides direct `\\obt` switching between the existing **Default** system-prompt
+policy and **Pass-through**, together with `\\obt moderari prompt status` to report the
+currently active policy mode.
+
+Direct command selection of **Custom** is intentionally deferred. A future command may
+provide an equivalent capability such as:
+
+```text
+\\obt moderari prompt custom
+```
+
+but it should only be introduced once Custom prompt selection, saved-prompt identity,
+working-copy state and application semantics are sufficiently defined that a command
+cannot select an ambiguous or unintended prompt.
+
+The policy-status contract should not need to change when this capability is added.
+`\\obt moderari prompt status` should always report only the active **mode** ---
+`default`, `pass-through`, or `custom` --- and should not expose which saved Custom
+prompt is selected or reveal the Custom prompt's contents.
 
 ## Vestigare --- Concurrent Session-Bound Trace Recordings
 
@@ -200,6 +294,42 @@ session-to-recording mapping, ownership and permissions, lifecycle
 recovery after client/service failure, UI representation of multiple
 active recordings, and how Repetere selects and replays each resulting
 session-bound Trace independently.
+
+
+## Rogare / Nuntius --- Dynamic `\obt` Command Discovery and Picker
+
+**Area:** Rogare / Nuntius / `\obt` Services / Control UX\
+**Document:** Future Rogare control-command discovery design
+
+Add a lightweight `\obt` command picker to Rogare so researchers and
+operators do not need to remember the complete command syntax exposed by
+every Lumen service. Selecting an entry should insert the corresponding
+command into Rogare's chat composer for review or completion; it must
+**not execute the command automatically**.
+
+The command list must be discovered dynamically rather than duplicated
+as a hard-coded Rogare or Nuntius catalogue. Nuntius already knows the
+active `\obt`-capable services and enough routing information to address
+them, while each service remains authoritative for the commands it owns.
+Discovery should therefore use the service control path: Nuntius requests
+the authoritative help/command catalogue from each relevant active
+service, analogous to the existing `\obt moderari help` behaviour,
+aggregates those responses, and returns the available command set to
+Rogare.
+
+The future discovery response should be machine-readable and should
+support at least the service, command/template and a concise description.
+Parameterized commands may be presented as editable templates such as
+`\obt session resume <number|session_id>` or
+`\obt model select <model>`. Rogare may group or filter discovered
+commands by service and availability, but it must not become a second
+source of truth for command ownership or syntax.
+
+This remains a usability layer over the existing control architecture:
+Rogare inserts ordinary `\obt` command text into the composer and the
+user explicitly sends it through the normal Pontis/Nuntius path. Command
+discovery must not create a parallel execution mechanism or cause control
+traffic to enter the model conversation.
 
 ## Rogare --- Friendly Control-Path Error Presentation
 
@@ -238,3 +368,26 @@ an explicit Easter Egg owned by the addressed service.
 This is optional future polish, not an M0.1 requirement. If implemented, the
 responses should be sparse enough that discovering one feels intentional rather
 than turning the `\obt` namespace into a novelty interface.
+
+## Rogare --- Conversation Copy and Export
+
+**Area:** Rogare / Research UX / Conversation Records\
+**Document:** Future Rogare conversation export design
+
+Add explicit copy/export functionality to Rogare's Conversation window so that a
+researcher or engineer can capture the complete human-readable conversation without
+manually selecting individual messages. The initial useful capability should include
+**Copy Conversation** and **Export as Markdown**. A structured **Export as JSON** may
+also preserve roles, session identity, timestamps and other appropriate conversational
+metadata for later analysis.
+
+This export represents the conversation as presented through Rogare and must remain
+semantically distinct from a Vestigare Trace. Rogare exports the human-readable
+interaction record; Vestigare preserves execution evidence suitable for inspection,
+Replay and behavioural analysis. Exporting a Rogare conversation must therefore not be
+treated as exporting or reconstructing the authoritative Trace.
+
+This is future research/usability functionality rather than an M0.1 requirement. It
+should only be promoted into M0.1 if manual conversation extraction becomes a material
+impediment during external research testing.
+

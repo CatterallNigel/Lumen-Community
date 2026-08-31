@@ -12,6 +12,8 @@
 | Date | By | Version | Description |
 | --- | --- | --- | --- |
 | 2026-08-23 | Nigel Catterall | 1.0 | First reviewed release |
+| 2026-08-30 | Nigel Catterall | 1.1 | Defined Pontis session identity as authoritative for Vestigare Trace binding; added active-session selection, no-session Trace-start prevention, pre-first-interaction recording boundary, and multi-client Trace acceptance requirements. |
+| 2026-08-30 | Nigel Catterall | 1.2 | Defined N9 Praebere runtime model lifecycle: Ollama startup discovery, optional preferred model, established versus active-execution sessions, external-client explicit selection, Rogare dropdown state, and model locking during active execution. |
 
 
 ## 1. Purpose
@@ -946,23 +948,66 @@ The purpose of this investigation is to establish that transactions occurring wi
 
 Testing should verify that interactions initiated within one session remain associated with that session throughout the relevant Lumen execution path.
 
-## 8.2 Shared Execution Conditions
+## 8.2 Execution-Condition Scope
 
-For M0.1, concurrent sessions do not have independently mutable provider/model or Moderari system-prompt configuration.
+For M0.1, provider/model selection is runtime-global and becomes locked while any
+active execution session exists, while Moderari system-prompt policy is session scoped.
 
-Where multiple sessions are active, the first active session establishes the shared execution conditions for:
+A successful Praebere model selection changes the provider/model used by subsequent
+model requests from all active sessions. By contrast, each established Moderari
+session retains its own active system-prompt policy and, where applicable, Applied
+Custom prompt state.
 
-- provider;
-- model;
-- Moderari system-prompt policy; and
-- where applicable, the Applied Custom system-prompt content.
-
-Subsequent concurrent sessions operate using those established execution conditions.
-
-The M0.1 investigation should validate session isolation under these shared conditions.
+The M0.1 investigation must validate session isolation while preserving this explicit
+difference in scope.
 
 
 ---
+
+
+# 8.3 Vestigare — Active Session Selection and Recording Boundary
+
+Pontis is authoritative for session identity. Vestigare must bind an active Trace to
+one explicit Pontis `session_id`; it must not infer the recorded session from creation
+order, recency or activity.
+
+M0.1 requires:
+
+- only one active Vestigare recording across the installation;
+- Trace Start to be unavailable/rejected when there are no active Lumen sessions;
+- the Vestigare UI to obtain/display eligible active Pontis sessions;
+- automatic explicit binding when exactly one eligible session exists;
+- researcher selection of the session to record when multiple eligible sessions exist;
+- the selected Pontis `session_id` to be persisted as the Trace session binding;
+- traffic from all unselected sessions to continue normally without entering the active Trace;
+- complete-session recording to begin before the selected session's first model interaction;
+- Trace Start to be rejected for a session that has already performed model interaction rather than silently creating an incomplete Trace.
+
+A later request may carry earlier conversational messages, but that cannot reconstruct
+all execution events and provenance that Vestigare failed to observe. M0.1 must not
+present a mid-session capture as a complete research Trace.
+
+The normal supported sequence is:
+
+```text
+client connects
+    |
+    v
+Pontis establishes/assigns session_id
+    |
+    v
+researcher starts Trace for that session
+    |
+    v
+Vestigare binds trace_id -> session_id
+    |
+    v
+first model interaction
+```
+
+Explicit partial/mid-session Trace support and multiple simultaneous recordings remain
+future development.
+
 
 # 9. Nuntius / Servire — Common `\obt` Control Plane
 
@@ -1255,7 +1300,7 @@ This makes Nuntius a dependency of the M0.1 Replay fidelity requirement and make
 
 ## 9.12 Praebere Discovery and Selection
 
-Praebere should be an early consumer of the common path.
+Praebere is the first native adopter of the common Nuntius control path.
 
 Expected commands include:
 
@@ -1265,11 +1310,65 @@ Expected commands include:
 \obt model select <model>
 ```
 
-`providers` and `models` return `200 + body`.
+Praebere must query Ollama on startup and maintain authoritative knowledge of the models actually available locally. A configured model is an optional **preferred model**, not a required installed/default model. Absence of the preferred model must not prevent Praebere or stack startup.
 
-Successful model selection returns `200` with no body unless a concrete response body is later required.
+The M0.1 state model distinguishes **available models**, **preferred model**, **selected runtime-global model**, and **selection lock state**.
 
-Servire configuration determines whether discovery responses are additionally delivered to Rogare or another service.
+`providers` and `models` return `200 + body`. Successful model selection must return an explicit authoritative outcome identifying the effective selection.
+
+### Session and Selection Lifecycle
+
+Pontis remains authoritative for session identity.
+
+A newly connected client first has an **established session**: `session_id` exists but no model interaction has occurred. Establishment alone must not lock model selection.
+
+After the first model interaction, the session becomes an **active execution session**. At that point the runtime-global selected model is locked. It remains locked while any active execution session exists.
+
+The intended sequence is:
+
+```text
+connect / establish session
+        |
+        v
+model selection allowed if no active execution session
+        |
+        v
+optional Trace start
+        |
+        v
+first model interaction
+        |
+        v
+active execution session / runtime-global model locked
+        |
+        v
+last active execution session ends
+        |
+        v
+model selection available again
+```
+
+An external client established while no model is selected must receive the discovered model list and guidance:
+
+```text
+\obt praebere model select <model_name>
+```
+
+Praebere must not silently apply the installation's preferred model to that external client.
+
+If an authoritative model is already locked by active execution, a newly established external or Rogare session does not receive a model choice; it is informed/displayed which runtime-global model is in use and uses that model.
+
+### Rogare
+
+Rogare should obtain the available-model state through Nuntius/Praebere and display it as a dropdown near the session start/stop controls.
+
+When no active execution session exists, the dropdown is enabled; an available preferred model may be shown as the initial UI choice; and changing the UI choice has no authoritative effect until Praebere acknowledges selection through the common control path.
+
+While any active execution session exists, the dropdown is disabled/locked; Rogare displays the authoritative runtime-global selected model; and Rogare restart/reconnect recovers that state rather than assuming local UI state.
+
+Servire configuration determines whether discovery/state responses are additionally delivered to Rogare or another service.
+
+Per-session model selection is future development and is not required for M0.1.
 
 ## 9.13 Operational Logging Boundary
 
@@ -1532,6 +1631,14 @@ The intended mechanism is a single active Servire operator lease per installatio
 - Verify Trace ownership and execution evidence cannot cross sessions.
 - Verify configuration/control state remains correctly scoped.
 - Verify sequential and concurrent Replay runs use distinct isolated sessions.
+- Verify Pontis provides the authoritative `session_id` used for Vestigare Trace binding.
+- Verify Trace Start is unavailable/rejected when no active session exists.
+- Verify Vestigare displays/selects the sole eligible session when exactly one exists.
+- Verify Vestigare requires explicit session selection when multiple eligible sessions exist.
+- Verify Vestigare never selects a session implicitly from recency or activity.
+- Verify a Trace can start after session establishment but before that session's first model interaction.
+- Verify Trace Start is rejected once the selected session has already performed model interaction.
+- With multiple clients active, verify only traffic for the selected `session_id` enters the active Trace.
 
 ## Nuntius / Pontis / Praebere / Servire
 

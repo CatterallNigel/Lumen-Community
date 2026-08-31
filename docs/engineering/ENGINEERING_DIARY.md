@@ -12581,3 +12581,144 @@ The remaining N7 work can continue from this demonstrated control-plane foundati
 
 > **Control traffic is becoming an explicit system concern rather than an accidental part of conversation.**
 
+---
+
+# 2026-08-27
+
+## N7+ — System-Prompt Policy, Effective-Prompt Provenance and Trace Fidelity
+
+### Observation
+
+Work continued beyond the initial N7 Moderari control-plane migration to make system-prompt handling an explicit, observable execution condition rather than an implicit property of Moderari.
+
+Moderari now exposes three distinct runtime system-prompt policies:
+
+```text
+Moderari Default
+Pass-through
+Custom
+```
+
+The work concentrated not only on selecting the policy, but on establishing which system prompt actually reached the model and preserving sufficient provenance for later deterministic Replay.
+
+### Moderari System-Prompt Policy
+
+The Moderari UI was extended to provide explicit selection and runtime visibility for the three policies.
+
+**Moderari Default** retains Moderari-owned system-prompt behaviour.
+
+**Pass-through** preserves the external client's supplied system prompt unchanged.
+
+**Custom** replaces the incoming client system prompt with an explicitly applied researcher-defined prompt.
+
+Custom prompt definitions can be saved and edited independently of the active runtime state. Loading, editing or saving a definition does not itself alter model execution. A Custom working copy becomes authoritative only when explicitly applied.
+
+This distinction is important for experimental work because a saved configuration and an execution condition are not necessarily the same thing.
+
+### Effective System-Prompt Provenance
+
+Testing exposed the need to distinguish two different forms of evidence whenever Moderari changes a system prompt:
+
+```text
+Incoming system prompt
+    What entered Lumen
+
+Effective system prompt
+    What actually reached the model
+```
+
+Both are historically significant, but only the effective prompt represents the execution condition that Replay must reproduce.
+
+Moderari was therefore made authoritative for effective system-prompt provenance and communicates that provenance to Vestigare through the Nuntius control plane.
+
+The provenance record distinguishes:
+
+- the selected policy;
+- the policy action;
+- the source of the effective prompt;
+- incoming system messages;
+- their disposition;
+- the effective system message or messages;
+- whether each message is valid Replay input.
+
+### Superseded Prompt Semantics
+
+When Moderari replaces an incoming client prompt, the original prompt is retained rather than discarded.
+
+It is recorded as:
+
+```text
+disposition = superseded
+replay_input = false
+```
+
+The replacement is recorded as the effective execution condition:
+
+```text
+replay_input = true
+```
+
+This resolves the earlier ambiguity where a Trace could preserve both the client prompt and the Moderari replacement without establishing which should later be reconstructed.
+
+The distinction is deliberately analogous to soft deletion: superseded information remains part of the historical evidence but is no longer active execution state.
+
+### Three-Policy Validation
+
+Fresh live traces were exercised for all three policy modes.
+
+The resulting invariant is:
+
+| Policy | Incoming client prompt | Authoritative effective prompt |
+| --- | --- | --- |
+| Moderari Default | preserved as provenance when superseded | Moderari-generated/default prompt |
+| Pass-through | preserved and remains effective | identical client prompt |
+| Custom | preserved as superseded provenance | exact applied Custom prompt |
+
+The Custom test used a deliberately distinguishable instruction requiring responses to be prefixed with `NIGEL-RULES:`.
+
+The resulting model response obeyed that instruction, providing behavioural evidence that the prompt recorded by Vestigare as effective was also the prompt governing the actual execution.
+
+Vestigare recorded exactly one effective system prompt for the exchange.
+
+### Historical Fidelity of Custom Prompts
+
+A significant consequence of the implementation is that Trace stores the literal Custom prompt used for the execution rather than merely retaining a reference to a saved Custom definition.
+
+This means later modification or deletion of the saved definition cannot alter the historical execution condition.
+
+The Trace therefore remains self-contained evidence of the prompt that governed the model at that point in time.
+
+### Architectural Conclusion
+
+System-prompt policy is now treated as part of the model's execution provenance.
+
+The important invariant is:
+
+> **Trace records both what entered Lumen and what actually reached the model when those differ, without confusing provenance with replayable execution context.**
+
+This closes the provenance side of the system-prompt fidelity problem.
+
+Vestigare can now distinguish historical input from authoritative Replay input, and Moderari provides the evidence required to make that distinction.
+
+### N7+ §6 Completion
+
+**N7+ §6 — Effective System-Prompt Trace Provenance is complete.**
+
+The exit condition has been demonstrated across Moderari Default, Pass-through and Custom policies:
+
+- the incoming client prompt remains auditable;
+- superseded prompts are explicitly non-replayable;
+- the effective prompt is explicitly identified;
+- exactly one authoritative effective prompt is retained where expected;
+- Custom prompt text is captured literally;
+- and live model behaviour confirms that the recorded effective prompt governed execution.
+
+The remaining work therefore moves from **recording the correct execution condition** to **reconstructing it correctly**.
+
+The next development stage is:
+
+> **N7+ §7 — Replay Pass-through Prerequisite**
+
+Repetere must consume the provenance established here, place Moderari into the required Replay execution mode, and reconstruct only the system prompt identified by the Trace as authoritative Replay input.
+
+

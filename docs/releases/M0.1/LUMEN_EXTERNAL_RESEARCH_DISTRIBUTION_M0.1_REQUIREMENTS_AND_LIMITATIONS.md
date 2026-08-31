@@ -12,6 +12,12 @@
 | 2026-08-23 | Nigel Catterall | 1.0 | First reviewed release |
 | 2026-08-26 | Nigel Catterall | 1.1 | Added future external-client automatic provider/model discovery requirement. |
 | 2026-08-26 | Nigel Catterall | 1.2 | Documented M0.1 single-active Vestigare recording restriction, ownership/session binding, and completion criterion. |
+| 2026-08-27 | Nigel Catterall | 1.3 | Documented observed runtime system-prompt policy switching within an active session and the resulting Trace/Replay implications. |
+| 2026-08-28 | Nigel Catterall | 1.4 | Revised Moderari to the implemented session-scoped system-prompt policy model; recorded concurrent Rogare/Pi validation, independent new-session defaults, and Servire policy-state visibility. |
+| 2026-08-30 | Nigel Catterall | 1.5 | Reconciled N8+ control-plane integration: Nuntius startup/diagnostics, Trace-state reconnect recovery, Servire operational-log filtering and validation-state lifecycle, and Fiducia shutdown/PID/log-cleanup behaviour. Added failed staged-Replay recovery requirement. |
+| 2026-08-30 | Nigel Catterall | 1.6 | Defined M0.1 provider/model selection as runtime-global; documented Praebere-managed stack shutdown semantics; clarified the single-active Vestigare recording limitation and required session-binding behaviour when multiple sessions/external clients exist. |
+| 2026-08-30 | Nigel Catterall | 1.7 | Defined Pontis session identity as authoritative for Trace binding; required explicit active-session selection in Vestigare; prohibited Trace start with no active session; and defined M0.1 recording as beginning before the selected session's first model interaction so a Trace is not silently incomplete. |
+| 2026-08-30 | Nigel Catterall | 1.8 | Refined N9 provider/model lifecycle: startup discovery from Ollama, optional preferred model, established versus active-execution sessions, external-client explicit selection, Rogare dropdown behaviour, and runtime-global model locking while execution sessions are active. |
 
 ## 1. Purpose
 
@@ -89,6 +95,10 @@ Each run must expose at least:
 
 Where existing evidence permits, the first divergence point should be exposed.
 
+A failed Replay run must remain preserved as experimental evidence while the staged
+Experiment remains recoverable. Retrying must create a fresh isolated Replay
+session/run and must not overwrite or silently discard the failed-run evidence.
+
 Repetere reports divergence but does not assess its significance.
 
 ### 3.3 System-Prompt Policy
@@ -157,45 +167,55 @@ Services with no responsibility for a command return `204`.
 
 Services that successfully handle a command return `200`.
 
+Nuntius is an integral Servire-owned control-plane service in M0.1. Servire starts
+Nuntius automatically when Servire becomes operational, before the managed workload
+stack is started. Stack Start/Stop operates on the managed workload services rather
+than defining Nuntius's normal lifecycle. Servire remains able to start, stop and
+restart Nuntius individually and stops Nuntius last during Servire shutdown.
+
+Nuntius must expose its live control-plane diagnostics through its Nuntius-owned UI
+surface in Servire. A reconnecting/restarted Rogare instance must be able to recover
+the authoritative active Vestigare Trace state through the Nuntius control path.
+
 ### 3.7 Provider and Model Discovery
 
-Praebere must remain the executor for model-provider operations.
+Praebere must remain the executor and authoritative state owner for model-provider operations.
 
 For M0.1, **Ollama is the only supported and validated model-provider platform**.
 
 Ollama must be available on its default port, `11434`. Alternative Ollama ports and alternative model-provider platforms are outside the supported M0.1 release boundary unless separately validated and explicitly brought into scope.
 
-Praebere must support discovery of the available Ollama models and model selection through the common `\obt` path so that Rogare and supported external clients can use the same Lumen command mechanism.
+On startup, Praebere must query Ollama for the models actually available locally. A configured model name is an optional **preferred model**, not a requirement that the researcher's Ollama installation contain that model. If the preferred model is absent, Praebere must remain operational with no model selected; startup must not fail and another model must not be silently substituted.
 
-#### Future External-Client Connection Usability
+M0.1 distinguishes:
 
-As a post-M0.1 usability/polish improvement, when Pontis establishes a supported external-client session it should automatically initiate provider/model discovery through the existing common control path rather than require the user to issue an initial discovery command manually.
+- **available models** — models discovered from Ollama;
+- **preferred model** — optional installation/UI preference;
+- **selected model** — authoritative runtime-global execution selection;
+- **selection lock** — whether active model execution prevents the selected model from being changed.
 
-The intended flow is:
+Praebere must support discovery and selection through the common `\obt` path so that Rogare and supported external clients use the same Lumen command mechanism.
+
+For M0.1, provider and selected-model state are **runtime-global**, not session scoped. However, a model change must not alter the execution condition of an already-active session. Lumen therefore distinguishes:
+
+- an **established session** — Pontis has assigned the authoritative `session_id`, but the session has not yet performed model interaction; merely connecting does not lock model selection;
+- an **active execution session** — the session has performed its first model interaction and its model execution condition has been established.
+
+Model selection/change is permitted only while there are no active execution sessions. Once the first model interaction occurs, the selected runtime-global model is locked until all active execution sessions have ended. Any new session established during that period uses the same locked model.
+
+When an external client establishes a session while no model is selected/locked, it must be presented with Praebere's available models and guidance to use:
 
 ```text
-External client connects
-        |
-      Pontis
-        |
-      Nuntius
-        |
-     Praebere
-        |
- provider/model choices
-        |
-      Nuntius
-        |
-      Pontis
-        |
- originating client/session
+\obt praebere model select <model_name>
 ```
 
-This must remain a convenience over the existing architecture, not a separate provider-discovery mechanism. Praebere remains authoritative for provider/model discovery, Nuntius remains responsible for control-plane routing, and Pontis remains responsible for the originating external-client/session correlation.
+The configured preferred model must **not** be silently selected for an external client.
 
-The objective is that a supported external client can be presented with the available model choice immediately after connection, without requiring separate instructions telling the researcher to run a `\obt` provider/model discovery command first.
+Rogare should present Praebere's discovered models in a dropdown associated with the session controls. When selection is unlocked, an available preferred model may be shown as the initial UI choice. That choice becomes authoritative only through the normal Praebere/Nuntius selection path. While any active execution session exists, Rogare must display the authoritative model and disable model choice.
 
-This behaviour is desirable polish but is **not an M0.1 completion blocker** unless separately brought into the release scope.
+Praebere also owns the provider lifecycle. On managed stack shutdown, Servire requests Praebere lifecycle shutdown; Praebere releases/unloads the managed model resources and stops Ollama **only where the Ollama process is Praebere-managed/owned**. If Ollama was already running independently, stopping the Lumen stack must not terminate that external provider unless configuration explicitly grants Praebere that ownership.
+
+Per-session provider/model selection remains outside the required M0.1 boundary.
 
 ### 3.8 Trace Separation
 
@@ -215,14 +235,13 @@ M0.1 must be validated with multiple simultaneous Lumen sessions.
 
 Transactions within concurrent sessions must remain bounded to their originating session. Session-specific conversational context, responses, Trace evidence and other session-specific state must not leak between sessions.
 
-For M0.1, concurrent sessions share the execution conditions established by the first active session for:
+For M0.1, conversational state and Moderari system-prompt policy are **session scoped**.
 
-- provider;
-- model;
-- Moderari system-prompt policy; and
-- where applicable, the Applied Custom system-prompt content.
+Live concurrent-session validation with Rogare and Pi demonstrated that one active session can remain under `Moderari Default` while another active session is independently changed to `Pass-through`. The change applies only to the selected/originating session and does not alter the policy of another active session.
 
-Subsequent concurrent sessions operate under those established execution conditions.
+Moderari distinguishes between the **default policy for new sessions** and the **active policy of each established session**. Changing an established session's policy does not silently change the new-session default and does not alter another established session.
+
+Provider/model concurrency remains subject to separate M0.1 validation and limitations; the demonstrated session-scoped system-prompt behaviour must not be generalized into an unsupported provider/model claim.
 
 ### 3.10 Client and Tool Responsibility
 
@@ -341,20 +360,26 @@ Before general external research release, Servire is expected to enforce a singl
 
 That enforcement is not an M0.1 requirement.
 
-### 5.6 Concurrent Sessions Cannot Change Shared Execution Conditions
+### 5.6 Concurrent Execution Conditions
 
-M0.1 does not support independently changing provider, model or Moderari system-prompt behaviour for a new session while another session is already active.
+Moderari system-prompt policy is no longer a shared global execution condition.
 
-The first active session establishes the shared provider/model and Moderari system-prompt condition used by concurrent sessions.
+M0.1 now supports independently established **session-scoped Moderari system-prompt policy**. Concurrent live validation demonstrated a Rogare session remaining under `Moderari Default` while a Pi/external-client session was changed to `Pass-through`. Policy status queries from each session reported its own state, and Servire displayed the selected session's policy independently from the default used for new sessions.
 
-While a session remains active, a subsequent session cannot change:
+The following distinctions therefore apply:
 
-- the provider;
-- the selected model;
-- the Moderari system-prompt policy; or
-- where applicable, the Applied Custom system-prompt content.
+- **new-session default** — the policy inherited when a new Moderari session is established;
+- **session active policy** — the policy currently applied to model requests for that established session;
+- changing one session's active policy does not change another session;
+- changing one session's active policy does not change the new-session default.
 
-A different provider, model or system-prompt condition requires the existing active sessions to end before the shared execution conditions are changed.
+Provider/model selection is deliberately **runtime-global for M0.1**. Concurrent
+sessions do not receive independent model selections. An established session that has
+not yet performed model interaction does not by itself lock selection; once any session
+begins model execution, the authoritative runtime-global model is locked until all
+active execution sessions have ended. New sessions established during that period use
+the locked model. This must remain distinct from Moderari system-prompt policy, which is
+session scoped.
 
 ### 5.7 Nuntius Is Lightweight
 
@@ -379,32 +404,30 @@ M0.1 does not require:
 - prompt version history;
 - collaborative editing.
 
-### 5.9 Mid-Session System-Prompt Changes
+### 5.9 Mid-Session System-Prompt Policy Changes
 
-M0.1 defines the `Moderari Default` and `Custom` system-prompt policies primarily for establishing the system context at the beginning of a session.
+Moderari system-prompt policy is evaluated at model-request time rather than being fixed for the lifetime of an external-client session.
 
-Some external clients may introduce additional `system` role messages later within an existing conversation/context.
+Current testing with Pi has demonstrated that an active session can transition between `Moderari Default` and `Pass-through` without restarting the client session. Concurrent Rogare/Pi testing additionally demonstrated that this transition is session scoped: changing the Pi session to `Pass-through` left the already-active Rogare session on `Moderari Default`, while the default for newly created sessions also remained `Moderari Default`. A subsequent request is processed using the newly selected policy while the existing conversational history remains available. For example, a session may begin under `Moderari Default`, change to `Pass-through`, and later return to `Moderari Default`, with the model retaining conversational continuity across those transitions.
 
-The current behaviour of Moderari when such messages are encountered has not yet been established for all policy modes.
+This is valid and potentially useful research behaviour, but it creates an important Trace and Replay consideration. A single recorded session may contain model executions produced under different system-prompt policies and therefore under different effective system prompts. The policy transition is part of the experimental condition and must not be treated as though one system prompt governed the entire session.
 
-- `Pass-through` preserves client-supplied system messages as part of the client-controlled context.
-- Behaviour under `Moderari Default` and `Custom` requires investigation. Moderari may currently recognise, transform or replace a later system message according to its normal system-prompt processing.
+In particular, an external client may continue to carry its own system message in the conversation while Moderari later applies `Moderari Default` or `Custom`. Depending on how Vestigare records the incoming client context and the effective model context, a Trace may therefore contain evidence of both the client-supplied system prompt and a Moderari-applied system prompt.
 
-M0.1 therefore does not guarantee controlled mid-session system-prompt replacement or transition when using `Moderari Default` or `Custom`.
+This has implications for Repetere. Replay must not assume that every recorded client system message should always be retained, nor that every client system message should always be suppressed when a Moderari prompt is present. If Vestigare records the external client's system prompt and also records Moderari's effective replacement, Repetere requires sufficient provenance to distinguish:
 
-If a researcher specifically requires system prompts to be introduced or changed by an external client during an existing session, the supported M0.1 approach is to:
+- the system context supplied by the external client;
+- the system-prompt policy active for each model execution;
+- the effective system prompt actually supplied to the model; and
+- any policy transition occurring during the recorded session.
 
-1. configure Moderari for `Pass-through`;
-2. supply the initial system prompt from the external client; and
-3. supply any subsequent system-role messages from that same client as part of the continuing conversation/context.
+Without that distinction, Replay could incorrectly send both the external-client system prompt and the Moderari-generated prompt, or incorrectly remove a client system prompt that was intentionally active during a `Pass-through` portion of the session.
 
-In this mode, responsibility for the system-prompt sequence belongs to the external client rather than Moderari.
+The precise Vestigare representation and Repetere reconstruction rules for these transitions remain to be established when the Trace-recording changes are implemented. M0.1 must therefore treat mid-session policy changes as observable execution behaviour whose provenance must be preserved, rather than attempting to infer Replay behaviour solely from message role or position.
 
-Rogare does not supply a client system prompt. When Rogare is used as the client, the system prompt presented to the model is therefore established through Moderari.
+For research use, changing the policy mid-session should be regarded as an explicit change in experimental conditions. A researcher seeking a single controlled system-prompt condition across an experiment should avoid changing the policy during the recorded session. A researcher intentionally investigating system-prompt transitions may use this behaviour, provided the resulting Trace preserves enough evidence to reproduce the transition correctly.
 
-Consequently, client-controlled mid-session system-prompt changes are not available through Rogare in M0.1. A researcher requiring that experimental behaviour must use an external client capable of supplying system-role messages and operate Moderari in `Pass-through`.
-
-Vestigare must nevertheless record the effective context actually supplied to the model so that the resulting system-prompt sequence remains observable in Trace evidence.
+Rogare does not itself supply a client system prompt. When Rogare is used as the client, the effective system prompt is therefore established through Moderari, but the same requirement remains: any policy change during a recorded session must be represented in the execution evidence.
 
 ### 5.10 Context Compaction Is Part of the Experimental Condition
 
@@ -418,15 +441,19 @@ M0.1 may itself be used to investigate this behaviour, including comparison of e
 
 `Pass-through` does not disable context compaction. It controls treatment of client-supplied system prompts, not Moderari's context-management behaviour.
 
-### 5.11 Servire Operations Log May Include Rogare Polling
+### 5.11 Servire Operations Log Filtering
 
-Servire provides an Operations Log intended to give the operator a consolidated view of meaningful operational activity across the Lumen services.
+Servire's Operations Log is an operator-facing view rather than a complete copy of
+every service access log.
 
-Nuntius command-routing and transport diagnostics are excluded from the normal Servire Operations Log and are instead available through Nuntius diagnostic logging exposed in the Nuntius UI within Servire.
+Routine successful internal `/api/...` polling/access traffic is filtered from the
+consolidated Operations Log so that model/service polling does not obscure meaningful
+operator and lifecycle activity. Service-owned detailed logs remain authoritative and
+are not removed by this presentation filter.
 
-In M0.1, Rogare continues to poll for status updates. This internal polling activity may appear in the Servire Operations Log and can obscure more meaningful user or operator activity.
-
-Separating Rogare polling/internal activity from user-session operational activity is not required for M0.1 and remains future development.
+Meaningful control-plane lifecycle events, warnings, errors and unsuccessful API
+responses remain visible. Nuntius command-routing and transport diagnostics remain
+available through the Nuntius-owned diagnostics UI exposed within Servire.
 
 ### 5.12 Trace Model/Provider Binding Is Not Yet Established
 
@@ -482,15 +509,73 @@ Offline research licensing, hardware migration, key rotation, capability manifes
 
 ### 5.17 Single Active Vestigare Recording
 
-M0.1 supports only **one active Vestigare recording at a time** across the Lumen installation.
+M0.1 supports only **one active Vestigare recording at a time** across the Lumen
+installation, regardless of how many Rogare or external-client sessions are active.
 
-Multiple Lumen sessions may exist concurrently, but Vestigare does not support recording multiple sessions simultaneously. When a recording is active, attempts to start another recording from Rogare, the Vestigare UI, or another supported control path must be prevented.
+Pontis is authoritative for Lumen session identity. Every supported session, including
+an otherwise unnamed external-client session, is assigned a Pontis `session_id`, and
+session-correlated traffic traversing the model path carries that identity and its
+associated session metadata.
 
-The active recording has a single owner and, where applicable, is bound to a single Lumen session. Recording controls presented by other clients must reflect that ownership and must not permit a second recording to be started or an active recording to be stopped by a non-owning client.
+Vestigare must never infer recording ownership from the "last-opened", "most recent"
+or "currently busiest" session. An active Trace is bound explicitly to one Pontis
+`session_id`:
 
-Traffic belonging to other concurrent sessions continues normally but is not incorporated into the active Trace merely because another session is being recorded. The active Trace remains bound to its recorded session.
+```text
+trace_id -> Pontis session_id
+```
 
-Support for multiple simultaneous Vestigare recordings is outside the M0.1 release boundary and remains future development.
+Traffic for other concurrent sessions continues normally but must not be incorporated
+into the active Trace.
+
+#### Trace Start and Session Selection
+
+A Trace cannot be started when there are **no active Lumen sessions**. The recording
+control must be disabled or the request rejected clearly because there is no session
+to which the Trace can be bound.
+
+When exactly one eligible active session exists, that session may be selected
+automatically, but the UI must display the actual Pontis session identity being
+recorded.
+
+When more than one eligible active session exists, Vestigare must present the active
+Pontis sessions and require the researcher to select which session is to be recorded.
+M0.1 must not silently choose a session.
+
+Where Trace Start originates from a session-aware control path, the originating Pontis
+`session_id` may be supplied as the proposed selection, but the resulting recording
+must still persist that explicit session binding.
+
+Once a Trace is active, attempts to start another recording must be prevented.
+
+#### Recording Start Boundary
+
+For M0.1, a research Trace intended to represent a complete session must begin
+**before the selected session's first model interaction**.
+
+Starting Vestigare after a session has already exchanged model traffic would otherwise
+miss the earlier execution sequence. A later request may carry conversational context
+containing earlier messages, but that is not equivalent to having observed and
+recorded the earlier requests, responses, tool activity, execution conditions and
+other provenance as they occurred.
+
+M0.1 must therefore not silently represent a mid-session recording as a complete
+session Trace. Trace Start is permitted only for an eligible active session that has
+not yet performed its first model interaction.
+
+This supports the normal sequence: the client connects, Pontis establishes and names
+the session, the researcher starts Vestigare for that session, and only then submits
+the first research prompt.
+
+Explicit partial/mid-session Trace support, historical backfilling, and multiple
+simultaneous Vestigare recordings are outside the required M0.1 boundary.
+
+**M0.1 acceptance:** create at least two simultaneous eligible sessions, confirm that
+Vestigare presents both Pontis session identities for selection, select one session,
+start recording before its first model interaction, send traffic through both sessions,
+and confirm that only the bound session appears in the Trace. Also verify that Trace
+Start is unavailable with no active session and is rejected for a session that has
+already begun model interaction.
 
 ## 6. Pre-General-Research-Release Requirement
 
@@ -523,9 +608,15 @@ M0.1 can be considered complete when:
 - effective execution context remains observable;
 - provider/model Trace provenance and any Replay binding behaviour have been established and documented before a provider/model Replay guarantee is made;
 - Moderari checkpoint/context-compaction behaviour remains observable in Trace evidence;
-- the M0.1 limitation on mid-session system-prompt changes under `Moderari Default` and `Custom` is documented;
-- concurrent-session isolation has been demonstrated;
-- Vestigare enforces the M0.1 single-active-recording restriction, binds an active recording to one session, and correctly reflects recording ownership/control state between Rogare and Vestigare;
+- observed mid-session system-prompt policy switching and its Trace/Replay provenance implications are documented;
+- concurrent-session isolation has been demonstrated, including independent Moderari system-prompt policy state for simultaneous Rogare and Pi sessions and separation of established-session state from the new-session default;
+- Vestigare enforces the M0.1 single-active-recording restriction and binds the active Trace to one authoritative Pontis `session_id`;
+- Trace Start is unavailable when no active session exists;
+- Vestigare presents active Pontis sessions for explicit selection when more than one eligible session exists and never guesses from recency/activity;
+- M0.1 complete-session recording can begin only before the selected session's first model interaction;
+- a multi-client Trace validation proves traffic from unbound sessions is excluded and the selected session identity is persisted in the Trace;
+- stopping the managed stack causes Praebere to release/unload its managed model
+  resources and stops Ollama only when Praebere owns the Ollama process;
 - the complete stack passes integration/regression validation as a single-host installation;
 - installation identity and signed runtime authorization work end-to-end;
 - authorization lease renewal and expiry behaviour have been demonstrated;
