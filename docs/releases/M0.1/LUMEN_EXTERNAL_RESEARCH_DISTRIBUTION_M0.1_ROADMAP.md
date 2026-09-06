@@ -1,79 +1,27 @@
 # Lumen External Research Distribution M0.1 --- Development Roadmap
 
 **Date:** 2026-08-22\
-**Status:** Proposed M0.1 Roadmap
+**Status:** Active M0.1 roadmap — N1–N9 and N10 live validation closed; remaining release work retained below
 
 > **"Plans are worthless, but planning is everything."**\
 > --- Dwight D. Eisenhower
 
 ## Document Revision History
 
-  -----------------------------------------------------------------------
-  Date              By                Version           Description
-  ----------------- ----------------- ----------------- -----------------
-  2026-08-23        Nigel Catterall   1.0               First reviewed
-                                                        release
-
-  2026-08-25        Nigel Catterall   1.1               Added Fiducia
-                                                        stale PID-file
-                                                        recovery
-                                                        requirement and
-                                                        acceptance
-                                                        validation.
-
-  2026-08-26        Nigel Catterall   1.2               Reconciled N1-N6
-                                                        implementation and
-                                                        live validation;
-                                                        recorded Trace
-                                                        ownership/session
-                                                        findings, system-
-                                                        prompt Trace finding,
-                                                        current bugs and
-                                                        optional M0.1 polish.
-
-  2026-08-26        Nigel Catterall   1.3               Added future Servire
-                                                        HTTPS/TLS operator-
-                                                        interface requirement
-                                                        to the post-M0.1
-                                                        development roadmap.
-
-  2026-08-28        Nigel Catterall   1.4               Reconciled N7 Moderari
-                                                        implementation and live
-                                                        concurrent-session
-                                                        validation; system-prompt
-                                                        policy is session scoped.
-
-  2026-08-30        Nigel Catterall   1.5               Reconciled N7+ Moderari,
-                                                        saved prompts, effective-
-                                                        prompt provenance, repeated
-                                                        context compaction, and
-                                                        Repetere C/D/E progress.
-
-2026-08-30        Nigel Catterall   1.6               Reconciled N8 diagnostics/
-                                                        UI and Servire control-plane
-                                                        integration progress; added
-                                                        Repetere failed staged-Replay
-                                                        recovery lifecycle work.
-
-2026-08-30        Nigel Catterall   1.7               Defined M0.1 provider/model
-                                                        selection as runtime-global;
-                                                        per-session provider/model
-                                                        selection remains optional
-                                                        polish/future development.
-2026-08-30        Nigel Catterall   1.8               Added Vestigare active-session
-                                                        selection and complete-session
-                                                        recording boundary: Pontis
-                                                        session identity is authoritative;
-                                                        Trace Start requires an eligible
-                                                        active session and must precede
-                                                        its first model interaction.
-2026-08-30        Nigel Catterall   1.9               Refined N9 model lifecycle:
-                                                         Praebere startup discovery,
-                                                         preferred-versus-selected model,
-                                                         established versus active-execution
-                                                         sessions, and runtime-global model
-                                                         locking while execution sessions exist.
-  -----------------------------------------------------------------------
+| Date       | By              | Version | Description                                                                                                                                                                                                               |
+| ---------- | --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-23 | Nigel Catterall | 1.0     | First reviewed release.                                                                                                                                                                                                   |
+| 2026-08-25 | Nigel Catterall | 1.1     | Added Fiducia stale PID-file recovery requirement and acceptance validation.                                                                                                                                              |
+| 2026-08-26 | Nigel Catterall | 1.2     | Reconciled N1–N6 implementation and live validation; recorded Trace ownership/session findings, system-prompt Trace finding, current bugs and optional M0.1 polish.                                                       |
+| 2026-08-26 | Nigel Catterall | 1.3     | Added future Servire HTTPS/TLS operator-interface requirement to the post-M0.1 development roadmap.                                                                                                                       |
+| 2026-08-28 | Nigel Catterall | 1.4     | Reconciled N7 Moderari implementation and live concurrent-session validation; system-prompt policy is session scoped.                                                                                                     |
+| 2026-08-30 | Nigel Catterall | 1.5     | Reconciled N7+ Moderari, saved prompts, effective-prompt provenance, repeated context compaction and Repetere C/D/E progress.                                                                                             |
+| 2026-08-30 | Nigel Catterall | 1.6     | Reconciled N8 diagnostics/UI and Servire control-plane integration progress; added Repetere failed staged-Replay recovery lifecycle work.                                                                                 |
+| 2026-08-30 | Nigel Catterall | 1.7     | Defined M0.1 provider/model selection as runtime-global; per-session provider/model selection remains optional polish/future development.                                                                                 |
+| 2026-08-30 | Nigel Catterall | 1.8     | Added Vestigare active-session selection and complete-session recording boundary: Pontis session identity is authoritative; Trace Start requires an eligible active session and must precede its first model interaction. |
+| 2026-08-30 | Nigel Catterall | 1.9     | Refined N9 model lifecycle: Praebere startup discovery, preferred-versus-selected model, established versus active-execution sessions and runtime-global model locking while execution sessions exist.                    |
+| 2026-09-01 | Nigel Catterall | 2.0     | Added N9.5 Pontis-owned session management, Rogare/external-client explicit closure, authorised orphan cleanup, Praebere lock release and restart reconciliation requirements.                                            |
+| 2026-09-06 | Nigel Catterall | 2.1     | Reconciled the reviewed N6–N10/Praebere document chain; closed N8 diagnostics, N9 and N10 live compatibility validation; replaced the stale Phase 6 checklist with the implemented runtime-global lifecycle; and added M0.1 trace-model recording and replay-start model enforcement. |
 
 ## Purpose
 
@@ -116,18 +64,18 @@ implementation baseline.
 -   [x] Confirm current Trace representation of system prompts and Replay executions.
     **N7+ corrected the effective-prompt evidence boundary. Provider/model provenance
     remains separately tracked for Praebere/N9.**
--   [ ] Establish whether Vestigare records provider identity and model
-    identity, where that information is stored, and whether it is
-    descriptive provenance or part of the replayable execution context.
--   [ ] Determine whether Repetere reads or acts upon any recorded
-    provider/model identity.
--   [ ] Determine whether provider/model identity appears indirectly in
-    system, assistant or other conversational messages.
--   [ ] Test whether the same source Trace can currently be replayed against
-    a different selected provider/model without otherwise changing its
-    recorded conversational context.
--   [ ] Inspect what is actually sent to the alternate model and what the
-    resulting Vestigare Trace records.
+-   [x] Establish where provider/model identity appears in Trace evidence.
+    **The exact model is present in recorded request/response messages, but recording-level
+    model metadata is absent; the required M0.1 correction is retained in Phase 5.**
+-   [x] Determine current Repetere provider/model behaviour. **Repetere does not yet
+    enforce the source Trace model at replay start; the required M0.1 correction is
+    retained in Phase 5.**
+-   [x] Determine whether provider/model identity appears indirectly in conversational
+    evidence. **It appears in transport bodies and must instead be available explicitly
+    from authoritative recording metadata.**
+-   [x] Resolve the M0.1 different-model replay boundary. **A replay must not substitute
+    a different active global model. Concurrent replay-private models remain deferred
+    until general per-session model selection.**
 -   [x] Compare baseline/Default, `Pass-through`, and `Custom` executions.
     **Completed during N7+: incoming provenance and the effective system prompt
     are distinguishable, with the effective prompt authoritative for execution evidence.**
@@ -269,8 +217,22 @@ system-context replay.
     Custom prompt.
 -   [x] Verify Replay reconstructs exactly one active effective system prompt and
     never combines a superseded incoming prompt with its Moderari replacement.
--   [ ] Run at least one deliberately system-prompt-sensitive behavioural validation
+-   [x] Run at least one deliberately system-prompt-sensitive behavioural validation
     capable of exposing duplicate/incorrect system context.
+    **Completed through the recorded Pi/Moderari provenance validation: the incoming Pi
+    system prompt was retained as superseded provenance and exactly one Lumen-generated
+    effective system prompt was marked as replay input.**
+
+-   [ ] Add authoritative provider and exact model identity to each Vestigare
+    `trace_recordings` document.
+-   [ ] At actual replay start, require Repetere to read the recorded model, verify it
+    against Praebere's cached catalogue, and select/reserve it through the normal
+    Pontis/Praebere lifecycle when no global model is selected.
+-   [ ] Allow Repetere to proceed when the active global model exactly matches the
+    recorded model; reject and visibly log a controlled conflict when it differs.
+-   [ ] Have Fiducia apply the same model check at scheduled execution time and record
+    a failed run, without changing global model state, when the models differ or the
+    recorded model is unavailable/missing.
 
 **Additional completed boundary work:** Vestigare is limited to one active
 M0.1 recording at a time and concurrent traffic from other sessions is excluded
@@ -295,38 +257,58 @@ concurrent-session execution-condition rules validated in Phase 10.
 Move provider/model control onto the common command path.
 
 -   [x] Complete the N9.1 Praebere current-state audit.
--   [ ] On Praebere startup, query Ollama for the models actually available locally.
--   [ ] Treat any configured model as an optional **preferred model**, not as a required installed/default model.
--   [ ] If the preferred model is unavailable, keep Praebere healthy with no model selected rather than failing stack startup or silently substituting another model.
--   [ ] Finalise `\obt providers`.
--   [ ] Finalise `\obt models`.
--   [ ] Finalise `\obt model select <model>`.
--   [ ] Make Praebere the executor and authority for provider/model operations and runtime-global selected-model state.
--   [ ] Return provider/model query results to the originating caller.
--   [ ] Deliver discovery/state results to Rogare/Moderari where Servire configuration requires it.
--   [ ] Avoid broadcasting provider/model lists to unrelated services.
--   [ ] Distinguish **available model**, **preferred model**, **selected model**, and **selection-lock state**.
--   [ ] Treat a Pontis-created session with no model interaction as an **established session**; merely connecting must not lock model selection.
--   [ ] Treat a session as an **active execution session** after its first model interaction.
--   [ ] Permit runtime-global model selection/change only while there are no active execution sessions.
--   [ ] Once the first model interaction occurs, lock the selected runtime-global model until all active execution sessions have ended.
--   [ ] A new session established while a model is locked must use the existing authoritative model and must not be offered a competing model choice.
--   [ ] For an external client established while no model is selected/locked, present the discovered model list and guidance: `\obt praebere model select <model_name>`.
--   [ ] Never silently apply the configured preferred model to an external client.
--   [ ] In Rogare, populate a model dropdown from Praebere discovery near the session start/stop controls.
--   [ ] If an available preferred model exists and selection is unlocked, show it as Rogare's initial dropdown choice; establish the authoritative selection through the common Praebere/Nuntius path before model execution.
--   [ ] Disable/lock Rogare model choice while any active execution session exists and display the authoritative model in use.
--   [ ] Verify selected model/provider state and lock state are represented correctly in subsequent execution evidence and user-facing state.
+-   [x] Discover Ollama models at startup and only on explicit **Refresh Models**;
+    serve routine queries, selection validation and UI polling from Praebere's cached catalogue.
+-   [x] Treat the configured model as an optional preferred model and never silently
+    select or substitute it for a client.
+-   [x] Finalise `\obt providers`, `\obt models` and
+    `\obt praebere model select <model>` through the common Nuntius path.
+-   [x] Make Praebere authoritative for provider/model operations, runtime-global
+    selection, reservation, activation, residency ownership and derived selection state.
+-   [x] Return results to the originating session and configured listeners without
+    broadcasting them to unrelated services.
+-   [x] Distinguish available, preferred, selected, reserved, locked, resident and
+    residency-ownership state.
+-   [x] Require every session to reserve the authoritative selected model explicitly;
+    selecting the same model is idempotent and selecting a different model while any
+    open reservation exists is rejected.
+-   [x] Treat first ask as model activation, demand-load a non-resident selected model,
+    and lock selection while model execution is active.
+-   [x] Cancel only the requesting session's reservation when activation fails and
+    communicate the controlled load failure and resulting authoritative state.
+-   [x] Persist Praebere runtime state in MongoDB and reconcile it with Pontis on
+    start/restart; remain fail-safe when authoritative reconciliation is unavailable.
+-   [x] Implement Pontis client/admin session lifecycle commands and session-management UI,
+    plus Rogare End Session/New Session closure behaviour.
+-   [x] Release Praebere execution/reservation state on session closure and unload only
+    model residency that Praebere caused after its final retaining session ends.
+-   [x] Implement the compact Praebere-owned UI and Servire tab, including cached polling,
+    Refresh Models, reconciliation and guarded reset operations.
+-   [x] Validate Rogare and external-client query, selection, execution and session-end paths.
+-   [x] Validate manual Rogare reconnect by re-entering the Pontis session ID; session
+    context survives although Rogare's prior local conversation display is not restored.
+-   [x] Close Nuntius N8 diagnostics and live N10 routing/regression validation, including
+    bounded history and Pontis-local rejection of external `\obt rogare start`.
 -   [x] Confirm the M0.1 tool-responsibility boundary: an external client owns its own tool declaration, execution and result handling.
 -   [x] Confirm Rogare has no native tool environment and uses an external tool provider.
 -   [x] Validate Pi as the supported M0.1 tool provider for Rogare in its expected/default installation location.
 -   [x] Do not claim Rogare support for alternative tool providers in M0.1.
 
-**M0.1 model lifecycle:** provider/model selection remains runtime-global rather than per-session, but an active session cannot change the execution condition of another active session. Connection establishes a session without locking selection; the first model interaction establishes active execution and locks the authoritative model until all active execution sessions end.
+**M0.1 model lifecycle:** provider/model selection remains runtime-global rather than
+per-session. Each session must explicitly reserve the same authoritative selected model.
+Any open reservation prevents changing to a different model; active model execution adds
+the execution lock. Selection becomes available only after the final reserving session ends.
+
+**M0.1 session lifecycle:** Pontis exposes explicit client and operator closure.
+The Servire authorization heartbeat remains a separate distribution-security
+mechanism and does not determine conversational-session liveness.
 
 **Future development:** per-session provider/model selection remains outside the required M0.1 boundary.
 
-**Exit condition:** Praebere discovers actual Ollama models and owns authoritative runtime-global model state; Rogare and external clients use the same Nuntius path; selection remains available before active execution, is locked during concurrent execution, and becomes available again only after all active execution sessions end.
+**Exit condition:** **COMPLETE.** Praebere discovers actual Ollama models and owns
+authoritative runtime-global model state; Rogare and external clients use the same Nuntius
+path; reservation, execution locking, persistence, reconciliation, demand residency,
+session release and the compact operational UI have been live validated.
 
 ## Phase 7 --- Moderari System-Prompt Policy
 
@@ -639,6 +621,17 @@ A representative validation should demonstrate:
     recorded process no longer exists, while still refusing a genuine
     duplicate running instance; Docker packaging does not persist the
     PID file as durable application state.
+48. Pontis UI and `\obt` controls can inspect/end sessions and authoritatively
+    clear an operator-confirmed orphan without affecting unrelated sessions;
+49. Rogare End Session, New Session, stop and restart execute the agreed Pontis
+    closure lifecycle;
+50. ending one activated session releases only its Praebere registration, and
+    model selection unlocks only after the final active execution session ends;
+51. Praebere restart restores selected model and active execution registrations,
+    remains fail-safe through Pontis reconciliation, and exposes unresolved
+    release/reconciliation state;
+52. safe Praebere execution reset is rejected while Pontis reports active
+    execution sessions and preserves provider/model state when validly used.
 
 **Pre-acceptance evidence already obtained:** client/Rogare and Pi operation,
 normal Trace capture, Repetere list control routing, clean `\obt` separation,
@@ -655,28 +648,16 @@ limitations are documented, and an appropriate Git-based channel is
 available for external research comments, bug reports and feature
 requests.
 
-## Current Known Bugs and Optional M0.1 Polish --- 2026-08-26
+## Current Known Bugs and Optional M0.1 Polish --- reconciled 2026-09-06
 
 ### Bugs / required follow-up
 
-- **Vestigare Trace-start/session selection:** current recording can be started without
-  an active session and does not yet enforce the complete-session start boundary.
-  Use Pontis `session_id` as the authoritative selection identity; expose eligible
-  active sessions in Vestigare; disable/reject Trace Start with no eligible session;
-  require explicit selection when several exist; and reject a new complete-session
-  Trace once the selected session has already performed model interaction.
-- **Nuntius Trace-state initial synchronisation:** Vestigare push events to Rogare
-  work, but Rogare's one-time `\obt vestigare trace status` query currently
-  returns `404` through Nuntius. Register/route the query and validate UI/service
-  reconnect while a recording is already active.
-- **Fiducia stale PID:** now reproduced on every managed start. Investigate PID
-  ownership, shutdown order and cleanup as one lifecycle issue.
-- **Fiducia `clear-logs`:** Servire's managed cleanup command is rejected by the
-  current Fiducia CLI. Align the lifecycle/maintenance command contract while
-  addressing the PID issue.
-- **Servire shutdown hang --- watch item:** one shutdown required manual process
-  termination after managed services had been stopped. Treat as reproducible bug
-  only if it recurs; inspect shutdown ordering/process wait behaviour then.
+- **Resolved during N8/N9:** Pontis session termination/Praebere release,
+  Vestigare session-bound Trace start, Nuntius Trace-status routing, Fiducia stale
+  PID recovery and Fiducia `clear-logs` compatibility are closed.
+- **Vestigare/Repetere/Fiducia model fidelity:** add authoritative model metadata to
+  `trace_recordings` and enforce exact recorded/global model compatibility at actual
+  replay start, as specified in Phase 5.
 - **Repetere failed staged-Replay lifecycle:** a failed run can remain presented as
   `FAILED - COMPLETED`. Preserve the failed run as evidence, but provide an explicit
   staged-Experiment recovery lifecycle for retry/reset/unstage. Any retry must create

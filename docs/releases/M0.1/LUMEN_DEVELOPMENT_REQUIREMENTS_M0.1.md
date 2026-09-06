@@ -14,6 +14,8 @@
 | 2026-08-23 | Nigel Catterall | 1.0 | First reviewed release |
 | 2026-08-30 | Nigel Catterall | 1.1 | Defined Pontis session identity as authoritative for Vestigare Trace binding; added active-session selection, no-session Trace-start prevention, pre-first-interaction recording boundary, and multi-client Trace acceptance requirements. |
 | 2026-08-30 | Nigel Catterall | 1.2 | Defined N9 Praebere runtime model lifecycle: Ollama startup discovery, optional preferred model, established versus active-execution sessions, external-client explicit selection, Rogare dropdown state, and model locking during active execution. |
+| 2026-09-01 | Nigel Catterall | 1.3 | Added the N9.5 Pontis-owned session-management lifecycle: Rogare and external-client explicit closure, Pontis UI and commands, authorised orphan cleanup, Praebere execution release, persistence/reconciliation and reset boundaries. Clarified that the Servire authorization heartbeat is separate from session lifecycle. |
+| 2026-09-04 | Nigel Catterall | 1.4 | Reconciled N9 implementation status through N9.6.3; recorded N9.1–N9.5 and N9.6.1 as complete, N9.6.2 as implemented pending final acceptance evidence, N9.6.3 as implemented with final bug-fix/lifecycle validation remaining, and moved the full N9.6.4 provider-neutral readiness taxonomy to nice-to-have/post-M0.1. Retained the compact Praebere operational UI as an M0.1 requirement and aligned the document with Ollama as external infrastructure. |
 
 
 ## 1. Purpose
@@ -44,6 +46,22 @@ Several related ideas have deliberately been kept outside M0.1:
 - Servire single-active-operator enforcement for general research distribution.
 
 The last item is a **pre-general-research-release requirement**, but it is not required to define M0.1 itself.
+
+---
+
+# 1.1 Current M0.1 Development Status — 2026-09-04
+
+The N9 control-plane/provider-runtime work has now moved substantially beyond the original planning baseline in this document. The authoritative working status is:
+
+- **N9.1–N9.5:** complete and validated.
+- **N9.6.1 — MongoDB runtime-state persistence:** complete.
+- **N9.6.2 — Pontis reconciliation/deferred release:** implemented; final acceptance evidence remains.
+- **N9.6.3 — provider/runtime reality, atomic reservation and demand residency:** implemented; known closeout bugs and final lifecycle validation remain.
+- **N9.6.4 — full provider-neutral readiness taxonomy:** moved out of the M0.1 critical path to **nice-to-have/post-M0.1**. Concrete M0.1 operational readiness/state reporting remains required.
+- **Praebere operational UI:** remains required for M0.1, but is deliberately compact and consumes the concrete authoritative state already available; it does not require the full N9.6.4 taxonomy.
+- **Ollama:** external infrastructure for M0.1. Lumen verifies the configured endpoint and may load/unload model residency through Ollama, but must never start or stop the Ollama process.
+
+The principal remaining M0.1 work after N9 closeout remains the Repetere/Fiducia Experiment and nested-Trace work, associated Trace/Replay provenance validation, remaining bounded Rogare UI work, Dockerised single-host distribution work, and Runtime Authorization/Distribution Security.
 
 ---
 
@@ -1298,39 +1316,24 @@ If Nuntius cannot route the command, Moderari returns `204`, `4xx`, or `5xx`, or
 
 This makes Nuntius a dependency of the M0.1 Replay fidelity requirement and makes positive command acknowledgement part of the Replay acceptance criteria.
 
-## 9.12 Praebere Discovery and Selection
+## 9.12 Praebere Discovery, Selection and Runtime Lifecycle
 
-Praebere is the first native adopter of the common Nuntius control path.
+**Implementation status (2026-09-04):** N9.1–N9.5 and N9.6.1 are complete. N9.6.2 is implemented with final acceptance evidence remaining. N9.6.3 is implemented with known closeout bugs/final lifecycle validation remaining. The full N9.6.4 provider-neutral readiness taxonomy is nice-to-have/post-M0.1.
 
-Expected commands include:
+Praebere is the first native adopter of the common Nuntius control path. Provider/model discovery and selection are live through the agreed control contract. Pontis is authoritative for session lifecycle and atomically owns the runtime-global model reservation; Praebere owns provider/model state, execution activation and any model residency that it caused.
 
-```text
-\obt providers
-\obt models
-\obt model select <model>
-```
+For M0.1, Ollama is **external infrastructure**. It must already be available at the configured endpoint. Praebere verifies endpoint availability but must never start or stop the Ollama process. A configured model is an optional preferred model; absence of that model must not prevent Praebere startup.
 
-Praebere must query Ollama on startup and maintain authoritative knowledge of the models actually available locally. A configured model is an optional **preferred model**, not a required installed/default model. Absence of the preferred model must not prevent Praebere or stack startup.
-
-The M0.1 state model distinguishes **available models**, **preferred model**, **selected runtime-global model**, and **selection lock state**.
-
-`providers` and `models` return `200 + body`. Successful model selection must return an explicit authoritative outcome identifying the effective selection.
-
-### Session and Selection Lifecycle
-
-Pontis remains authoritative for session identity.
-
-A newly connected client first has an **established session**: `session_id` exists but no model interaction has occurred. Establishment alone must not lock model selection.
-
-After the first model interaction, the session becomes an **active execution session**. At that point the runtime-global selected model is locked. It remains locked while any active execution session exists.
-
-The intended sequence is:
+The runtime lifecycle is:
 
 ```text
-connect / establish session
+connect / establish Pontis session
         |
         v
-model selection allowed if no active execution session
+select model if no conflicting reservation exists
+        |
+        v
+Pontis atomically reserves selected runtime-global model
         |
         v
 optional Trace start
@@ -1339,36 +1342,37 @@ optional Trace start
 first model interaction
         |
         v
-active execution session / runtime-global model locked
+Praebere activates execution and demand-loads model if not resident
         |
         v
-last active execution session ends
+concurrent sessions may share the same reserved model/residency
         |
         v
-model selection available again
+final active execution ends -> unload only Praebere-owned residency
+        |
+        v
+final reserving session ends -> Pontis releases model reservation
 ```
 
-An external client established while no model is selected must receive the discovered model list and guidance:
+A different model must be rejected while a reservation exists. Concurrent requests for different models must have one atomic winner. Clients update their displayed model only from Pontis-confirmed authoritative state.
 
-```text
-\obt praebere model select <model_name>
-```
+Praebere persists selected provider/model state, residency ownership and active execution registrations and reconciles restart state against Pontis. Deferred release after Praebere unavailability must reconcile automatically and remain observable until complete.
 
-Praebere must not silently apply the installation's preferred model to that external client.
+### Compact Praebere Operational UI
 
-If an authoritative model is already locked by active execution, a newly established external or Rogare session does not receive a model choice; it is informed/displayed which runtime-global model is in use and uses that model.
+M0.1 retains a compact Praebere-owned UI exposed through Servire. It must present the concrete authoritative state needed by an operator, including provider reachability, selected/preferred model, reservation/selection state, active executions, residency ownership and reconciliation/degraded state where applicable. It must provide only the bounded administration/recovery actions required by the M0.1 lifecycle.
 
-### Rogare
+The UI does **not** require implementation of the complete N9.6.4 `Selected / Available / Resident / Warmable / Ready / Degraded / Unavailable` abstraction before M0.1 release. That broader provider-neutral readiness contract is deferred as an architectural enhancement.
 
-Rogare should obtain the available-model state through Nuntius/Praebere and display it as a dropdown near the session start/stop controls.
+### N9 Closeout Remaining
 
-When no active execution session exists, the dropdown is enabled; an available preferred model may be shown as the initial UI choice; and changing the UI choice has no authoritative effect until Praebere acknowledges selection through the common control path.
+Before N9 is closed for M0.1:
 
-While any active execution session exists, the dropdown is disabled/locked; Rogare displays the authoritative runtime-global selected model; and Rogare restart/reconnect recovers that state rather than assuming local UI state.
-
-Servire configuration determines whether discovery/state responses are additionally delivered to Rogare or another service.
-
-Per-session model selection is future development and is not required for M0.1.
+- fix the known N9.6.3 closeout bugs;
+- complete the final N9.6.2/N9.6.3 lifecycle acceptance run and retain evidence;
+- complete/validate the compact Praebere operational UI;
+- complete remaining execution/provenance evidence and quality gates required by the N9 closeout documents; and
+- reconcile final N9 documentation.
 
 ## 9.13 Operational Logging Boundary
 
@@ -1390,21 +1394,17 @@ Separating Rogare polling/internal activity from user-session operational activi
 
 ## 9.14 M0.1 Development Priority
 
-The preferred dependency sequence is:
+The original Nuntius/Praebere dependency sequence has substantially completed. The remaining priority is now:
 
 ```text
-1. Inspect existing Repetere / Moderari / Pontis \obt behaviour
-2. Define the common 204 / 200 / error contract
-3. Extend Servire configuration with obt_enabled, command ownership and response targets
-4. Implement Nuntius bootstrap and in-memory routing dictionary
-5. Route Pontis \obt traffic to Nuntius and preserve session/request correlation
-6. Implement targeted command routing
-7. Implement returned query-response routing through Pontis
-8. Implement configured shared-response delivery
-9. Migrate existing Repetere / Moderari command behaviour
-10. Implement Replay system-prompt fidelity through Nuntius, including blocking positive acknowledgement from Moderari
-11. Implement Praebere discovery and selection through Nuntius
-12. Continue remaining M0.1 consumer changes
+1. Close the remaining N9.6.3 bugs and final N9 lifecycle validation.
+2. Complete the compact Praebere operational UI and N9 closeout evidence.
+3. Complete Repetere/Fiducia Experiment, nested-Trace and Replay-fidelity work.
+4. Complete required Vestigare Trace/provenance and multi-session acceptance work.
+5. Complete remaining bounded Rogare UI work required by M0.1.
+6. Dockerise and validate the complete single-host distribution.
+7. Implement and validate Runtime Authorization and Distribution Security.
+8. Run complete M0.1 integration/regression/release acceptance and reconcile documentation.
 ```
 
 This establishes the control plane before extending the services that consume it.
@@ -1642,29 +1642,43 @@ The intended mechanism is a single active Servire operator lease per installatio
 
 ## Nuntius / Pontis / Praebere / Servire
 
-- Treat Nuntius as foundational M0.1 infrastructure and implement it early.
-- Review existing Repetere, Moderari and Pontis `\obt` implementations.
-- Establish `\obt` as the common Lumen control-command language.
-- Add a common `obt_enabled` service capability.
-- Define `204`, `200` without body, `200` with body, and error semantics.
-- Extend Servire configuration with command ownership and query-response targets.
-- Make Servire authoritative for the active control-plane topology.
-- Bootstrap Nuntius directly from Servire using `\obt services`.
-- Accept an empty Servire catalogue as healthy.
-- Build an in-memory Nuntius routing dictionary from Servire configuration.
-- Keep the dictionary current as Servire starts/stops services.
-- Route commands directly to configured owners rather than broadcasting normally.
-- Preserve external request/session correlation in Pontis.
-- Return query results through Nuntius to Pontis and the correct originating client.
-- Deliver query response bodies only to additional services configured by Servire.
-- Keep Nuntius control traffic out of conversational Trace records.
-- Preserve resulting execution conditions in Trace.
-- Use the common path for Replay Pass-through control.
-- Return the authoritative Moderari execution result to Repetere and require positive acknowledgement before Replay proceeds.
-- Use the common path for Praebere provider/model discovery and selection.
-- Defer operational-log user/internal classification from the initial M0.1 control-plane implementation.
+- [x] Treat Nuntius as foundational M0.1 infrastructure and implement it early.
+- [x] Review existing Repetere, Moderari and Pontis `\obt` implementations.
+- [x] Establish `\obt` as the common Lumen control-command language.
+- [x] Add a common `obt_enabled` service capability.
+- [x] Define `204`, `200` without body, `200` with body, and error semantics.
+- [ ] Extend Servire configuration with command ownership and query-response targets.
+- [x] Make Servire authoritative for the active control-plane topology.
+- [x] Bootstrap Nuntius directly from Servire using `\obt services`.
+- [x] Accept an empty Servire catalogue as healthy.
+- [x] Build an in-memory Nuntius routing dictionary from Servire configuration.
+- [x] Keep the dictionary current as Servire starts/stops services.
+- [x] Route commands directly to configured owners rather than broadcasting normally.
+- [x] Preserve external request/session correlation in Pontis.
+- [x] Return query results through Nuntius to Pontis and the correct originating client.
+- [ ] Deliver query response bodies only to additional services configured by Servire.
+- [x] Keep Nuntius control traffic out of conversational Trace records.
+- [ ] Preserve resulting execution conditions in Trace.
+- [ ] Use the common path for Replay Pass-through control.
+- [ ] Return the authoritative Moderari execution result to Repetere and require positive acknowledgement before Replay proceeds.
+- [x] Use the common path for Praebere provider/model discovery and selection.
+- [x] Expose Pontis client-scoped session status/end/new commands and restricted
+  administrative list/end/force-close commands through the common control path.
+- [x] Provide the Pontis session-management UI and verify it displays authoritative
+  session, execution, in-flight and Praebere release state.
+- [x] Verify Rogare End Session, New Session, stop and restart close the current
+  Pontis session correctly.
+- [ ] Verify ending one activated session releases only its Praebere registration
+  and model selection unlocks only after the final active execution session ends.
+- [ ] Verify orphan cleanup is explicit, restricted, confirmed, idempotent and
+  audited; idle time alone must not close a session.
+- [ ] Verify Praebere persists execution-lock state across restart and reconciles
+  it against Pontis before selection changes resume.
+- [ ] Defer operational-log user/internal classification from the initial M0.1 control-plane implementation.
 
 
+
+**N9 closeout status:** N9.1–N9.5 and N9.6.1 are complete. N9.6.2 is implemented pending final acceptance evidence. N9.6.3 is implemented pending known bug fixes and final lifecycle validation. N9.6.4 full provider-neutral readiness taxonomy is deferred to nice-to-have/post-M0.1. The compact Praebere operational UI remains required.
 ## Servire / Runtime Authorization Security
 
 - Establish Distribution ID, Service Group UUID and installation cryptographic identity.

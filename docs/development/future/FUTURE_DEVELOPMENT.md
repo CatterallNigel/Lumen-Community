@@ -49,6 +49,11 @@
                                                         and retained per-session
                                                         provider/model selection as
                                                         future development
+
+   1.9               2026-09-04        Nigel Catterall   Recorded the disabled legacy
+                                                        Moderari provider/model startup
+                                                        validation and deferred the
+                                                        removal decision
   -----------------------------------------------------------------------
 
 **Status:** Living Document\
@@ -236,6 +241,34 @@ cannot become model prompt or conversational context.
 This item is therefore **closed for M0.1 by deliberate disablement**, with any
 redesign or reintroduction deferred to future development.
 
+## Moderari --- Legacy Provider and Model Startup Validation Removal
+
+**Area:** Moderari / Praebere / Provider Readiness / Startup Lifecycle\
+**Document:** Praebere N9.6 Runtime and Readiness Reconciliation Mini-Roadmap
+
+Moderari historically checked Ollama availability, enumerated the configured model
+and optionally sent a live chat-completion probe during startup. This originated in
+the earlier OBT architecture, when Moderari was responsible for validating and warming
+its configured model. The live probe could load that model with long-lived residency
+before any Lumen session performed an ask.
+
+N9.6 assigns provider availability, model discovery and model residency to Praebere.
+Moderari's provider/model startup checks are therefore deliberately disabled for M0.1.
+The implementation remains present behind the disabled
+`startup_validation.provider_model_checks_enabled` compatibility flag, while Moderari
+continues to validate only its configuration, filesystem and MongoDB dependencies.
+
+A future development decision must determine whether to remove the retained provider
+and model validation code, its configuration fields and related tests completely, or
+whether a provider-neutral diagnostic use remains valid outside the normal startup
+lifecycle. Any retained diagnostic must be explicitly invoked, must not establish
+provider authority, and must not load, warm or alter model residency implicitly.
+
+The earlier orphaned `llama-server` observations may have been contributed to by this
+legacy live startup probe and its long-lived model residency. That historical cause no
+longer affects the M0.1 architecture because Ollama is externally operated and Moderari
+no longer probes it during startup.
+
 ## Moderari --- Direct `\\obt` Selection of Custom System-Prompt Policy
 
 **Area:** Moderari / Nuntius / System-Prompt Policy / Control UX\
@@ -390,4 +423,3 @@ treated as exporting or reconstructing the authoritative Trace.
 This is future research/usability functionality rather than an M0.1 requirement. It
 should only be promoted into M0.1 if manual conversation extraction becomes a material
 impediment during external research testing.
-

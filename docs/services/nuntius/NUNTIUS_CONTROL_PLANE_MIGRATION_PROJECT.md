@@ -838,14 +838,19 @@ Vestigare conversational Trace.
 
 ## N9 --- Praebere First Native Adoption
 
-Implement the provider/model discovery commands using the completed
-control plane.
+**Status:** SUBSTANTIALLY COMPLETE — native control adoption and N9.5 are validated;
+N9.6.3 bug fixes/final lifecycle validation and compact Praebere UI closeout remain.
 
-This validates that a service without legacy conversational `\obt`
+Praebere now uses the completed control plane for provider/model discovery and
+selection. This validates that a service without legacy conversational `\obt`
 transport can use the architecture cleanly.
 
-**Exit condition:** provider/model query and selection commands use the
-same Nuntius path and response contract.
+The full provider-neutral N9.6.4 readiness taxonomy has been moved to
+nice-to-have/post-M0.1 and is not required to prove native adoption.
+
+**Exit condition:** provider/model query and selection commands use the same Nuntius
+path and response contract; remaining N9 closeout is tracked in the Praebere N9
+addendum and lifecycle documents.
 
 ------------------------------------------------------------------------
 
@@ -894,7 +899,7 @@ The Nuntius cross-service project is complete when:
     Servire Operations Log.
 - [ ] 13. Nuntius diagnostics provide enough evidence to diagnose routing
     failures and timeouts.
-- [ ] 14. Praebere can use the same completed mechanism for provider/model
+- [x] 14. Praebere can use the same completed mechanism for provider/model
     operations.
 - [ ] 15. Legacy conversational command traversal is no longer required as the
     normal route.
@@ -906,7 +911,7 @@ service for M0.1 purposes.
 ------------------------------------------------------------------------
 # 8. Relationship to the Main M0.1 Roadmap
 
-This project remains the active implementation stream. **N1 through N7 are complete; N8 is the next active phase.**
+The common control plane is operational. **N1 through N7 are complete; N9 native Praebere adoption is substantially complete. N8 diagnostics/UI and N10 compatibility removal/regression validation remain open project closeout work.**
 
 The sequence is:
 

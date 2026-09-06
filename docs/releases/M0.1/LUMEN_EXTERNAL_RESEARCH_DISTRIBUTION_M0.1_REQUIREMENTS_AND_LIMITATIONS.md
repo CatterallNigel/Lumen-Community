@@ -1,6 +1,6 @@
 # Lumen External Research Distribution M0.1 — Requirements and Limitations
 
-**Date:** 2026-08-22  
+**Date:** 2026-09-05  
 **Status:** Draft Release Definition  
 **Release:** M0.1
 
@@ -18,6 +18,11 @@
 | 2026-08-30 | Nigel Catterall | 1.6 | Defined M0.1 provider/model selection as runtime-global; documented Praebere-managed stack shutdown semantics; clarified the single-active Vestigare recording limitation and required session-binding behaviour when multiple sessions/external clients exist. |
 | 2026-08-30 | Nigel Catterall | 1.7 | Defined Pontis session identity as authoritative for Trace binding; required explicit active-session selection in Vestigare; prohibited Trace start with no active session; and defined M0.1 recording as beginning before the selected session's first model interaction so a Trace is not silently incomplete. |
 | 2026-08-30 | Nigel Catterall | 1.8 | Refined N9 provider/model lifecycle: startup discovery from Ollama, optional preferred model, established versus active-execution sessions, external-client explicit selection, Rogare dropdown behaviour, and runtime-global model locking while execution sessions are active. |
+| 2026-09-01 | Nigel Catterall | 1.9 | Added the N9.5 Pontis-owned session-management and orphan-recovery boundary, Rogare lifecycle closure, Praebere lock release/persistence/reconciliation/reset requirements, and clarified separation from the Servire authorization heartbeat. |
+| 2026-09-04 | Nigel Catterall | 2.0 | Added N9.6.2 deferred-release reconciliation and N9.6.3 external-Ollama, demand-residency and atomic runtime-model reservation requirements. Removed Praebere ownership of the Ollama process lifecycle. |
+| 2026-09-05 | Nigel Catterall | 2.1 | Clarified Praebere authority for model selection, reservation and residency; retained Pontis authority for session identity/lifecycle; defined available, reserved and locked selection states; and clarified that Pontis `not active` means not active in model execution, not that the session is closed or the model is available. |
+| 2026-09-06 | Nigel Catterall | 2.2 | Defined the M0.1 cached model-discovery and explicit-refresh boundary, including stale-cache visibility and failed-load reservation cancellation. |
+| 2026-09-06 | Nigel Catterall | 2.3 | Reconciled successful Vestigare provenance validation; required authoritative model metadata in `trace_recordings`; defined Repetere/Fiducia exact recorded-model enforcement under the runtime-global M0.1 model boundary; and documented Rogare's manual session-reconnect limitation. |
 
 ## 1. Purpose
 
@@ -72,8 +77,13 @@ M0.1 must:
 - record the effective model execution through Vestigare;
 - preserve the actual context supplied to the model;
 - preserve the effective system prompt;
-- establish and document what provider/model identity Vestigare currently records and whether that identity is descriptive provenance, replay-binding information, or absent from the replayable Trace;
-- once established, retain sufficient provider/model execution provenance to identify the conditions under which the recorded execution occurred.
+- retain the incoming client system prompt as superseded provenance when Moderari
+  replaces it, exclude that superseded prompt from Replay input, and identify exactly
+  one authoritative effective system prompt as replayable execution context;
+- store the authoritative provider and exact model identity used for execution in the
+  corresponding Vestigare `trace_recordings` document; and
+- retain sufficient provider/model execution provenance to identify and enforce the
+  model condition under which the recorded execution occurred.
 
 ### 3.2 Experiment and Repetition
 
@@ -100,6 +110,26 @@ Experiment remains recoverable. Retrying must create a fresh isolated Replay
 session/run and must not overwrite or silently discard the failed-run evidence.
 
 Repetere reports divergence but does not assess its significance.
+
+At actual replay start, Repetere must read the authoritative provider/model identity
+from the source `trace_recordings` document and apply the normal Pontis/Praebere
+session-selection lifecycle:
+
+- when no global model is selected, the recorded model must exist in Praebere's cached
+  catalogue and must be selected/reserved for the Replay session before execution;
+- when the global model exactly matches the recorded model, Repetere must reserve that
+  model for the Replay session and continue normally;
+- when a different global model is selected, reserved or locked, Repetere must log and
+  display a controlled model-conflict error and must not start the Replay;
+- when authoritative model metadata is absent or the recorded model is unavailable,
+  Repetere must fail explicitly before model execution; and
+- Repetere must never load Ollama models directly or silently substitute the active
+  model. First-execution activation remains Praebere's responsibility.
+
+Fiducia must apply the same compatibility check at scheduled execution time. If the
+active global model differs from the recorded model, or the recorded model is missing
+or unavailable, Fiducia must record a failed scheduled-run result and must not change
+or interrupt the active global model.
 
 ### 3.3 System-Prompt Policy
 
@@ -160,12 +190,15 @@ Nuntius must:
 - obtain the active service catalogue from Servire;
 - accept an empty catalogue as healthy when Servire is reachable;
 - maintain the available-service catalogue;
-- distribute commands to available services;
+- resolve the configured command owner and route directly to that service rather than
+  broadcasting or using legacy consume-or-forward traversal;
 - support simple `200`, `204`, and error response semantics.
 
-Services with no responsibility for a command return `204`.
-
 Services that successfully handle a command return `200`.
+
+A routed owner may return `204` only where the defined operation legitimately has no
+response body. Silence, a timeout or the absence of an authoritative outcome must never
+be interpreted as success.
 
 Nuntius is an integral Servire-owned control-plane service in M0.1. Servire starts
 Nuntius automatically when Servire becomes operational, before the managed workload
@@ -179,31 +212,97 @@ the authoritative active Vestigare Trace state through the Nuntius control path.
 
 ### 3.7 Provider and Model Discovery
 
-Praebere must remain the executor and authoritative state owner for model-provider operations.
+Praebere must remain the executor and authoritative state owner for model discovery,
+selection intent, demand loading and Lumen-owned model residency.
 
 For M0.1, **Ollama is the only supported and validated model-provider platform**.
 
-Ollama must be available on its default port, `11434`. Alternative Ollama ports and alternative model-provider platforms are outside the supported M0.1 release boundary unless separately validated and explicitly brought into scope.
+Ollama is external infrastructure and must already be available at the configured
+endpoint. The M0.1 default is port `11434`. Praebere must not start, stop or otherwise
+assume process ownership of Ollama. If the configured endpoint is unavailable during
+Praebere lifecycle startup, startup must fail explicitly and Servire must roll back the
+services started by that stack-start attempt. Alternative model-provider platforms are
+outside the supported M0.1 release boundary unless separately validated and explicitly
+brought into scope.
 
-On startup, Praebere must query Ollama for the models actually available locally. A configured model name is an optional **preferred model**, not a requirement that the researcher's Ollama installation contain that model. If the preferred model is absent, Praebere must remain operational with no model selected; startup must not fail and another model must not be silently substituted.
+On startup, Praebere must query Ollama for the models actually available locally and
+persist the resulting model catalogue as authoritative cached discovery state. Ordinary
+model-list queries, model-selection validation, status reads and Praebere UI polling must
+use that cache and must not repeatedly query Ollama. The Praebere UI **Refresh Models**
+action is the explicit mechanism for replacing the cache with current Ollama discovery.
+If an explicit refresh fails, Praebere must retain the last successfully discovered
+catalogue and report the refresh failure rather than silently replacing the catalogue
+with an empty or partial result.
+
+A configured model name is an optional **preferred model**, not a requirement that the
+researcher's Ollama installation contain that model. If the preferred model is absent,
+Praebere must remain operational with no model selected; startup must not fail and another
+model must not be silently substituted.
 
 M0.1 distinguishes:
 
 - **available models** — models discovered from Ollama;
 - **preferred model** — optional installation/UI preference;
 - **selected model** — authoritative runtime-global execution selection;
-- **selection lock** — whether active model execution prevents the selected model from being changed.
+- **model reservation** — the runtime-global model atomically reserved by Praebere
+  for one or more open Pontis sessions;
+- **active execution session** — a session whose first model ask has activated
+  execution through Praebere;
+- **Praebere-owned residency** — a resident model that Praebere itself requested
+  Ollama to load.
 
 Praebere must support discovery and selection through the common `\obt` path so that Rogare and supported external clients use the same Lumen command mechanism.
 
-For M0.1, provider and selected-model state are **runtime-global**, not session scoped. However, a model change must not alter the execution condition of an already-active session. Lumen therefore distinguishes:
+For M0.1, provider and selected-model state are **runtime-global**, not session scoped.
+Model selection and model loading are separate operations. Selecting a model records
+intent and atomically reserves that model in Praebere for the requesting Pontis
+session; it must not load the model.
+Lumen therefore distinguishes:
 
-- an **established session** — Pontis has assigned the authoritative `session_id`, but the session has not yet performed model interaction; merely connecting does not lock model selection;
+- an **established session** — Pontis has assigned the authoritative `session_id`; the
+  session may have no model reservation or may reserve the runtime-global selected model;
 - an **active execution session** — the session has performed its first model interaction and its model execution condition has been established.
 
-Model selection/change is permitted only while there are no active execution sessions. Once the first model interaction occurs, the selected runtime-global model is locked until all active execution sessions have ended. Any new session established during that period uses the same locked model.
+Pontis UI/API text `not active` means **not active in model execution**. It does not
+mean that the Pontis session is closed, and it does not by itself mean that model
+selection is available. An established, non-executing session may still reserve the
+runtime-global model in Praebere.
 
-When an external client establishes a session while no model is selected/locked, it must be presented with Praebere's available models and guidance to use:
+Praebere exposes the authoritative model-selection state:
+
+- **available** — no open session currently reserves the selected model;
+- **reserved** — one or more open sessions reserve the selected model, but none is
+  currently active in model execution;
+- **locked** — one or more sessions are active in model execution; and
+- **reconciliation pending** — Praebere cannot yet safely determine the authoritative
+  reservation/execution state.
+
+The first successful selection reserves the runtime-global model for that session.
+Other sessions may reserve the same model. A request for a different model must be
+rejected atomically by Praebere while any reservation exists. If two
+clients concurrently request different models, exactly one model may win; both clients
+must display Praebere's authoritative confirmed model rather than an optimistic local
+choice. Pontis records the confirmed model for routing and presentation but does not
+independently create or enforce the model reservation.
+
+Praebere loads the selected model only on the first ask, and only if Ollama does not
+already report it resident. Praebere records residency ownership only when it issued
+that load. Multiple execution sessions using the reserved model share the residency.
+If Ollama cannot load the selected model, including because it was removed after the
+last successful discovery, Praebere must return a controlled model-activation error,
+must not register the execution session as active, and must cancel and persist the
+requesting session's reservation. The client must be told that both activation failed
+and its reservation was cancelled. Reservations held by other open sessions must remain
+unchanged; the resulting selection state is `available` when no reservation remains and
+`reserved` when another reservation remains.
+When the final active execution session ends, Praebere unloads the model only if it
+owns that residency. A model that was already resident before Lumen used it remains
+loaded. When the final reserving session ends, Pontis reports the session-lifecycle
+change and Praebere releases that session's reservation; the last selected model may
+remain recorded as history but is no longer reserved.
+
+When an external client establishes a session while no model is reserved, it must be
+presented with Praebere's available models and guidance to use:
 
 ```text
 \obt praebere model select <model_name>
@@ -211,11 +310,62 @@ When an external client establishes a session while no model is selected/locked,
 
 The configured preferred model must **not** be silently selected for an external client.
 
-Rogare should present Praebere's discovered models in a dropdown associated with the session controls. When selection is unlocked, an available preferred model may be shown as the initial UI choice. That choice becomes authoritative only through the normal Praebere/Nuntius selection path. While any active execution session exists, Rogare must display the authoritative model and disable model choice.
+Rogare must expose Praebere's authoritative model discovery and selection through the
+same `\obt praebere` control path used by external clients. A model becomes authoritative
+only after Praebere accepts the session's normal selection/reservation request. While a
+reservation exists, Rogare must display the authoritative reserved model and surface a
+controlled conflict if that session requests a different model.
 
-Praebere also owns the provider lifecycle. On managed stack shutdown, Servire requests Praebere lifecycle shutdown; Praebere releases/unloads the managed model resources and stops Ollama **only where the Ollama process is Praebere-managed/owned**. If Ollama was already running independently, stopping the Lumen stack must not terminate that external provider unless configuration explicitly grants Praebere that ownership.
+On managed stack shutdown, Praebere releases only model residency that it caused.
+Lumen must never stop Ollama. Failure to unload Lumen-owned residency must be reported
+as degraded partial completion and must not be concealed by terminating the provider.
 
 Per-session provider/model selection remains outside the required M0.1 boundary.
+
+### 3.7.1 Session Management and Model-Lock Release
+
+Pontis is authoritative for session identity and lifecycle. M0.1 must provide:
+
+- a Pontis-owned Servire UI showing established and active-execution sessions,
+  origin, request/in-flight state, timestamps and Praebere registration/release
+  state;
+- graceful End Session and confirmed, authorised Force Close / Clear Orphan
+  operations;
+- client-scoped `\obt pontis session status`, `session end` and `session new`
+  commands;
+- restricted administrative `\obt pontis sessions`, named `session end` and
+  `session force-close` commands;
+- an End Session action in Rogare;
+- termination of the current Rogare session during New Session, normal stop and
+  restart; and
+- idempotent, auditable release of the ended session's Praebere execution
+  registration through Nuntius.
+
+If Praebere is unavailable, local Pontis closure is partial success: the session must
+be shown as `release pending`, and Force Close feedback must state both the successful
+local closure and deferred provider release. On Praebere restart, reconciliation must
+run automatically, consume pending releases, update Praebere's active set, acknowledge
+Pontis and reach `complete` without requiring another client request.
+
+Ordinary external clients may inspect, end or replace only their own Pontis
+session. Administrative cross-session operations must be authorised. Idle time
+alone must not classify or close a session as orphaned. M0.1 does not require
+Pontis to POST a heartbeat to an external-client callback address.
+
+Praebere must release its execution lock and any Praebere-owned residency only after
+the final **active execution session** has ended. Praebere must retain the runtime-model
+reservation until the final Pontis session reserving that model has ended. Praebere must
+persist selected provider/model state, residency ownership and active execution
+registrations, restore them fail-safe after restart and reconcile against Pontis
+authority. A Pontis session closed while Praebere is unavailable must remain visibly
+`release pending`; Praebere restart must reconcile it, remove it from the active set,
+acknowledge release to Pontis and reach `complete`. Safe execution reset is
+permitted only when Pontis confirms no active execution sessions remain; forced
+reset, if provided, is restricted and auditable emergency recovery.
+
+The mandatory Servire distribution-authorization heartbeat remains a distinct
+licensing/security requirement. It neither proves client-session liveness nor
+replaces Pontis session termination.
 
 ### 3.8 Trace Separation
 
@@ -228,6 +378,11 @@ Examples include:
 - model;
 - provider;
 - effective system prompt.
+
+Vestigare recording metadata must identify the authoritative provider and exact model
+used. Individual request/response bodies may also contain the model identity, but
+Repetere and Fiducia must not be required to decode conversational transport bodies to
+determine the source execution model.
 
 ### 3.9 Concurrent Session Isolation
 
@@ -374,14 +529,33 @@ The following distinctions therefore apply:
 - changing one session's active policy does not change the new-session default.
 
 Provider/model selection is deliberately **runtime-global for M0.1**. Concurrent
-sessions do not receive independent model selections. An established session that has
-not yet performed model interaction does not by itself lock selection; once any session
-begins model execution, the authoritative runtime-global model is locked until all
-active execution sessions have ended. New sessions established during that period use
-the locked model. This must remain distinct from Moderari system-prompt policy, which is
-session scoped.
+sessions do not receive independent model selections. Praebere atomically reserves the
+first successfully selected model for the selecting Pontis session before execution begins.
+Other sessions may join that same reservation but cannot reserve a different model
+until every reserving session has ended. First ask activates execution and demand-loads
+the reserved model; it does not decide which client wins model selection. This must
+remain distinct from Moderari system-prompt policy, which is session scoped.
 
-### 5.7 Nuntius Is Lightweight
+### 5.7 Model Discovery Is Cached
+
+Praebere's model catalogue is a snapshot from startup or the most recent successful
+explicit **Refresh Models** action. It is not a continuously synchronised view of
+Ollama. Models added to or removed from Ollama outside Lumen are therefore not reflected
+in ordinary `\obt praebere models` responses or the Praebere UI until the researcher
+uses **Refresh Models** or restarts the stack.
+
+A model appearing as `available` in Praebere means that it existed at the last successful
+discovery; it does not guarantee that the model still exists or can currently be loaded.
+If Ollama cannot load a cached model on first ask, the ask fails with a controlled
+activation error and the requesting session's reservation is cancelled. The researcher
+must correct the Ollama condition or refresh the catalogue before selecting again.
+
+If live refresh cannot reach Ollama or otherwise fails, Praebere deliberately retains
+the previous catalogue and displays the refresh failure. This fail-safe behaviour avoids
+silently discarding the last known discovery state, but the retained catalogue may be
+stale until a later refresh succeeds.
+
+### 5.8 Nuntius Is Lightweight
 
 Nuntius is not a durable message broker.
 
@@ -394,7 +568,7 @@ M0.1 does not require:
 - distributed consensus;
 - sophisticated subscriptions.
 
-### 5.8 Saved Prompt Management Is Minimal
+### 5.9 Saved Prompt Management Is Minimal
 
 M0.1 does not require:
 
@@ -404,7 +578,7 @@ M0.1 does not require:
 - prompt version history;
 - collaborative editing.
 
-### 5.9 Mid-Session System-Prompt Policy Changes
+### 5.10 Mid-Session System-Prompt Policy Changes
 
 Moderari system-prompt policy is evaluated at model-request time rather than being fixed for the lifetime of an external-client session.
 
@@ -423,13 +597,18 @@ This has implications for Repetere. Replay must not assume that every recorded c
 
 Without that distinction, Replay could incorrectly send both the external-client system prompt and the Moderari-generated prompt, or incorrectly remove a client system prompt that was intentionally active during a `Pass-through` portion of the session.
 
-The precise Vestigare representation and Repetere reconstruction rules for these transitions remain to be established when the Trace-recording changes are implemented. M0.1 must therefore treat mid-session policy changes as observable execution behaviour whose provenance must be preserved, rather than attempting to infer Replay behaviour solely from message role or position.
+Vestigare now records authoritative system-prompt provenance for each applicable
+exchange. The incoming client prompt is retained with `disposition: superseded` and is
+not Replay input when Moderari replaces it. The Lumen/Moderari effective system prompt
+is retained separately and identified as the single replayable system prompt. Replay
+must continue to use this explicit provenance rather than infer behaviour solely from
+message role or position.
 
 For research use, changing the policy mid-session should be regarded as an explicit change in experimental conditions. A researcher seeking a single controlled system-prompt condition across an experiment should avoid changing the policy during the recorded session. A researcher intentionally investigating system-prompt transitions may use this behaviour, provided the resulting Trace preserves enough evidence to reproduce the transition correctly.
 
 Rogare does not itself supply a client system prompt. When Rogare is used as the client, the effective system prompt is therefore established through Moderari, but the same requirement remains: any policy change during a recorded session must be represented in the execution evidence.
 
-### 5.10 Context Compaction Is Part of the Experimental Condition
+### 5.11 Context Compaction Is Part of the Experimental Condition
 
 Moderari's context-compaction mechanism is active in M0.1 and may materially affect model behaviour once the configured utilisation threshold is reached.
 
@@ -441,7 +620,7 @@ M0.1 may itself be used to investigate this behaviour, including comparison of e
 
 `Pass-through` does not disable context compaction. It controls treatment of client-supplied system prompts, not Moderari's context-management behaviour.
 
-### 5.11 Servire Operations Log Filtering
+### 5.12 Servire Operations Log Filtering
 
 Servire's Operations Log is an operator-facing view rather than a complete copy of
 every service access log.
@@ -455,23 +634,30 @@ Meaningful control-plane lifecycle events, warnings, errors and unsuccessful API
 responses remain visible. Nuntius command-routing and transport diagnostics remain
 available through the Nuntius-owned diagnostics UI exposed within Servire.
 
-### 5.12 Trace Model/Provider Binding Is Not Yet Established
+### 5.13 Replay Uses the Runtime-Global Model Boundary
 
-M0.1 has not yet established whether a Vestigare Trace is operationally bound to the provider/model used for the source execution.
+M0.1 does not provide a private or per-session model for Repetere. A Replay must use the
+model recorded for its source Trace, but that model must also be compatible with the
+current runtime-global Praebere selection.
 
-Development must investigate:
+The exact model appears in recorded request and response transport bodies. M0.1 must
+add the authoritative provider and exact model identity directly to the associated
+`trace_recordings` document so Replay does not infer it from message content.
 
-- whether provider identity is recorded in the Trace;
-- whether model identity is recorded in the Trace;
-- where and in what form that information is stored;
-- whether any provider/model identity is descriptive provenance only or is used by Repetere when reconstructing a Replay;
-- whether provider/model identity appears indirectly within system, assistant or other conversational messages;
-- whether an otherwise unchanged Trace can currently be replayed against a different selected provider/model; and
-- whether changing provider/model introduces hidden or model-specific context into the Replay.
+At Replay start:
 
-Until this behaviour is established, M0.1 must not claim either that Replay is bound to the source provider/model or that arbitrary provider/model substitution is a supported controlled Replay condition.
+- if no model is selected, Repetere may select/reserve the recorded model through the
+  ordinary Pontis/Praebere lifecycle;
+- if the selected model matches exactly, Replay may share it as another normal session;
+- if a different model is selected, reserved or locked, Replay must stop with a clear
+  conflict rather than substitute that model or disturb active sessions.
 
-### 5.13 Single-Machine Deployment
+Consequently, an M0.1 Replay may be delayed until sessions reserving a different model
+have ended. Running a Replay concurrently on a different, Replay-private model remains
+deferred until Lumen implements general per-session model selection and multi-model
+residency management.
+
+### 5.14 Single-Machine Deployment
 
 M0.1 must be installed and operated on a single host machine.
 
@@ -479,7 +665,7 @@ Researchers must not distribute individual Lumen services across multiple machin
 
 Multi-host/distributed deployment remains future development and requires separate validation of service discovery, transport, operational control, security, authorization and logging.
 
-### 5.14 Research Distribution Is Not the Commercial Product
+### 5.15 Research Distribution Is Not the Commercial Product
 
 M0.1 does not define:
 
@@ -489,7 +675,7 @@ M0.1 does not define:
 - Aestimare assessment services;
 - the final deployment/support model.
 
-### 5.15 Runtime Protection Is Not Absolute Tamper Resistance
+### 5.16 Runtime Protection Is Not Absolute Tamper Resistance
 
 M0.1 runtime authorization and configuration protection are intended to prevent accidental unauthorised use, simple copying and ordinary operation outside the authorised installation model.
 
@@ -499,7 +685,7 @@ A sufficiently determined operator with source-code and machine access may ultim
 
 The security objective is therefore to make circumvention deliberate, preserve installation provenance, prevent simple redistribution from producing a functioning authorised installation, and reduce reliance on contractual enforcement. It must not be represented as absolute DRM or a hardware trust boundary.
 
-### 5.16 Runtime Authorization Requires Periodic Illuminates.One Availability
+### 5.17 Runtime Authorization Requires Periodic Illuminates.One Availability
 
 Normal external M0.1 operation depends on periodically renewing authorization with Illuminates.One.
 
@@ -507,7 +693,7 @@ Temporary connectivity failure must be tolerated through the authorization lease
 
 Offline research licensing, hardware migration, key rotation, capability manifests and the complete commercial licensing system remain future work unless separately brought into M0.1.
 
-### 5.17 Single Active Vestigare Recording
+### 5.18 Single Active Vestigare Recording
 
 M0.1 supports only **one active Vestigare recording at a time** across the Lumen
 installation, regardless of how many Rogare or external-client sessions are active.
@@ -577,6 +763,21 @@ and confirm that only the bound session appears in the Trace. Also verify that T
 Start is unavailable with no active session and is rejected for a session that has
 already begun model interaction.
 
+### 5.19 Rogare Session Reconnect Is Manual
+
+Rogare does not automatically discover or reconnect to an existing Pontis session in
+M0.1. After Rogare restart or disconnection, the researcher must obtain the active
+session ID from Pontis, enter it in Rogare's Session field and start using that session.
+
+The authoritative Pontis session and its model/conversational context continue, but
+Rogare does not restore its prior local conversation display. Earlier messages may
+therefore be absent from the Rogare UI even though the continuing model request retains
+the established Lumen session context.
+
+Automatic session discovery and restoration of Rogare conversation presentation remain
+future improvements. This limitation does not indicate loss of Pontis session identity
+or model context.
+
 ## 6. Pre-General-Research-Release Requirement
 
 Before the Research Distribution is made generally available to external researchers, Servire should enforce a single active operator session per installation.
@@ -607,6 +808,13 @@ M0.1 can be considered complete when:
 - `\obt` traffic remains outside conversational Trace;
 - effective execution context remains observable;
 - provider/model Trace provenance and any Replay binding behaviour have been established and documented before a provider/model Replay guarantee is made;
+- every new Vestigare `trace_recordings` document records the authoritative provider
+  and exact model used for execution;
+- Repetere verifies and reserves the recorded model at actual Replay start, proceeds
+  only when the runtime-global selection matches, and fails clearly without model
+  execution when it conflicts or is unavailable;
+- Fiducia records a failed scheduled-run result instead of changing the global model
+  when the scheduled Trace model conflicts with the active selection;
 - Moderari checkpoint/context-compaction behaviour remains observable in Trace evidence;
 - observed mid-session system-prompt policy switching and its Trace/Replay provenance implications are documented;
 - concurrent-session isolation has been demonstrated, including independent Moderari system-prompt policy state for simultaneous Rogare and Pi sessions and separation of established-session state from the new-session default;
@@ -615,8 +823,18 @@ M0.1 can be considered complete when:
 - Vestigare presents active Pontis sessions for explicit selection when more than one eligible session exists and never guesses from recency/activity;
 - M0.1 complete-session recording can begin only before the selected session's first model interaction;
 - a multi-client Trace validation proves traffic from unbound sessions is excluded and the selected session identity is persisted in the Trace;
-- stopping the managed stack causes Praebere to release/unload its managed model
-  resources and stops Ollama only when Praebere owns the Ollama process;
+- a Praebere restart validation proves deferred Pontis releases reconcile
+  automatically and reconciliation reaches `complete` without a further client ask;
+- Force Close reports local closure plus deferred Praebere release as partial success;
+- Praebere startup fails explicitly when the configured Ollama endpoint is unavailable,
+  causing Servire to roll back that stack-start attempt;
+- selecting a model does not load it; the first ask demand-loads it when absent;
+- Praebere atomically enforces one runtime-global model reservation while allowing
+  concurrent sessions to share the same reserved model;
+- clients display the Praebere-confirmed authoritative model after selection success or
+  conflict, including the current reserved model in human-readable conflict feedback;
+- stopping the managed stack causes Praebere to unload only model residency that it
+  caused and never stops externally operated Ollama;
 - the complete stack passes integration/regression validation as a single-host installation;
 - installation identity and signed runtime authorization work end-to-end;
 - authorization lease renewal and expiry behaviour have been demonstrated;

@@ -4,8 +4,8 @@
 
 **Test date:** 29 August 2026\
 **Evidence reviewed:** 30 August 2026\
-**Status:** Completed execution; compaction mechanism validated with an
-important behavioural finding\
+**Status:** Closed validation evidence; compaction mechanism validated with an
+important behavioural finding retained for future research\
 **Model:** `qwen2.5-coder:14b-32k`\
 **Client:** Pi\
 **Session:** `session-http-edd3ed22-7099-4470-bfd1-14dfc050034b`\

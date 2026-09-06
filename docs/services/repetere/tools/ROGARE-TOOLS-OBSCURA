@@ -1,0 +1,91 @@
+# Rogare Tools Note: Obscura as a Lightweight Browser Tool
+
+Date: 2026-09-02
+
+Source: https://github.com/h4ckf0r0day/obscura
+
+## Summary
+
+Obscura is an open-source headless browser engine written in Rust. It is aimed at AI agents, browser automation, and web scraping, and it is interesting for Lumen Rogare because it offers a small, headless alternative to heavier browser tooling.
+
+The name is also nicely on-theme: `obscura` is Latin, carrying meanings around darkness, hiddenness, or obscurity. For Rogare, the appeal is almost the inverse: it could let the system quietly look outward, inspect pages, search, click, and extract information without opening a visible browser window.
+
+## Why It Matters For Lumen Rogare
+
+Lumen Rogare currently uses Pi for tools. Pi has a browser tool, but the present browser flow can open a headed browser window against an Ollama web page that requires login. That creates friction for a local, agentic tool loop: the user sees a browser appear, the workflow can get stuck at authentication, and Ollama becomes entangled with web browsing when it should mostly remain a local inference service.
+
+Obscura could separate those concerns:
+
+```text
+Lumen Rogare
+  -> tool router
+  -> Obscura MCP server
+  -> headless web navigation / search / extraction
+
+Lumen Rogare
+  -> local Ollama API
+  -> local model inference
+```
+
+In this shape, Ollama handles thinking and generation through its API, while Obscura handles web interaction as a dedicated browser tool.
+
+## Useful Capabilities
+
+Obscura appears to provide several capabilities that map well onto Rogare tools:
+
+- Headless operation, so no visible browser window is required.
+- Rust implementation, which may be attractive for a small local toolchain.
+- Linux ARM64 release builds, making Raspberry Pi-class deployment plausible.
+- MCP server support, allowing it to expose browser tools directly to an agent runtime.
+- Chrome DevTools Protocol support, giving a path to Puppeteer or Playwright-style integration.
+- Page navigation, readable snapshots, text extraction, link extraction, screenshots, PDF export, form filling, clicking, key presses, and JavaScript evaluation.
+- Cookie handling and redirect support, which matters for login-like flows.
+- Optional stealth mode, custom user agents, and proxy support.
+- CLI commands for simple `fetch` and parallel `scrape` workflows.
+
+For Lumen Rogare, the MCP surface is especially relevant. Obscura exposes tools such as `browser_navigate`, `browser_snapshot`, `browser_screenshot`, `browser_click`, `browser_fill`, `browser_type`, `browser_evaluate`, `browser_wait_for`, and network/console inspection.
+
+## Fit As A Rogare Tool
+
+Obscura looks best suited as Rogare's lightweight web-actuator layer: a tool that can search, open pages, collect readable page text, follow links, fill simple forms, and take screenshots when visual confirmation is useful.
+
+This would be particularly useful for:
+
+- General web search and result inspection.
+- Reading documentation pages.
+- Following source links during research.
+- Pulling page text into Rogare's reasoning loop.
+- Running small browsing tasks on a Pi without a full desktop browser.
+- Avoiding the current headed-browser login failure mode.
+
+It should not replace Ollama. Instead, it should reduce the accidental coupling between browser automation and Ollama. Ollama remains the local model endpoint; Obscura becomes one of Rogare's external perception/action tools.
+
+## Risks And Unknowns
+
+Obscura is not Chromium. Its README says the rendering engine is evolving, and long-tail CSS, some Web APIs, media playback, compositor effects, and platform font rendering may differ from Chromium. That is fine for many search and extraction tasks, but it is worth testing before making it the only browser backend.
+
+Potential concerns:
+
+- Some modern JavaScript-heavy sites may behave differently than they do in Chrome.
+- Search engines and login pages may still block or challenge automation.
+- Stealth features may help in some cases, but they also need careful, ethical use.
+- Pi performance should be tested directly rather than assumed from desktop benchmarks.
+- The security model matters: web tools need SSRF protection, private-network controls, allowlists or denylists, and good logging.
+
+## Suggested Prototype
+
+The smallest useful spike would be:
+
+1. Install the Linux ARM64 Obscura binary on the Pi or on a dev machine that mirrors Pi constraints.
+2. Start Obscura in MCP mode with local-only access.
+3. Add an experimental Rogare browser provider backed by Obscura MCP.
+4. Test four flows: search query, open result, extract readable text, and screenshot.
+5. Test one difficult page: a modern SPA, docs site, or login-like form.
+6. Measure startup time, memory use, page extraction reliability, and failure behavior.
+7. Keep the existing browser tool as a fallback until Obscura proves reliable enough.
+
+## Initial Recommendation
+
+Obscura is worth a small Rogare tools spike. It directly addresses the current pain point: browser work should not open a visible window or get trapped at an Ollama web login. The clean design is to let Rogare call Ollama locally for inference and call Obscura separately for web browsing.
+
+If the prototype works on Pi-class hardware, Obscura could become Rogare's default lightweight browser/search tool, with a heavier Chromium or Playwright path reserved for pages that need full browser compatibility.
