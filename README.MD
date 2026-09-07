@@ -1,174 +1,220 @@
 # Lumen
 
-> **Continuity, understanding, provenance and trust for long-running AI-assisted work.**
+> **Continuity • Understanding • Provenance • Trust**
 
-**Lumen is a model-independent AI orchestration and continuity engine.**
+**Lumen is a model- and client-independent Reasoning Assurance Service for AI-assisted work.**
 
-Language models can reason, generate and assist exceptionally well, but an individual model session remains temporary. Context windows are finite, conversations end, models are replaced, and important project knowledge is easily fragmented or lost.
+AI observability can show what happened. Lumen is being built to preserve the evidence needed to understand **why it happened, whether it can be reproduced, and whether the result is dependable enough to use**.
 
-Lumen provides a continuity layer between clients and model providers. It preserves the information required for work to continue coherently across sessions, context boundaries and model changes.
+Lumen sits between AI clients and model providers. It coordinates sessions, model use, evidence capture and controlled replay without replacing the client, model or surrounding tools.
 
-Lumen does not attempt to replace the client, the model or the tools around them. It coordinates their interaction while maintaining a persistent, evidence-based understanding of the work.
+> **Observability tells you what happened. Lumen tells you whether it was worth it.**
 
 ---
 
 ## Why Lumen exists
 
-Most AI systems treat the current conversation as the boundary of the work.
+Language models can reason, generate and assist exceptionally well, but their sessions are temporary and their behaviour is not perfectly repeatable.
 
-That becomes increasingly unreliable as a project grows. Important information may disappear from the active context, including:
+As work grows beyond a single exchange, important context and evidence can become fragmented:
 
-- the original objective;
-- established facts and constraints;
-- decisions already made;
-- the reasoning behind those decisions;
+- objectives, facts and constraints;
+- decisions and the reasoning behind them;
 - assumptions and later corrections;
-- source and file provenance;
-- work already completed;
-- unresolved questions;
-- the current architectural or conceptual model;
-- the correct point from which work should resume.
+- sources, files and provenance;
+- model, provider and configuration details;
+- work completed and questions still unresolved;
+- the relationship between a conclusion and the trace that produced it;
+- the correct point from which work should continue.
 
-When the context window is exhausted, much of this accumulated understanding must be reconstructed. Reconstruction consumes time, introduces inconsistency and can silently change the direction of the work.
+A transcript alone does not provide reliable continuity or assurance. It does not necessarily establish which model ran, how it was configured, what evidence it used, whether the execution can be repeated, or how a changed answer should be interpreted.
 
-Lumen exists so that the **project**, rather than an individual conversation, becomes the primary unit of continuity.
+Lumen therefore treats the **project, experiment and execution evidence**—rather than an individual conversation—as the durable basis of understanding.
 
 ---
 
-## How Lumen works
+## What Lumen provides
 
-At its simplest, Lumen sits between an AI client and a model provider:
+Lumen is designed to support four connected capabilities:
 
-```text
-Client
-  ↓
-Lumen
-  ↓
-Model provider
-  ↓
-Model
+1. **Continuity** — preserve the meaningful state of work across sessions, context boundaries, clients and model changes.
+2. **Observation** — capture correlated evidence about requests, responses, execution and operational state.
+3. **Reproduction** — replay controlled runs in fresh sessions with sufficient model and configuration metadata to make comparisons meaningful.
+4. **Assurance** — build calibrated trust from accumulated evidence rather than requiring every output to be accepted or reverified from first principles.
+
+The immediate M0.1 research focus is:
+
+> **Observe → Reproduce → Repeat**
+
+Behavioural assessment is part of the wider architecture, but **Lumen Aestimare is not included in the M0.1 External Research Distribution**.
+
+---
+
+## How Lumen fits
+
+```mermaid
+flowchart TD
+    C["AI clients"] --> P["Pontis: session boundary"]
+    P --> M["Moderari: model use"]
+    M --> O["External model provider"]
+    P --> V["Vestigare: trace evidence"]
+    V --> R["Repetere: experiments and replay"]
+    S["Servire and Nuntius: operational control"] --> P
+    S --> M
 ```
 
-The client may be a console, development environment, application or agent. The model provider may be a local platform such as Ollama or another compatible inference service.
+The client may be Rogare, a console, an IDE, an application or an agent. The provider may be a local platform such as Ollama or another supported inference service.
 
-Lumen maintains an external continuity state that can survive beyond any single model context. That state may include:
+Lumen does not own the external provider process. For Ollama, Lumen checks availability and manages only model residency that Lumen itself caused:
 
-- objectives and active tasks;
-- established project knowledge;
-- architectural decisions;
-- reasoning and rationale;
-- provenance and evidence;
-- checkpoints and summaries;
-- files examined or changed;
-- assumptions, contradictions and corrections;
-- unresolved questions;
-- the model's current understanding;
-- the appropriate resume point.
+- model selection records runtime intent;
+- the first ask loads the selected model when required;
+- active execution sessions reserve that model;
+- the final dependent session may release a model loaded by Lumen;
+- a model already resident before Lumen used it is left untouched.
 
-By separating project continuity from the model session, Lumen can support long-running work without depending on one model, one client or one uninterrupted conversation.
+This separation keeps provider infrastructure independent while allowing Lumen to enforce a coherent model choice across active work.
 
 ---
 
-## What Lumen is — and is not
+## Service architecture
 
-Lumen is not a replacement for a language model, an autonomous coding agent or a conventional chat-history store.
+Lumen is implemented as a set of services with explicit ownership boundaries.
 
-It is infrastructure for maintaining coherent work around those systems.
+| Service | Responsibility |
+| --- | --- |
+| **Rogare** | Research and session interface, including model selection during session establishment. |
+| **Pontis** | Client boundary and authority for session lifecycle, selected-model enforcement and request correlation. |
+| **Moderari** | Orchestrates how the selected model is used, including prompts and tool behaviour. |
+| **Praebere** | Discovers providers and models; owns runtime-global model selection, reservation, readiness and Lumen-initiated model residency. |
+| **Vestigare** | Records correlated execution traces, provenance and recording-level model metadata. |
+| **Repetere** | Owns experiments, runs and controlled reproduction in fresh execution sessions. |
+| **Fiducia** | Coordinates scheduled and assurance-related workflows. |
+| **Servire** | Operational authority and control plane for the Lumen service group. |
+| **Nuntius** | Common operational command, status and diagnostic path. |
+| **Aestimare** | Behavioural assessment and evidence synthesis; part of the wider architecture, but outside M0.1. |
 
-Lumen does not make a model inherently more intelligent. It helps the model operate with better continuity, clearer evidence and a more dependable understanding of what has already happened.
-
-Its purpose is not merely to remember more text. Its purpose is to preserve the **meaning, decisions, provenance and state of the work** well enough for that work to continue reliably.
+MongoDB provides persistence for the M0.1 service group. Services run in Docker on a private Lumen network, with Servire providing the supported operational lifecycle.
 
 ---
 
-## Core design principles
+## Lumen Assess
 
-- **Model independent** — Lumen is designed to work with different language models and model providers.
-- **Client independent** — it is not tied to a particular console, IDE, application or agent framework.
-- **Persistent** — continuity can survive beyond the lifetime of a single conversation or model process.
-- **Observable** — important interactions and state transitions should be inspectable.
-- **Auditable** — decisions, reasoning and provenance should be traceable.
-- **Evidence based** — conclusions should be linked to supporting sources wherever practical.
-- **Repeatable** — behaviour and outcomes should be capable of controlled comparison.
-- **Fail-fast** — invalid dependencies and unsafe assumptions should be identified as early as possible.
+Lumen Aestimare is deliberately framed as behavioural assessment rather than an intelligence benchmark:
+
+> Lumen Assess does not attempt to determine how intelligent an AI system is. It characterises how that system behaves under controlled, repeatable conditions so that behaviour can be understood, compared and improved.
+
+The aim is not to reduce a model to one score. Different assessors examine distinct behavioural dimensions, while Aestimare relates their findings to the execution evidence captured elsewhere in Lumen.
+
+In short:
+
+> **Assess measures behaviour, not intelligence.**
+
+---
+
+## What Lumen is—and is not
+
+Lumen is not:
+
+- a language model;
+- a replacement for an AI client or coding agent;
+- a model provider;
+- a conventional chat-history store;
+- a claim that model output is automatically correct.
+
+Lumen does not make a model inherently more intelligent. It provides infrastructure for preserving context, correlating evidence, reproducing behaviour and supporting informed human judgement.
+
+Its purpose is not merely to remember more text. Its purpose is to preserve enough **meaning, state, execution evidence and provenance** for AI-assisted work to remain coherent and defensible.
+
+---
+
+## Design principles
+
+- **Model independent** — models can change without redefining the assurance architecture.
+- **Client independent** — Lumen is not tied to one console, IDE, application or agent framework.
+- **Provider neutral** — provider lifecycle and capability are isolated behind an explicit boundary.
+- **Persistent** — important project, experiment and execution state survives individual sessions.
+- **Observable** — interactions and state transitions can be inspected.
+- **Auditable** — conclusions can be related to their reasoning, configuration and provenance.
+- **Evidence based** — assurance is built from recorded behaviour rather than assertion.
+- **Repeatable** — controlled replay makes behavioural comparison possible.
+- **Fail-fast** — invalid dependencies, model conflicts and unsafe assumptions are rejected early.
+- **Human accountable** — evidence supports human judgement; it does not disguise or remove responsibility.
 - **Practical** — engineering usefulness and operational trust take priority over benchmark theatre.
 
 ---
 
-## The Lumen extension family
+## M0.1 External Research Distribution
 
-Lumen is supported by a family of complementary extensions. Each addresses a distinct aspect of understanding, testing or operating AI-assisted systems.
+M0.1 is the first defined external research distribution of Lumen. It is intended for bounded, independent research rather than general production deployment.
 
-| Engineering name | Product name | Purpose |
-|---|---|---|
-| **Lumen Trace** | **Lumen Vestigare** | Observes and records meaningful interactions so behaviour, decisions and provenance can be examined. |
-| **Lumen Replay** | **Lumen Repetere** | Re-runs recorded interaction plans under controlled conditions and compares live behaviour with the original execution. |
-| **Lumen Assess** | **Lumen Aestimare** | Characterises model behaviour through controlled, repeatable assessment. It measures behaviour, not intelligence. |
-| **Lumen Servire** | **Lumen Servire** | Provides the service-facing capabilities required to use Lumen within practical applications and operating environments. |
+The distribution comprises:
 
-These extensions are complementary but remain independently useful. They may be used with Lumen or, where appropriate, adapted to work directly within an existing local AI stack.
+- Rogare;
+- Pontis;
+- Moderari;
+- Praebere;
+- Vestigare;
+- Repetere;
+- Fiducia;
+- Servire;
+- Nuntius;
+- MongoDB.
 
-### Lumen Assess
+The supported installation is a single-machine Docker deployment on a private Lumen network. Servire is the operational authority; directly starting protected services is not the supported runtime model.
 
-Lumen Assess is deliberately framed as behavioural assessment rather than an intelligence benchmark:
-
-> Lumen Assess does not attempt to determine how intelligent an AI system is. It seeks to characterise how that system behaves under controlled, repeatable conditions, enabling behaviour to be understood, compared, trusted and continuously improved.
-
-This distinction is central to the wider Lumen approach. The goal is not to reduce a model to a single score, but to make its behaviour more observable and defensible.
+M0.1 remains active engineering work. The repository should not be interpreted as a finished, generally available product or as a promise that every documented future capability is already implemented.
 
 ---
 
-## Current development direction
+## Current development
 
-Lumen is an active engineering and research project.
+Current work is concentrated on making the first external research workflow dependable:
 
-Current work is focused on strengthening the continuity engine and the infrastructure around it, including:
+- recording model identity and configuration with execution evidence;
+- persisting experiments and individual runs;
+- creating a fresh Pontis execution session for each replay run;
+- validating and reserving the selected model before execution;
+- correlating replay runs with child traces;
+- supporting multiple active sessions without mixing their evidence;
+- preserving provider-neutral, lazy model readiness;
+- improving failure reporting, operational diagnostics and recovery.
 
-- persistent session and project state;
-- structured checkpoints and context rollover;
-- dependency and provenance validation;
-- clearer model-understanding records;
-- isolation between users and projects;
-- operational observability;
-- repeatable model-behaviour experiments;
-- comparison of answer quality and behaviour under bounded resources.
-
-The repository should presently be regarded as a developing engineering system rather than a finished, generally available product. Architecture, implementation and documentation will continue to evolve together.
+Later work extends these foundations into richer behavioural assessment through Aestimare.
 
 ---
 
 ## Documentation
 
-The repository contains design, architecture, research and engineering documentation for Lumen and its extensions.
+The repository contains the public architecture, research, engineering record and development direction for Lumen.
 
-Key areas include:
+Start with:
 
-- **Vision** — why Lumen exists and the principles behind it;
-- **Architecture** — components, responsibilities and data flow;
-- **Engineering diary** — the chronological development record;
-- **Model behaviour research** — observations, hypotheses and experimental direction;
-- **Extension overviews** — Trace, Replay, Assess and Servire;
-- **Brand guide** — naming and visual identity across the Lumen family.
+- [Documentation index](docs/README.md)
+- [Canonical Lumen architecture](docs/architecture/core/ARCHITECTURE.md)
+- [Current ecosystem architecture](docs/architecture/ecosystem/LUMEN_ECOSYSTEM_CURRENT_ARCHITECTURE.md)
+- [Canonical service matrix](docs/architecture/ecosystem/LUMEN_SERVICE_MATRIX.md)
+- [Engineering Diary](docs/engineering/ENGINEERING_DIARY.md)
 
-See the repository documentation directories and overview files for the current structure.
-
----
-
-## Licensing
-
-No community licence has yet been published.
-
-The project is currently made available to document its architecture, research and development.
-
-An **Illuminates Community License** and an **Illuminates Commercial License** are planned before the first community software release.
+Historical milestone notes, evidence and research documents remain valuable records, but they may describe earlier architecture. Where documents conflict, the canonical architecture and service matrix define the current service boundaries.
 
 ---
 
-## Contributions
+## Licensing and availability
 
-Community interest, discussion and constructive feedback are welcome.
+No general community software licence has yet been published.
 
-Formal code contributions are not currently being accepted while the architecture and implementation continue to evolve. A contribution process will be introduced when the project reaches an appropriate level of maturity.
+This repository makes Lumen's architecture, research and development record available for examination. The M0.1 software distribution is planned as a separately authorised, research-only release with defined usage and redistribution restrictions.
+
+An **Illuminates Community License** and an **Illuminates Commercial License** remain planned for later software availability.
+
+---
+
+## Contributions and feedback
+
+Discussion, research interest and constructive feedback are welcome.
+
+Formal code contributions are not currently being accepted while the architecture and first external research distribution continue to evolve. A contribution process will be introduced when the project reaches an appropriate level of maturity.
 
 ---
 
@@ -176,8 +222,12 @@ Formal code contributions are not currently being accepted while the architectur
 
 Lumen is developed by **Illuminates.One**.
 
-Illuminates.One creates tools that help people discover, preserve and build upon knowledge. Continuity, provenance, understanding and engineering trustworthiness underpin the initiative.
+Illuminates.One creates tools that help people discover, preserve and build upon knowledge. Continuity, provenance, understanding and engineering trustworthiness underpin that work.
 
-Lumen is the first project to embody that philosophy: providing the continuity infrastructure required for AI-assisted engineering and knowledge work to remain coherent, observable and dependable over time.
+Lumen embodies that philosophy by building the evidence and continuity infrastructure required for AI-assisted engineering and knowledge work to remain coherent, observable and dependable over time.
 
 **We illuminate knowledge.**
+
+---
+
+<p align="center"><strong>RERI · AESTIMARE · SERVIRE</strong></p>
