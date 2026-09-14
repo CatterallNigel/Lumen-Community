@@ -23,6 +23,7 @@
 | 2026-09-05 | Nigel Catterall | 2.1 | Clarified Praebere authority for model selection, reservation and residency; retained Pontis authority for session identity/lifecycle; defined available, reserved and locked selection states; and clarified that Pontis `not active` means not active in model execution, not that the session is closed or the model is available. |
 | 2026-09-06 | Nigel Catterall | 2.2 | Defined the M0.1 cached model-discovery and explicit-refresh boundary, including stale-cache visibility and failed-load reservation cancellation. |
 | 2026-09-06 | Nigel Catterall | 2.3 | Reconciled successful Vestigare provenance validation; required authoritative model metadata in `trace_recordings`; defined Repetere/Fiducia exact recorded-model enforcement under the runtime-global M0.1 model boundary; and documented Rogare's manual session-reconnect limitation. |
+| 2026-09-10 | Nigel Catterall | 2.4 | Defined staged Replay Experiments as immutable snapshots of replay-critical source conditions, including the required model; documented the unstage-and-restage workflow and deferred cross-model Experiment support. |
 
 ## 1. Purpose
 
@@ -108,6 +109,18 @@ Where existing evidence permits, the first divergence point should be exposed.
 A failed Replay run must remain preserved as experimental evidence while the staged
 Experiment remains recoverable. Retrying must create a fresh isolated Replay
 session/run and must not overwrite or silently discard the failed-run evidence.
+
+Staging a source Trace must create an Experiment containing a fixed snapshot of the
+replay-critical conditions available at staging time, including the authoritative
+provider and exact required model. Subsequent changes to the source
+`trace_recordings` document must not silently mutate an already staged Experiment.
+Every run of that staged Experiment must continue to use its persisted Experiment
+snapshot so that repeated runs remain reproducible and comparable.
+
+To incorporate corrected or deliberately changed source metadata in M0.1, the
+researcher must unstage the existing Experiment and stage the source Trace again.
+Restaging creates a new Experiment snapshot; it must not rewrite the previous
+Experiment or its preserved run evidence.
 
 Repetere reports divergence but does not assess its significance.
 
@@ -656,6 +669,19 @@ Consequently, an M0.1 Replay may be delayed until sessions reserving a different
 have ended. Running a Replay concurrently on a different, Replay-private model remains
 deferred until Lumen implements general per-session model selection and multi-model
 residency management.
+
+An already staged Experiment also retains the provider/model requirement captured when
+it was staged. Editing the source Trace metadata after staging does not change that
+Experiment, even after a service or stack restart. The researcher must unstage and
+restage the source Trace to incorporate the changed metadata into a new Experiment.
+
+M0.1 does not provide a supported UI or API for changing the required model of an
+existing staged Experiment. Deliberately replaying the same source Trace against
+different models is a valid future research capability, but it requires an explicit
+cross-model Experiment or cloning workflow that preserves the original Experiment,
+the changed model condition, provenance and separate run histories. Direct MongoDB
+editing may demonstrate the underlying concept during development, but it is not a
+supported M0.1 research workflow.
 
 ### 5.14 Single-Machine Deployment
 

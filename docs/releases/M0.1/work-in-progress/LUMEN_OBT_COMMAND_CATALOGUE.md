@@ -1,300 +1,181 @@
-# Lumen `/obt` Command Catalogue
+# Lumen `\obt` User Command Catalogue
 
-**Status:** Living canonical register  
+**Status:** Living canonical user-command register  
 **Initial catalogue date:** 2026-08-27  
-**Scope:** User-facing and internal Lumen control-plane commands
+**Last reconciled:** 2026-09-06  
+**Scope:** Commands that a researcher or authorised operator may enter through a
+Lumen client such as Pi or Rogare
 
 ## Document Revision History
 
 | Date | By | Version | Description |
 | --- | --- | --- | --- |
-| 2026-08-27 | Nigel Catterall / OpenAI | 0.1 | Initial catalogue assembled from the Nuntius architecture, M0.1 roadmap, and recorded Repetere command decisions |
+| 2026-08-27 | Nigel Catterall / OpenAI | 0.1 | Initial mixed user/internal catalogue |
+| 2026-09-06 | Nigel Catterall / OpenAI | 0.2 | Corrected the prefix and service-qualified syntax; retained only user-entered commands |
 
-## 1. Purpose
+## 1. Purpose and Boundary
 
-This document is the canonical dictionary of Lumen `/obt` commands.
+This document records the Lumen control commands that a researcher or authorised
+operator may type into a connected client.
 
-It records:
-
-- the exact command syntax;
-- the service that owns and executes the command;
-- whether the command is user-facing or internal;
-- its arguments and response;
-- its implementation state;
-- unresolved syntax or behaviour that must be confirmed from code.
-
-Every new `/obt` command must be added here when it is designed, not after it is implemented.
-
-## 2. Prefix Reconciliation Required
-
-The current architectural documents render the prefix as `\obt`, while the current catalogue request calls it `/obt`.
-
-This catalogue uses `/obt` as its display form, but the accepted wire syntax must be verified against the current Pontis, Repetere, and Moderari implementations before Version 1.0. Until then, `\obt` must be treated as a possible legacy or actual wire prefix rather than silently discarded.
-
-## 3. Status Definitions
-
-| Status | Meaning |
-| --- | --- |
-| Implemented | Previously recorded as supported by the existing service |
-| Proposed | Required or described by an approved architecture/roadmap but not confirmed in code |
-| Internal | Intended for service-to-service control-plane use rather than normal user entry |
-| Needs code verification | Existing behaviour or precise syntax must be established by inspecting the current repositories |
-| Reserved | Name is retained, but no executable contract has yet been defined |
-
-## 4. Command Grammar
+The canonical prefix is `\obt`, not `/obt`. Commands are service-qualified:
 
 ```text
-/obt <domain> [action] [arguments...]
+\obt <service> <operation> [arguments...]
 ```
 
-Known shorter query forms also exist:
+These commands are intercepted by Lumen and must not be sent to the model or added
+to model context or Vestigare conversational Trace evidence.
+
+This catalogue deliberately excludes:
+
+- all service-to-service bootstrap, lifecycle, routing, notification, execution,
+  recording-control and provenance commands;
+- proposed or reserved commands that do not have a current user contract; and
+- service lifecycle actions performed through the Servire UI.
+
+## 2. Command Index
+
+| Command | Owner | Audience | Purpose |
+| --- | --- | --- | --- |
+| `\obt pontis session status` | Pontis | Researcher | Show the current client's authoritative session state |
+| `\obt pontis session tools status` | Pontis | Researcher | Show whether provider-tool injection is enabled |
+| `\obt pontis session tools on` | Pontis | Researcher | Enable provider-tool injection for the current session |
+| `\obt pontis session tools off` | Pontis | Researcher | Disable provider-tool injection for the current session |
+| `\obt pontis session end` | Pontis | Researcher | End the current session gracefully |
+| `\obt pontis session new` | Pontis | Researcher | End the current session and create a replacement |
+| `\obt pontis sessions` | Pontis | Authorised operator | List authoritative sessions |
+| `\obt pontis session end <session_id>` | Pontis | Authorised operator | Gracefully end a named session |
+| `\obt pontis session force-close <session_id>` | Pontis | Authorised operator | Force-close an orphaned or unrecoverable session |
+| `\obt praebere help` | Praebere | Researcher | List Praebere commands |
+| `\obt praebere providers` | Praebere | Researcher | Show authoritative provider state |
+| `\obt praebere models` | Praebere | Researcher | Show the discovered model catalogue and selection state |
+| `\obt praebere model select <model_name>` | Praebere | Researcher | Reserve the selected runtime-global model for the current session |
+| `\obt praebere reconcile` | Praebere | Authorised operator | Retry reconciliation of persisted runtime state with Pontis |
+| `\obt moderari help` | Moderari | Researcher | List Moderari commands |
+| `\obt moderari status` | Moderari | Researcher | Show current Moderari session/model/profile status |
+| `\obt moderari context` | Moderari | Researcher | Show estimated context usage |
+| `\obt moderari prompt status` | Moderari | Researcher | Show the current session's system-prompt policy |
+| `\obt moderari prompt default` | Moderari | Researcher | Apply the default system-prompt policy to the current session |
+| `\obt moderari prompt pass-through` | Moderari | Researcher | Apply Pass-through to the current session |
+| `\obt moderari session info` | Moderari | Researcher | Show the current Moderari session identity and state |
+| `\obt moderari session list` | Moderari | Researcher | List saved Moderari sessions |
+| `\obt moderari session resume <number_or_session_id>` | Moderari | Researcher | Stage a saved Moderari session for restoration |
+| `\obt moderari session continuation` | Moderari | Researcher | Show continuation state for the current session |
+| `\obt repetere help` | Repetere | Researcher | Show Repetere command help |
+| `\obt repetere list` | Repetere | Researcher | List prepared Replay sessions |
+| `\obt repetere start <replay_id>` | Repetere | Researcher | Start the identified prepared Replay |
+| `\obt repetere status` | Repetere | Researcher | Show the applicable Replay status |
+| `\obt repetere stop` | Repetere | Researcher | Stop the applicable active Replay |
+
+## 3. Pontis Session Commands
+
+### Client-scoped commands
+
+The following commands apply only to the session from which they are sent:
 
 ```text
-/obt services
-/obt providers
-/obt models
+\obt pontis session status
+\obt pontis session tools status
+\obt pontis session tools on
+\obt pontis session tools off
+\obt pontis session end
+\obt pontis session new
 ```
 
-The external command must not expose the owning service's endpoint. Pontis recognises the command, Nuntius routes it using Servire's authoritative catalogue, and the domain service executes it.
+`session tools on` and `session tools off` change provider-tool injection without
+changing the model reserved for the session. `session end` is idempotent.
+`session new` ends the current session before returning a replacement session
+identity.
 
-## 5. Command Index
-
-| Command | Owner | Audience | Type | Status |
-| --- | --- | --- | --- | --- |
-| `/obt services` | Servire | Nuntius / operator | Query | Proposed; existing form needs verification |
-| `/obt service available ...` | Servire → Nuntius | Internal | Topology notification | Proposed, Internal |
-| `/obt service unavailable ...` | Servire → Nuntius | Internal | Topology notification | Proposed, Internal |
-| `/obt providers` | Praebere | Client / Rogare | Query | Proposed |
-| `/obt models` | Praebere | Client / Rogare | Query | Proposed |
-| `/obt model select <model>` | Praebere | Client / Rogare | State change | Proposed |
-| `/obt replay` | Repetere | Client / Rogare | Help | Implemented; needs code verification |
-| `/obt replay help` | Repetere | Client / Rogare | Help | Implemented; needs code verification |
-| `/obt replay list` | Repetere | Client / Rogare | Query | Implemented; needs code verification |
-| `/obt replay start <replay-id>` | Repetere | Client / Rogare | State change | Implemented; needs code verification |
-| `/obt replay status` | Repetere | Client / Rogare | Query | Implemented; needs code verification |
-| `/obt replay stop` | Repetere | Client / Rogare | State change | Implemented; needs code verification |
-| `/obt replay unstage <name-or-id>` | Repetere | Client / Rogare | State change | Reserved; exact syntax unresolved |
-| `/obt replay delete <name-or-id>` | Repetere | Client / Rogare | State change | Reserved; exact syntax unresolved |
-| Moderari session Pass-through command | Moderari | Repetere | State change | Proposed, Internal; syntax unresolved |
-
-## 6. Servire Commands
-
-### 6.1 `/obt services`
-
-| Field | Definition |
-| --- | --- |
-| Owner | Servire |
-| Purpose | Returns the authoritative active Lumen control-plane catalogue |
-| Primary caller | Nuntius during bootstrap or catalogue rebuild |
-| Expected success | `200 OK` with catalogue body; an empty catalogue is valid and healthy |
-| Failure significance | Nuntius cannot establish authoritative routing during bootstrap |
-| Status | Proposed extension; inspect current implementation |
-
-The response must contain enough information to determine:
-
-- configured and running services;
-- service endpoints;
-- whether `obt_enabled` is true;
-- command ownership;
-- successful response targets.
-
-### 6.2 `/obt service available ...`
-
-Internal runtime notification that a service has become available. The payload must contain enough information for Nuntius to add or update its routes. Exact syntax and payload schema remain unresolved.
-
-### 6.3 `/obt service unavailable ...`
-
-Internal runtime notification that a service is no longer available. The payload must identify the service and allow Nuntius to remove its active command routes. Exact syntax and payload schema remain unresolved.
-
-## 7. Praebere Commands
-
-### 7.1 `/obt providers`
-
-| Field | Definition |
-| --- | --- |
-| Owner | Praebere |
-| Purpose | Returns available model providers |
-| Expected success | `200 OK` with authoritative provider list |
-| Expected response targets | Originator and Rogare where configured by Servire |
-| Status | Proposed for M0.1 |
-
-### 7.2 `/obt models`
-
-| Field | Definition |
-| --- | --- |
-| Owner | Praebere |
-| Purpose | Returns available models for the applicable provider context |
-| Expected success | `200 OK` with authoritative model list |
-| Expected response targets | Originator and Rogare where configured by Servire |
-| Status | Proposed for M0.1 |
-
-Open question: determine whether provider is implicit in shared state or becomes an explicit command argument.
-
-### 7.3 `/obt model select <model>`
-
-| Field | Definition |
-| --- | --- |
-| Owner | Praebere |
-| Purpose | Selects the model used for subsequent execution |
-| Argument | `<model>` — exact provider-qualified identifier format unresolved |
-| Expected success | `200 OK` with no body |
-| Evidence requirement | Subsequent Trace evidence must record the actual selected provider/model execution state |
-| Status | Proposed for M0.1 |
-
-The architecture's configuration example uses the internal key `model_select`. That key must not be mistaken for the public command syntax.
-
-## 8. Repetere Commands
-
-### 8.1 `/obt replay`
-
-Bare replay command. Previously defined to behave as help rather than start a replay.
-
-### 8.2 `/obt replay help`
-
-Returns Replay command help and supported syntax.
-
-### 8.3 `/obt replay list`
-
-Returns prepared Replay sessions in the `ready` state.
-
-Expected success: `200 OK` with an authoritative list body.
-
-### 8.4 `/obt replay start <replay-id>`
-
-Starts the identified prepared replay.
-
-Known constraints:
-
-- an unnamed session cannot be prepared;
-- duplicate prepared-session names are not permitted;
-- M0.1 requires each Replay execution to receive a new isolated Replay session;
-- Replay must not inherit context or temporary state from a preceding run.
-
-### 8.5 `/obt replay status`
-
-Returns the status of the current or applicable replay. The exact response schema and whether an optional replay identifier is supported require code verification.
-
-### 8.6 `/obt replay stop`
-
-Stops the active replay. The exact scope when several sessions exist requires code verification.
-
-### 8.7 Reserved Repetere lifecycle commands
-
-Earlier design decisions require operations to unstage and delete prepared sessions, but their implemented syntax has not been established.
-
-Reserved candidate forms:
+### Restricted operator commands
 
 ```text
-/obt replay unstage <name-or-id>
-/obt replay delete <name-or-id>
+\obt pontis sessions
+\obt pontis session end <session_id>
+\obt pontis session force-close <session_id>
 ```
 
-These are not to be treated as implemented until verified.
+These commands can name another session and therefore require the authorised
+operator path. Normal end is preferred. Force-close is a conspicuous recovery action
+for an orphaned session or failed graceful closure.
 
-## 9. Moderari Commands
-
-### 9.1 Session-scoped Pass-through override
-
-Before replay begins, Repetere must instruct Moderari through Nuntius to apply Pass-through to the newly created Replay session.
-
-Required semantics:
-
-- session-scoped, never global;
-- applies before any Replay model interaction;
-- requires authoritative `200 OK` acknowledgement;
-- `204`, `4xx`, `5xx`, or timeout aborts the run as `FAILED / INCOMPLETE`;
-- the effective system prompt from the source Trace is then replayed exactly once.
-
-The architecture illustrates this semantically as `Moderari: Pass-through`, but no final public or wire syntax is defined. A candidate command must not be invented here. The current Moderari injection path must be inspected first.
-
-## 10. Common Response Contract
-
-| Response | Meaning |
-| --- | --- |
-| `200 OK`, no body | Command executed successfully |
-| `200 OK` with body | Query completed; body is the authoritative result |
-| `204 No Content` | Target service did not handle the command |
-| `4xx` / `5xx` | Owning service recognised the command but failed to execute it |
-| `504 Gateway Timeout` | Outcome could not be confirmed before timeout |
-
-Every solicited command must produce one terminal response to its originator. Silence is never success.
-
-A late owner response after `504` is diagnostic evidence only. It must not replace the terminal timeout already returned to the originator.
-
-## 11. Routing and Trace Rules
-
-- Servire is authoritative for active command ownership and response consumers.
-- Pontis recognises external `/obt` traffic and forwards it to Nuntius.
-- Nuntius routes to the configured owner and correlates the result.
-- Nuntius does not interpret command-domain data.
-- A service with `obt_enabled = false` returns `204` immediately.
-- Unknown or irrelevant commands return `204`; recognised failures return an error.
-- Control commands do not become user, assistant, system, or tool turns in Vestigare Trace.
-- The execution conditions produced by commands remain observable in Trace where required for reproduction.
-- Nuntius diagnostics remain separate from both the Servire Operations Log and Vestigare conversational Trace.
-
-## 12. Commands Not Yet Catalogued
-
-No executable `/obt` contract has yet been established here for:
-
-- Fiducia schedules and repeated Experiment runs;
-- Vestigare trace control;
-- Rogare UI control;
-- Aestimare or Periti assessment operations;
-- provider selection distinct from model selection;
-- inference configuration;
-- saved Moderari prompt CRUD;
-- service lifecycle start, stop, or restart through Servire.
-
-These are gaps to investigate, not implicit commands.
-
-## 13. Required Code-Audit Checklist
-
-Before promoting this catalogue to Version 1.0, search every active Lumen repository for:
+## 4. Praebere Model Commands
 
 ```text
-/obt
-\obt
-obt_
-"obt"
-replay help
-replay list
-model select
-pass-through
+\obt praebere help
+\obt praebere providers
+\obt praebere models
+\obt praebere model select <model_name>
+\obt praebere reconcile
 ```
 
-For every match:
+`providers` and `models` report Praebere's authoritative cached state. Ordinary
+queries do not refresh Ollama discovery; discovery occurs at Praebere startup and
+through the Praebere UI's **Refresh Models** action.
 
-1. identify the accepting endpoint or parser;
-2. record the exact wire syntax and aliases;
-3. record arguments, defaults, validation, and response schema;
-4. record the executing service and downstream side effects;
-5. add tests that prove the catalogue entry;
-6. remove or explicitly deprecate conflicting syntax;
-7. update this document in the same change.
+`model select` attaches the current session to the named runtime-global model. The
+model must already be in Praebere's discovered catalogue. Selection is idempotent for
+the same session and model. A conflicting selection is rejected while another open
+session reserves the current model or while model execution is active.
 
-## 14. Command Registration Template
+`reconcile` is an operator recovery command. It retries reconciliation of the
+persisted `praebere_runtime_state` with Pontis and returns the authoritative outcome.
 
-Copy this block when adding a command:
+## 5. Moderari Session and Prompt Commands
 
-```markdown
-### `/obt <domain> <action> [arguments]`
+```text
+\obt moderari help
+\obt moderari status
+\obt moderari context
+\obt moderari prompt status
+\obt moderari prompt default
+\obt moderari prompt pass-through
+\obt moderari session info
+\obt moderari session list
+\obt moderari session resume <number_or_session_id>
+\obt moderari session continuation
+```
 
-| Field | Definition |
+Prompt-policy changes are session-scoped. `prompt status` reports only the active
+mode. Custom prompt content is applied through the Moderari UI in M0.1.
+
+`session resume` stages the chosen saved session. Its saved context is restored on
+the next ordinary, non-command message; the command itself does not invoke the model.
+
+## 6. Repetere Replay Commands
+
+```text
+\obt repetere help
+\obt repetere list
+\obt repetere start <replay_id>
+\obt repetere status
+\obt repetere stop
+```
+
+`list` returns prepared Replay sessions. `start` starts the identified prepared
+Replay in a fresh isolated Replay session. `status` and `stop` apply to the current
+Replay context.
+
+Unstage and delete operations are not included because no current user `\obt`
+contract has been established for them.
+
+## 7. Common Outcomes
+
+| Outcome | Meaning |
 | --- | --- |
-| Owner | `<service>` |
-| Audience | `External / Rogare / Internal service` |
-| Purpose | `<single responsibility>` |
-| Arguments | `<names, types, valid values, defaults>` |
-| Expected success | `<status and response schema>` |
-| Errors | `<status, conditions, retry semantics>` |
-| Response targets | `<originator and configured consumers>` |
-| Trace effect | `<none, or resulting execution evidence>` |
-| Status | `<Implemented / Proposed / Internal / Reserved>` |
-| Tests | `<repository and test identifiers>` |
-```
+| `200 OK` | The owner completed the command; the body contains the authoritative result where applicable |
+| `204 No Content` | The addressed service did not handle the command |
+| `4xx` | The command was invalid, unauthorised or could not be applied to the current state |
+| `5xx` | The owning service or a required dependency failed while executing the command |
+| `504 Gateway Timeout` | Lumen could not confirm the authoritative outcome before the configured timeout |
 
-## 15. Canonical Maintenance Rule
+Every solicited user command must receive one terminal response. Silence is not
+success. A late owner response after a `504` remains diagnostic evidence and does not
+replace the terminal response already returned to the client.
 
-> A `/obt` command is not complete until its syntax, owner, arguments, response contract, trace effect, implementation status, and tests are recorded in this catalogue.
+## 8. Maintenance Rule
 
+Add a command to this catalogue only when it is deliberately available for direct
+researcher or authorised-operator entry. Internal commands belong in service
+contracts and implementation documentation, not in this user catalogue.

@@ -1,7 +1,7 @@
 # Lumen External Research Distribution M0.1 --- Development Roadmap
 
 **Date:** 2026-08-22\
-**Status:** Active M0.1 roadmap — N1–N9 and N10 live validation closed; remaining release work retained below
+**Status:** Reconciled 2026-09-14 — core N1–N10 development substantially complete; remaining release/security acceptance work retained below
 
 > **"Plans are worthless, but planning is everything."**\
 > --- Dwight D. Eisenhower
@@ -22,6 +22,7 @@
 | 2026-08-30 | Nigel Catterall | 1.9     | Refined N9 model lifecycle: Praebere startup discovery, preferred-versus-selected model, established versus active-execution sessions and runtime-global model locking while execution sessions exist.                    |
 | 2026-09-01 | Nigel Catterall | 2.0     | Added N9.5 Pontis-owned session management, Rogare/external-client explicit closure, authorised orphan cleanup, Praebere lock release and restart reconciliation requirements.                                            |
 | 2026-09-06 | Nigel Catterall | 2.1     | Reconciled the reviewed N6–N10/Praebere document chain; closed N8 diagnostics, N9 and N10 live compatibility validation; replaced the stale Phase 6 checklist with the implemented runtime-global lifecycle; and added M0.1 trace-model recording and replay-start model enforcement. |
+| 2026-09-14 | Nigel Catterall / review | 2.2 | Reconciled N1–N10 and signed off completed Replay/Experiment work; retained Phase 11 security and Phase 12 formal acceptance as release gates. |
 
 ## Purpose
 
@@ -223,14 +224,14 @@ system-context replay.
     system prompt was retained as superseded provenance and exactly one Lumen-generated
     effective system prompt was marked as replay input.**
 
--   [ ] Add authoritative provider and exact model identity to each Vestigare
+-   [x] Add authoritative provider and exact model identity to each Vestigare
     `trace_recordings` document.
--   [ ] At actual replay start, require Repetere to read the recorded model, verify it
+-   [x] At actual replay start, require Repetere to read the recorded model, verify it
     against Praebere's cached catalogue, and select/reserve it through the normal
     Pontis/Praebere lifecycle when no global model is selected.
--   [ ] Allow Repetere to proceed when the active global model exactly matches the
+-   [x] Allow Repetere to proceed when the active global model exactly matches the
     recorded model; reject and visibly log a controlled conflict when it differs.
--   [ ] Have Fiducia apply the same model check at scheduled execution time and record
+-   [x] Have Fiducia apply the same model check at scheduled execution time and record
     a failed run, without changing global model state, when the models differ or the
     recorded model is unavailable/missing.
 
@@ -400,42 +401,49 @@ independent.
 Implement the Experiment relationship required for controlled repeated
 execution.
 
--   [ ] Introduce Experiment as an explicit concept.
--   [ ] Associate an Experiment with its source Trace.
--   [ ] Associate replay-created Traces with Experiment runs.
--   [ ] Have Fiducia coordinate repeated runs against an Experiment.
--   [ ] Harden Fiducia startup against stale PID files: if the PID file
+-   [x] Introduce Experiment as an explicit concept.
+-   [x] Associate an Experiment with its source Trace.
+-   [x] Associate replay-created Traces with Experiment runs.
+-   [x] Have Fiducia coordinate repeated runs against an Experiment.
+-   [x] Harden Fiducia startup against stale PID files: if the PID file
     exists, verify that the recorded PID belongs to a live Fiducia
     process; if not, treat the file as stale, remove/replace it, log the
     recovery, and continue startup. A genuinely running Fiducia instance
     must still prevent duplicate startup. **Current live behaviour: stale PID
     recovery is now failing on every managed start; likely lifecycle/shutdown-order
     race and must be investigated in the next Fiducia/Servire pass.**
--   [ ] Correct Fiducia managed log cleanup. Servire currently invokes
+-   [x] Correct Fiducia managed log cleanup. Servire currently invokes
     `clear-logs`, but Fiducia's CLI rejects that argument and exits with code 2.
     Investigate this alongside the PID/lifecycle boundary rather than as an
     unrelated feature.
--   [ ] Ensure Fiducia PID/runtime files are container-runtime state and are
+-   [x] Ensure Fiducia PID/runtime files are container-runtime state and are
     not persisted as durable application data in the Docker distribution.
--   [ ] Ensure every Experiment run receives its own Replay session rather
+-   [x] Ensure every Experiment run receives its own Replay session rather
     than reusing the session of another run.
--   [ ] Surface run state as `MATCHED`, `DIVERGED`, or
+-   [x] Surface run state as `MATCHED`, `DIVERGED`, or
     `FAILED / INCOMPLETE`.
--   [ ] Define an explicit recovery lifecycle for a failed staged Replay. A failed
+-   [x] Define an explicit recovery lifecycle for a failed staged Replay. A failed
     run must remain preserved as evidence while the staged experiment can be
     retried, reset/recovered, or unstaged without becoming indefinitely stuck in
     an ambiguous `FAILED - COMPLETED` state.
--   [ ] Ensure retrying a failed staged Replay creates a fresh isolated Replay
+-   [x] Ensure retrying a failed staged Replay creates a fresh isolated Replay
     session/run and does not overwrite, discard, or silently mutate the preserved
     failed-run evidence.
--   [ ] Make the Repetere UI distinguish clearly between the terminal state of an
+-   [x] Make the Repetere UI distinguish clearly between the terminal state of an
     individual failed run and the current actionable state of its staged Experiment.
--   [ ] Surface first divergence point where available.
--   [ ] Present Experiment/run relationships clearly in the UI.
--   [ ] Preserve the distinction between Repetere divergence detection and
+-   [x] Surface first divergence point where available.
+-   [x] Present Experiment/run relationships clearly in the UI.
+-   [x] Preserve the distinction between Repetere divergence detection and
     future Aestimare assessment.
 
-**Exit condition:** a researcher can create repeated controlled
+**Status 2026-09-14:** **COMPLETE / SIGNED OFF.** Experiment, Run and replay-child
+Trace relationships, fresh per-Run sessions, result/divergence presentation,
+failed-run recovery, retry preservation, and deletion/retention semantics are
+implemented. Unstage deletes an Experiment when `run_ids` is empty; otherwise
+historical Experiment/Run evidence is retained. Fiducia consumes the current
+Repetere Experiment/Run contract.
+
+**Exit condition:** **MET.** A researcher can create repeated controlled
 executions and see the resulting evidence as one coherent Experiment.
 
 ## Phase 10 --- Multi-Session Isolation Validation
@@ -457,27 +465,25 @@ execution-condition model.
     provider and selected-model state are runtime-global. Per-session provider/model
     isolation is not an M0.1 requirement and must not be inferred from Moderari's
     session-scoped policy behaviour.
--   [ ] Make Pontis `session_id` the authoritative Vestigare Trace-binding identity.
--   [ ] Have Vestigare obtain and display eligible active Pontis sessions for Trace Start.
--   [ ] Disable/reject Trace Start when there are no eligible active sessions.
--   [ ] When exactly one eligible session exists, bind/display that session explicitly.
--   [ ] When multiple eligible sessions exist, require the researcher to select the
+-   [x] Make Pontis `session_id` the authoritative Vestigare Trace-binding identity.
+-   [x] Have Vestigare obtain and display eligible active Pontis sessions for Trace Start.
+-   [x] Disable/reject Trace Start when there are no eligible active sessions.
+-   [x] When exactly one eligible session exists, bind/display that session explicitly.
+-   [x] When multiple eligible sessions exist, require the researcher to select the
     session to record; never infer selection from recency, creation order or activity.
--   [ ] Persist the selected Pontis `session_id` as the Trace session binding.
--   [ ] Define eligibility for a complete-session Trace as an established session that
+-   [x] Persist the selected Pontis `session_id` as the Trace session binding.
+-   [x] Define eligibility for a complete-session Trace as an established session that
     has not yet performed its first model interaction.
--   [ ] Reject complete-session Trace Start after the selected session has already
+-   [x] Reject complete-session Trace Start after the selected session has already
     performed model interaction rather than silently creating an incomplete Trace.
--   [ ] Validate the normal sequence: client connects → Pontis assigns `session_id` →
+-   [x] Validate the normal sequence: client connects → Pontis assigns `session_id` →
     researcher starts Trace → Vestigare binds Trace → first model interaction.
--   [ ] With multiple sessions active, verify only traffic matching the selected
+-   [x] With multiple sessions active, verify only traffic matching the selected
     `session_id` enters the active Trace.
 
 **M0.1 Trace limitation:** Vestigare supports one active Trace recording at a
-time. Session filtering/ownership is implemented, but the complete M0.1 recording
-lifecycle is not yet complete: Trace Start must be driven by explicit eligible
-Pontis-session selection and must occur before the selected session's first model
-interaction. Other sessions continue normally but are not recorded. Concurrent
+time. Session filtering/ownership and explicit eligible Pontis-session Trace Start
+binding are implemented. Other sessions continue normally but are not recorded. Concurrent
 independent Trace recordings remain future development.
 
 Any demonstrated session leakage is an M0.1 blocker.
@@ -487,6 +493,18 @@ isolation have live evidence; Vestigare Trace Start is explicitly bound to an el
 Pontis session before its first model interaction; zero-, one- and multi-session start
 behaviour is validated; and Praebere provider/model state remains explicitly runtime-global for M0.1,
 with model selection locked while any active execution session exists.
+
+## Core N1–N10 Development Sign-Off --- 2026-09-14
+
+The N1–N10 development chain is signed off for the M0.1 development boundary,
+including the consolidated Replay/Experiment work through **Repetere 0.20.18**
+and current Fiducia interoperability through **Fiducia 0.7.3**.
+
+This is a development sign-off, not a declaration that the external distribution
+is released. **Phase 11 Runtime Authorization and Distribution Security remains
+outstanding**, and **Phase 12 formal release-candidate acceptance remains the final
+acceptance gate**. Development validations already obtained may be repeated there
+as formal acceptance evidence.
 
 ## Phase 11 --- Runtime Authorization and Distribution Security
 
@@ -655,13 +673,9 @@ requests.
 - **Resolved during N8/N9:** Pontis session termination/Praebere release,
   Vestigare session-bound Trace start, Nuntius Trace-status routing, Fiducia stale
   PID recovery and Fiducia `clear-logs` compatibility are closed.
-- **Vestigare/Repetere/Fiducia model fidelity:** add authoritative model metadata to
-  `trace_recordings` and enforce exact recorded/global model compatibility at actual
-  replay start, as specified in Phase 5.
-- **Repetere failed staged-Replay lifecycle:** a failed run can remain presented as
-  `FAILED - COMPLETED`. Preserve the failed run as evidence, but provide an explicit
-  staged-Experiment recovery lifecycle for retry/reset/unstage. Any retry must create
-  a fresh isolated Replay session/run and must not overwrite the failed-run evidence.
+- **Resolved:** Vestigare/Repetere model fidelity and exact-model Replay binding are implemented.
+- **Resolved:** Repetere failed staged-Replay recovery, fresh retry runs, evidence preservation,
+  cleanup convergence, child hierarchy, and Experiment/Run deletion-retention semantics are implemented.
 
 ### If time --- polish, not release blockers
 

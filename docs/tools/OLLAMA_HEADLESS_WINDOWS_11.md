@@ -22,7 +22,7 @@ curl.exe http://127.0.0.1:11434/api/tags
 ## Start with Logs and PID Tracking
 
 ```cmd
-powershell -NoProfile -Command "$p = Start-Process -FilePath 'ollama.exe' -ArgumentList 'serve' -WindowStyle Hidden -RedirectStandardOutput \"$env:LOCALAPPDATA\Ollama\headless-out.log\" -RedirectStandardError \"$env:LOCALAPPDATA\Ollama\headless-error.log\" -PassThru; $p.Id | Set-Content \"$env:LOCALAPPDATA\Ollama\headless.pid\""
+powershell -NoProfile -Command "$p = Start-Process -FilePath 'ollama.exe' -ArgumentList 'serve' -WindowStyle Hidden -RedirectStandardOutput \"$env:LOCALAPPDATA\Ollama\headless-out.log\" -RedirectStandardError \"$env:LOCALAPPDATA\Ollama\headless-error.log\" -PassThru; $p.Id | Set-Content \"$env:LOCALAPPDATA\Ollama\ollama.pid\""
 ```
 
 This records separate output and error logs and saves the server process ID.

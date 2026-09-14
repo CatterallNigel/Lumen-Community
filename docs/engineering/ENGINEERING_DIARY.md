@@ -4,6 +4,7 @@
 
 | Version | Date | Change |
 |---|---|---|
+| 1.3 | 2026-09-11 | Added 7–11 September Repetere Phase 9 progress: Experiment/Run/child-Trace model, Replay session isolation, model enforcement, matched/divergent lifecycle, forced-divergence recording-boundary investigation, consolidated UI requirements and revised M0.1 release position. |
 | 1.2 | 2026-09-06 | Added the 4–6 September N9.6.3 completion, authoritative reservation lifecycle, Nuntius timeout correction, Praebere UI, cached discovery policy, Trace routing findings, Replay model requirements and N9 closeout. |
 | 1.1 | 2026-09-03 | Added N9.3–N9.5 completion, Pontis/Rogare session and tool-policy work, and N9.6.1–N9.6.2 runtime-state reconciliation evidence. |
 | 1.0 | 2026-08-30 | Consolidated Engineering Diary through N9.2. |
@@ -13654,5 +13655,305 @@ particularly Vestigare recording-level model metadata and Repetere enforcement o
 recorded model at Replay start. The core Pi/Rogare selection, reservation, lazy-load,
 execution, release and shutdown lifecycle has been demonstrated end to end without
 the earlier 5xx activation failures.
+
+---
+
+---
+# 2026-09-07 to 2026-09-11
+
+## Replay Phase — Experiment/Run Persistence, Model Enforcement and Child-Trace Correlation
+
+### Observation
+
+With the N9 runtime/model lifecycle stabilised, the M0.1 critical path moved into Repetere and Vestigare. Replay could no longer be treated as a single mutable action against a staged Trace. Repeated execution requires a durable Experiment definition, independent Run evidence and a new child Trace for each execution that actually reaches recording.
+
+### Implementation and Validation
+
+The Replay work was decomposed into a staged sequence and the first six milestones were completed:
+
+1. Vestigare recording-level model metadata.
+2. Experiment and Run persistence schema.
+3. Repetere Run creation and fresh Pontis session lifecycle.
+4. Repetere model validation/reservation and fail-fast behaviour.
+5. Child Trace creation and correlation.
+6. Terminal results, cleanup and recovery foundations.
+
+Vestigare now records the model provenance required for Replay. Repetere uses that provenance as the required execution condition rather than inferring the model from message content or inheriting whichever model happens to be active.
+
+The Experiment/Run schema separates reusable experimental intent from individual execution evidence. Every execution attempt receives its own Run identity and preserves its own result. A Run that reaches recording receives a child Trace correlated to the Experiment, Run and Replay session.
+
+### Architectural Conclusion
+
+Replay is now modelled as:
+
+```text
+Source Trace
+    ↓
+Experiment
+    ↓
+Run
+    ↓
+Replay-created child Trace
+```
+
+The Experiment is reusable. `MATCHED`, `DIVERGED` and `FAILED / INCOMPLETE` are Run results, not Experiment identities. A retry creates new evidence rather than rewriting an earlier outcome.
+
+---
+
+## Repetere Control Path and Fresh Session Isolation
+
+### Observation
+
+Early live testing showed that routing Replay creation through a normal Pontis conversational session produced incorrect reuse behaviour: the first Run completed correctly, while a subsequent Run could complete immediately without establishing genuinely fresh execution state.
+
+### Correction
+
+Repetere was changed to use the Nuntius control path for Replay lifecycle coordination rather than creating Replay through a normal Pontis conversational ask.
+
+Each Run now establishes fresh session-scoped execution state and must not inherit:
+
+- a previous Replay Run's model context;
+- a console session's conversational state;
+- previous Moderari state;
+- previous tool state.
+
+### Conclusion
+
+Replay lifecycle control and Replay conversational traffic are distinct concerns. A control operation should establish the execution boundary without contaminating the interaction that is being reproduced.
+
+---
+
+## Replay Model Validation and Lazy Activation
+
+### Observation
+
+The source Trace's recorded model is part of the experiment condition. A Replay performed with a different model is not the same experiment.
+
+### Implemented Behaviour
+
+At Run start Repetere validates the recorded model against Praebere's authoritative state.
+
+The M0.1 rule remains fail-fast:
+
+- if no model is selected, the recorded model may be selected/reserved;
+- if the selected model matches, the Replay may reserve and continue;
+- if a different model is selected, reserved or locked, the Run fails before execution;
+- no model substitution is permitted;
+- lazy activation remains Praebere's responsibility;
+- failed activation must not leave a stale Replay reservation.
+
+Live testing confirmed the expected lifecycle: the required model was selected, loaded for Replay execution, the Replay session closed on completion, and Praebere unloaded the model when the final applicable ownership condition ended.
+
+### Conclusion
+
+Model provenance has moved from descriptive Trace metadata to an enforceable Replay prerequisite.
+
+---
+
+## Replay Child Trace and Terminal Cleanup
+
+### Observation
+
+A Replay must produce evidence that is independently inspectable without altering its source recording.
+
+### Validation
+
+Child Trace creation and correlation were successfully demonstrated. Subsequent database inspection confirmed that the Replay-created Trace contained the expected recorded interaction.
+
+Terminal cleanup was also exercised after migration/schema cleanup. Repetere now preserves terminal Run evidence while releasing the execution resources associated with that Run.
+
+The desired invariant is:
+
+```text
+source Trace remains immutable
+        ↓
+each Run creates independent evidence
+        ↓
+terminal result persists
+        ↓
+child recording/session/model resources close cleanly
+```
+
+A failed prerequisite may legitimately produce a Run with no child Trace because execution and recording never began.
+
+---
+
+## Tool Exposure Inconsistency During Replay
+
+### Observation
+
+During Replay testing, Rogare showed Tools Off while the first Replay asks still exposed tools to Pi/model execution. A later ask did not expose them.
+
+This demonstrated that the visible Rogare tool setting and the effective Replay tool path were not consistently aligned.
+
+### Assessment
+
+The issue is retained as a Replay acceptance concern rather than being hidden by successful happy-path testing. Deterministic matching requires recorded tool results to be injected privately while the Replay remains matched; real tool execution becomes appropriate only after behavioural divergence transitions the Run to live continuation.
+
+---
+
+## Definitive Matched and Divergent Replay Behaviour
+
+### Architectural Decision
+
+The Replay lifecycle was clarified into two fundamentally different execution modes.
+
+### Matched Replay
+
+While live behaviour continues to match the source Trace:
+
+- Repetere sends the reconstructed request directly to Moderari;
+- the live response is compared with the recorded response;
+- matching evidence is recorded privately through Vestigare;
+- recorded tool results are injected by Repetere;
+- Pi does not execute those recorded tools;
+- the prepared Pontis/Pi route remains dormant.
+
+When all meaningful source exchanges have matched, Repetere owns the completion decision, stops the child recording, closes its Replay session and persists `MATCHED`.
+
+### Divergent Replay
+
+At the first meaningful behavioural difference:
+
+- Repetere preserves first-fork evidence;
+- comparison against the recorded continuation stops;
+- recorded tool-result injection stops;
+- the Run remains active;
+- the actual divergent interaction is allowed to continue through the prepared live route;
+- real tool requests may therefore be executed by Pi;
+- Vestigare records the live continuation;
+- Pontis detects the eventual ACP `end_turn` and notifies Repetere;
+- Repetere then completes the Run and initiates ordered cleanup.
+
+A divergence is therefore an experimental result, not an instruction to terminate the interaction at the first mismatch.
+
+### Conclusion
+
+The important distinction is:
+
+> **Matched Replay is deterministic private reproduction. Divergent Replay becomes live evidence collection.**
+
+---
+
+## Divergence Recording Boundary — Duplicate Evidence Correction
+
+### Observation
+
+Forced-divergence testing exposed a recording-boundary defect. The divergent response could be recorded once through Repetere's private/backchannel ingestion and again when the same response entered the normal live Vestigare path.
+
+This produced duplicate evidence in the Replay-created Trace.
+
+### Required Correction
+
+The fork must occur before the divergent response is submitted to Vestigare through the private/backchannel recording path.
+
+The required boundary is:
+
+```text
+live response received
+        ↓
+compare with source
+        ↓
+match?
+  yes -> private Vestigare ingestion
+  no  -> persist fork evidence
+         switch to live transparent route
+         divergent response recorded once
+         through the main Vestigare path
+```
+
+The first divergent response must therefore appear only once in the child recording.
+
+### 0.19.1 Test Result
+
+Repetere 0.19.1 incorporated an attempted correction together with a mypy cleanup. A forced-divergence acceptance test still produced a 13-message Trace, matching the earlier 0.19.0 symptom closely enough that the recording-boundary change could not be considered validated.
+
+### Current Position
+
+The intended architecture is settled, but the 0.19.1 forced-divergence result remains an active defect investigation. Message-level evidence and operational logs must be used to identify where the duplicate recording path is still occurring.
+
+---
+
+## Repetere UI and State Model Consolidation
+
+### Observation
+
+Replay UI requirements had accumulated across the Experiment/Run cleanup work, matched/divergent lifecycle specification and subsequent live testing. Several visible states also mixed internal lifecycle concepts with operator-relevant experimental results.
+
+### UI Decision
+
+The Repetere operator UI will use a clearer Experiment → Run → child Trace hierarchy.
+
+Ordinary lifecycle/result states are presented as coloured text rather than status pills. Redundant wording is removed:
+
+```text
+Staged for replay   -> Staged
+Matched · Completed -> Matched
+Diverged · Completed -> Diverged
+```
+
+`Running` is success-in-progress and must never be presented as an operation failure.
+
+The active Run and its child Trace must refresh automatically while execution is active. On terminal state Repetere performs a final authoritative refresh and refreshes the overall **Trace recordings** list. Normal operation must not require a browser refresh or tab change.
+
+`Run again` creates a new Run, clears only transient banners/current-state presentation and retains all previous Run and child-Trace evidence.
+
+### Trace Model Provenance in UI
+
+The **Trace recordings** list will display the model used by each Trace.
+
+The displayed value must come from the Trace's recorded model provenance, not from Praebere's current selection or another active session. Missing provenance is displayed explicitly rather than inferred.
+
+### Divergence Presentation
+
+Behavioural divergence is displayed as experimental evidence rather than generic failure. Where available the UI exposes:
+
+- matched progress;
+- first fork step;
+- expected behaviour;
+- observed behaviour.
+
+The Run remains visibly active after first divergence until the complete live continuation ends.
+
+### Recovery Presentation
+
+Infrastructure/prerequisite failure is represented separately as `Failed / Incomplete`. If cleanup cannot be confirmed, the Experiment enters `Recovery Required`, disables unsafe rerun and exposes guarded recovery while retaining the failed Run as evidence.
+
+### Conclusion
+
+The Repetere UI is intended to present authoritative experimental state rather than raw internal lifecycle vocabulary.
+
+---
+
+## M0.1 Schedule and Current Position
+
+### Observation
+
+Replay implementation and acceptance testing have required more work than the initial release schedule allowed. The matched/divergent transition, child-Trace evidence boundary and UI/state reconciliation are release-critical because they directly determine whether an external researcher can trust what Replay reports.
+
+### Decision
+
+The external M0.1 delivery window has moved from the week of 7 September to the week beginning 13 September 2026.
+
+The delay is deliberate rather than cosmetic. M0.1 should not be distributed while forced-divergence evidence can still be duplicated or while the operator UI can present stale/ambiguous Replay state.
+
+### Current Release Focus
+
+The immediate critical path is:
+
+1. resolve and validate the forced-divergence duplicate-recording boundary;
+2. complete the consolidated Repetere UI/state changes;
+3. verify matched, divergent and failed/incomplete Runs end to end;
+4. verify child Trace/model provenance and automatic UI refresh;
+5. complete remaining Fiducia scheduling/recovery acceptance;
+6. perform cross-service live acceptance before packaging M0.1.
+
+### Overall Conclusion
+
+The work since the N9 closeout has moved Replay from a simple re-execution mechanism toward a defensible experimental evidence model.
+
+The principal engineering invariant is now clear:
+
+> **A source Trace defines the experiment condition; every Run is independent evidence; matching Replay remains deterministic and private; divergence forks once into a live continuation; and the UI must converge automatically on the same authoritative state persisted by the services.**
 
 ---
