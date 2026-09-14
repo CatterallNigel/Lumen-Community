@@ -1,7 +1,7 @@
 # Lumen External Research Distribution M0.1 — Requirements and Limitations
 
-**Date:** 2026-09-05  
-**Status:** Draft Release Definition  
+**Date:** 2026-09-14  
+**Status:** Reconciled M0.1 Release Definition  
 **Release:** M0.1
 
 
@@ -24,6 +24,7 @@
 | 2026-09-06 | Nigel Catterall | 2.2 | Defined the M0.1 cached model-discovery and explicit-refresh boundary, including stale-cache visibility and failed-load reservation cancellation. |
 | 2026-09-06 | Nigel Catterall | 2.3 | Reconciled successful Vestigare provenance validation; required authoritative model metadata in `trace_recordings`; defined Repetere/Fiducia exact recorded-model enforcement under the runtime-global M0.1 model boundary; and documented Rogare's manual session-reconnect limitation. |
 | 2026-09-10 | Nigel Catterall | 2.4 | Defined staged Replay Experiments as immutable snapshots of replay-critical source conditions, including the required model; documented the unstage-and-restage workflow and deferred cross-model Experiment support. |
+| 2026-09-14 | Nigel Catterall / review | 2.5 | Reconciled the release definition against completed M0.1 Replay implementation through Repetere 0.20.18 and Fiducia 0.7.3; clarified immutable Experiment snapshot authority, final matched/divergent Replay lifecycle, evidence retention/deletion semantics, and current implementation sign-off boundary. |
 
 ## 1. Purpose
 
@@ -122,10 +123,67 @@ researcher must unstage the existing Experiment and stage the source Trace again
 Restaging creates a new Experiment snapshot; it must not rewrite the previous
 Experiment or its preserved run evidence.
 
+Experiment and Replay evidence use the following durable hierarchy:
+
+```text
+Source Trace
+    ↓
+Experiment
+    ↓
+Run
+    ↓
+Replay-created child Trace
+```
+
+Each Run is independent experimental evidence. Retrying or running an Experiment
+again must create a new Run and must not overwrite an earlier Run or child Trace.
+A Run that fails before recording legitimately may have no child Trace.
+
+Staging state and evidence retention are separate concerns. Unstaging an Experiment
+with historical Runs must retain the Experiment and its Run/child-Trace evidence.
+Unstaging an Experiment that has never produced a Run may remove the empty
+Experiment. If an already-unstaged Experiment becomes empty because its final
+historical Run/child Trace is explicitly deleted, the now-empty Experiment may also
+be removed. A staged Experiment remains available for further execution even if its
+last historical child Run is deliberately deleted.
+
+Deleting a replay-created child Trace must remove the corresponding Vestigare
+Trace/messages and Run evidence consistently and repair the parent Experiment's
+Run references. Explicit destructive Experiment deletion must remove its
+replay-created child Traces, Runs and Experiment definition while retaining the
+original source Trace. Destructive deletion must not proceed while the affected
+execution is active or cleanup is unsettled.
+
 Repetere reports divergence but does not assess its significance.
 
-At actual replay start, Repetere must read the authoritative provider/model identity
-from the source `trace_recordings` document and apply the normal Pontis/Praebere
+Replay has two execution modes:
+
+- while behaviour continues to match the source Trace, Repetere performs
+  deterministic reproduction, compares the live response with the recorded
+  response, records matching evidence through the private recording path and
+  injects recorded tool results rather than re-executing those tools;
+- at the first meaningful divergence, Repetere must persist the fork before the
+  divergent response enters the private Vestigare ingestion path, stop comparison
+  against the recorded continuation, stop recorded tool-result injection and
+  transition to the prepared live continuation path;
+- the first divergent interaction must be recorded exactly once through the live
+  Vestigare path;
+- divergence is a Run result, not an instruction to terminate immediately: the
+  live interaction continues, including real tool execution where applicable,
+  until the live turn reaches its normal completion boundary;
+- terminal cleanup then closes the Replay recording/session and releases the
+  applicable model reservation/residency while preserving the Run and child Trace
+  as evidence.
+
+A fully matched Replay terminates when all meaningful source exchanges have been
+reproduced and records `MATCHED`. A divergent Replay records `DIVERGED` only after
+the live continuation has reached its terminal boundary.
+
+At staging time, Repetere must read the authoritative provider/model identity from
+the source `trace_recordings` document and persist it in the immutable Experiment
+snapshot. At actual Run start, that persisted Experiment snapshot is authoritative;
+Repetere must not silently re-read changed source metadata and thereby mutate the
+experimental condition. Repetere then applies the normal Pontis/Praebere
 session-selection lifecycle:
 
 - when no global model is selected, the recorded model must exist in Praebere's cached
@@ -817,6 +875,29 @@ The mechanism should:
 - use a renewable lease/timeout so abandoned sessions do not permanently lock the installation.
 
 This is a distribution/access policy and must not be confused with Lumen's underlying ability to isolate concurrent sessions.
+
+## 6.1 Implementation Status — 2026-09-14
+
+The core functional development represented by the M0.1 N1–N10 development chain
+has been reconciled against the implemented system and is **development-signed-off**.
+This includes the Experiment/Run/replay-child-Trace model, Replay model provenance
+and enforcement, matched/divergent execution behaviour, lifecycle and cleanup
+convergence, operator UI evidence presentation, retention/deletion semantics and
+current Fiducia/Repetere interoperability through **Repetere 0.20.18** and
+**Fiducia 0.7.3**.
+
+This status does **not** declare the External Research Distribution released.
+Two explicit release gates remain:
+
+1. **Runtime Authorization and Distribution Security** — the requirements in
+   Section 3.11 and the dedicated security design must be implemented and validated.
+2. **Formal integrated M0.1 release-candidate acceptance** — the complete
+   single-host distribution must pass the final acceptance matrix. Development
+   validations already obtained may be repeated as formal acceptance evidence.
+
+The completion criteria below remain the authoritative release checklist. Items
+already demonstrated during development are not reopened as design work merely
+because the final integrated acceptance run has not yet been performed.
 
 ## 7. M0.1 Completion Criteria
 

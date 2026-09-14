@@ -4,6 +4,7 @@
 
 | Version | Date | Change |
 |---|---|---|
+| 1.4 | 2026-09-14 | Added 11–14 September Replay closeout: Repetere UI/state convergence, durable Experiment/Run/child-Trace hierarchy, cleanup and deletion semantics, Fiducia contract compatibility, roadmap reconciliation, and M0.1 release position. |
 | 1.3 | 2026-09-11 | Added 7–11 September Repetere Phase 9 progress: Experiment/Run/child-Trace model, Replay session isolation, model enforcement, matched/divergent lifecycle, forced-divergence recording-boundary investigation, consolidated UI requirements and revised M0.1 release position. |
 | 1.2 | 2026-09-06 | Added the 4–6 September N9.6.3 completion, authoritative reservation lifecycle, Nuntius timeout correction, Praebere UI, cached discovery policy, Trace routing findings, Replay model requirements and N9 closeout. |
 | 1.1 | 2026-09-03 | Added N9.3–N9.5 completion, Pontis/Rogare session and tool-policy work, and N9.6.1–N9.6.2 runtime-state reconciliation evidence. |
@@ -13955,5 +13956,263 @@ The work since the N9 closeout has moved Replay from a simple re-execution mecha
 The principal engineering invariant is now clear:
 
 > **A source Trace defines the experiment condition; every Run is independent evidence; matching Replay remains deterministic and private; divergence forks once into a live continuation; and the UI must converge automatically on the same authoritative state persisted by the services.**
+
+---
+
+
+# 2026-09-11 to 2026-09-14
+
+## Repetere M0.1 Replay Closeout
+
+### Observation
+
+The remaining Replay work after the initial Experiment/Run implementation was concentrated less in the basic execution path than in evidence integrity, lifecycle convergence and operator presentation. Live forced-divergence testing, database inspection and repeated UI testing exposed several cases where the underlying execution could be correct while persisted or presented state remained stale, ambiguous or incomplete.
+
+### Implementation and Validation
+
+The Repetere work was completed through the 0.20.x remediation sequence, culminating in **Repetere 0.20.18**.
+
+The completed boundary now includes:
+
+- durable Experiment → Run → replay-created child Trace relationships;
+- source Trace immutability;
+- fresh isolated execution state for every Run;
+- recorded-model provenance and exact-model Replay enforcement;
+- matched and divergent terminal-result semantics;
+- first-divergence evidence;
+- automatic UI polling and terminal-state convergence;
+- clear separation between Run result and Experiment actionable state;
+- preservation of historical Runs and child Traces;
+- safe child-Trace deletion;
+- explicit destructive Experiment deletion;
+- correct cleanup of empty Experiments;
+- retention of child hierarchy after an Experiment is unstaged.
+
+### Conclusion
+
+The Replay evidence model is now sufficiently coherent to sign off the Repetere M0.1 development boundary.
+
+The core relationship remains:
+
+```text
+Source Trace
+    ↓
+Experiment
+    ↓
+Run
+    ↓
+Replay-created child Trace
+```
+
+A Run is immutable experimental evidence. Experiment state describes what may be done next; it does not rewrite the outcome of an earlier Run.
+
+---
+
+## Terminal Cleanup and Persisted Lifecycle Convergence
+
+### Observation
+
+A successful divergent Replay could briefly appear as `Recovery Required` because terminal execution had completed while ordered cleanup was still settling. Separately, MongoDB could retain a Run-level `lifecycle_state` of `CLEANUP_REQUIRED` even after cleanup had actually completed.
+
+These were presentation/persistence convergence defects rather than failures of the Replay itself.
+
+### Correction
+
+Repetere now distinguishes transient finalization from genuine cleanup failure. The UI continues polling while cleanup is settling and only presents terminal completion once the authoritative state has converged.
+
+Run cleanup persistence was also corrected so that completion of cleanup advances the persisted lifecycle to `COMPLETED`.
+
+### Conclusion
+
+The operator UI, Run document and actual cleanup lifecycle now converge on the same terminal state. A transient safety lock is no longer misrepresented as recovery failure.
+
+---
+
+## Safe Replay Evidence Deletion and Retention
+
+### Observation
+
+Once Experiment/Run/child-Trace evidence became durable, deletion semantics had to be explicit. Removing a visible row without repairing the corresponding Repetere and Vestigare evidence would leave orphaned or misleading experimental state.
+
+### Implemented Semantics
+
+Deleting a replay-created child Trace now removes the Vestigare Trace/messages first, then removes the corresponding Run and repairs the parent Experiment's Run pointers.
+
+Deleting an Experiment is an explicitly destructive operation that removes its replay-created child Traces, Run documents and Experiment document while retaining the original source Trace.
+
+Destructive operations are rejected while execution or cleanup is active.
+
+`Unstage` remains distinct from deletion:
+
+- an Experiment with historical Runs is retained as evidence when unstaged;
+- an Experiment that has never produced a Run is removed when unstaged;
+- if an unstaged Experiment later loses its final remaining child Run through deletion, the now-empty Experiment is also removed;
+- a staged Experiment remains present even if its final historical child is deliberately deleted.
+
+### Architectural Conclusion
+
+Persistence follows evidence value. Empty administrative scaffolding does not need to survive, while anything that represents an actual experimental Run remains durable until explicitly deleted.
+
+---
+
+## Unstaged Experiment Hierarchy
+
+### Observation
+
+An unstaged Experiment with surviving Runs initially disappeared from the Repetere Trace-recordings hierarchy because the dashboard grouped child Runs only through currently staged Experiment sessions.
+
+The Run and child Trace still existed in MongoDB, but the UI no longer exposed their relationship to the source Trace.
+
+### Correction
+
+Trace-recording hierarchy is now reconstructed from durable Run evidence using the Run's source recording identity rather than from staging state.
+
+### Conclusion
+
+Staging is an operational state, not the ownership mechanism for historical evidence. Unstaging an Experiment no longer hides its surviving Run/child-Trace history.
+
+---
+
+## Repetere UI Consolidation
+
+### Observation
+
+The accumulated Replay UI requirements were implemented and reconciled against live behaviour.
+
+### Result
+
+The Repetere UI now presents the Experiment → Run → child Trace structure directly. Trace recordings display recorded model provenance. Replay-created child Traces use the same inspection surface as ordinary recordings. Status presentation distinguishes Experiment state from Run outcome, avoids redundant lifecycle wording, and refreshes automatically at Run completion.
+
+`Run again` immediately establishes a new current Run presentation while preserving previous evidence. Search/filter interactions retain useful viewport state, and hierarchy/table layout was reduced to a more compact operator-facing representation.
+
+### Conclusion
+
+The UI now represents persisted experimental evidence rather than attempting to expose every internal service lifecycle transition.
+
+---
+
+## Fiducia / Repetere Contract Reconciliation
+
+### Observation
+
+After the Repetere Experiment/Run model evolved, Fiducia 0.7.1 could reach `GET /replays/prepared` successfully but rejected the returned payload as an invalid Prepared Replay contract.
+
+The problem was not Repetere availability. Fiducia still expected the earlier Replay-session-shaped fields while Repetere now returned the authoritative Experiment-shaped contract.
+
+### Correction
+
+Fiducia was updated to accept the current Repetere contract while retaining compatibility with the earlier field names.
+
+Prepared Replay discovery now maps:
+
+```text
+experiment_id  → Fiducia replay identity
+source_trace_id → source recording
+name           → experiment name
+```
+
+Run mapping was similarly reconciled with the current Repetere fields and terminal results. Current Repetere `MATCHED`, `DIVERGED`, `FAILED_INCOMPLETE` and `TERMINATED` outcomes are translated into Fiducia's execution-state vocabulary.
+
+A final mypy-only test annotation issue was corrected in **Fiducia 0.7.3**.
+
+### Validation
+
+The Windows development environment reported:
+
+- **113 pytest tests passed**;
+- **Ruff passed**;
+- the remaining mypy annotation error was corrected;
+- Fiducia subsequently operated correctly against the current Repetere service.
+
+### Conclusion
+
+Fiducia and Repetere are again interoperable at the M0.1 Experiment/Run boundary. The earlier Prepared Replay failure was a stale client-contract problem, not a missing Repetere capability.
+
+---
+
+## M0.1 Replay Documentation Sign-Off
+
+### Observation
+
+By 14 September the individual Replay requirement documents no longer accurately represented the amount of completed work because many checklist items remained historically unchecked after their implementation had been validated.
+
+### Action
+
+The Replay documentation set was reconciled against the implemented behaviour through Repetere 0.20.18 and Fiducia 0.7.3.
+
+The completed Repetere work was signed off, and a separate outstanding-work document was created so that historical requirement documents do not have to serve simultaneously as implementation history and current task list.
+
+The main **Lumen External Research Distribution M0.1 Roadmap** was then reconciled. The core **N1–N10 development chain** is now considered signed off for the M0.1 development boundary.
+
+### Important Boundary
+
+This does **not** mean that the external M0.1 distribution itself is released.
+
+The remaining release gates are:
+
+1. **Phase 11 — Runtime Authorization and Distribution Security**;
+2. **Phase 12 — formal internal M0.1 release-candidate acceptance**.
+
+Development smoke tests already obtained remain useful evidence, but the final integrated acceptance pass is intentionally retained.
+
+### Conclusion
+
+The project has moved from broad feature development into release completion. Replay is no longer the dominant unresolved architectural workstream.
+
+---
+
+## Development Environment Interruption
+
+### Observation
+
+Several development days around the final Replay/Fiducia closeout were disrupted by a Windows 10 update and subsequent unusually high `ntoskrnl.exe` disk activity affecting Docker Desktop and WSL-backed workloads.
+
+Docker's data VHDX was large enough for host-level storage activity to materially affect the development environment. Investigation included Docker container block-I/O checks, WSL state inspection and controlled Docker/WSL restarts.
+
+Disk activity subsequently returned to zero without disabling the normal container workload.
+
+### Impact
+
+The interruption cost approximately two development days during an already compressed M0.1 release period.
+
+### Release Position
+
+Despite the delay, the remaining work is sufficiently bounded that delivery of the external M0.1 research release by the following Sunday remains a reasonable target rather than a commitment.
+
+The Lumen-Community M0.1 release documentation is being kept current so the external researcher can see both completed progress and the remaining release work.
+
+---
+
+## Current M0.1 Engineering Position
+
+### Status
+
+The principal development sequence through N1–N10 is substantially complete and signed off.
+
+The immediate work has narrowed to distribution/security implementation and formal release-candidate acceptance rather than further redesign of Replay.
+
+### Current Boundary
+
+```text
+N1–N10 core development
+        ↓
+SIGNED OFF
+        ↓
+Phase 11
+Runtime Authorization / Distribution Security
+        ↓
+Phase 12
+Integrated Internal Acceptance
+        ↓
+External M0.1 Research Distribution
+```
+
+### Overall Conclusion
+
+The work completed during this period closes one of the largest remaining M0.1 architectural areas.
+
+Repetere now treats Replay as controlled experimental execution with durable provenance rather than as a transient re-run operation. Fiducia consumes that model correctly, and the operator surfaces preserve the distinction between source evidence, experimental definition, individual Run outcome and replay-created evidence.
+
+The remaining M0.1 work is therefore primarily about **trusting and packaging the complete system**, rather than defining how Replay itself should behave.
 
 ---
