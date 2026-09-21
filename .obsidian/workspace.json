@@ -22,20 +22,6 @@
             }
           },
           {
-            "id": "ca37c956e73c8c1d",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_REPLAY_OUTSTANDING_2026-09-13.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "LUMEN_M0.1_REPLAY_OUTSTANDING_2026-09-13"
-            }
-          },
-          {
             "id": "a7dbb11fadd1e2e8",
             "type": "leaf",
             "state": {
@@ -49,8 +35,7 @@
               "title": "LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -217,44 +202,44 @@
       "bases:Create new base": false
     }
   },
-  "active": "a7dbb11fadd1e2e8",
+  "active": "cdcb0ab851b65fe1",
   "lastOpenFiles": [
-    "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_REQUIREMENTS_AND_LIMITATIONS_SIGNED_OFF_20260914.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_REPLAY_OUTSTANDING_2026-09-13.md",
-    "docs/tools/OLLAMA_HEADLESS_WINDOWS_11.md",
-    "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP-1.md",
     "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
-    "docs/releases/M0.1/devlopment-archive/LUMEN_M0.1_REPLAY_SIGN_OFF_2026-09-13.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_REPETERE_CONSOLIDATED_UI_UPDATE_REQUIREMENTS.md",
-    "docs/releases/M0.1/devlopment-archive/REPETERE_CHILD_OF_STAGED_REPLAY_UI_AND_STATE_CLEANUP.md",
-    "docs/releases/M0.1/devlopment-archive/M0.1_TRACE_MODEL_REPLAY_REQUIREMENT.md",
-    "docs/releases/M0.1/devlopment-archive/LUMEN_REPETERE_UI_UPDATE_REQUIREMENTS.md",
-    "docs/releases/M0.1/devlopment-archive/LUMEN_REPETERE_REPLAY_STAGE_ONE_SESSION_PREPARATION.md",
-    "docs/releases/M0.1/devlopment-archive/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR.md",
-    "docs/releases/M0.1/devlopment-archive/LUMEN_REPETERE_CONSOLIDATED_UI_UPDATE_REQUIREMENTS.md",
-    "docs/releases/M0.1/devlopment-archive/LUMEN_M0.1_REPLAY_RUNTIME_ARTIFACTS_2026-09-07.md",
-    "docs/releases/M0.1/devlopment-archive/LUMEN_M0.1_REPLAY_IMPLEMENTATION_SEQUENCE.md",
-    "docs/releases/M0.1/devlopment-archive/REVIEWED_DOCUMENTS_CARRY_FORWARD_NOT_IN_M0.1_ROADMAP.md",
+    "docs/private/TEMP_N9_REVIEWED_DOCUMENTS_CLOSEOUT_REQUIREMENTS.md",
+    "docs/private/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR.md",
+    "docs/private/LUMEN_DEVELOPMENT_REQUIREMENTS_M0.1.md",
+    "docs/private/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
+    "docs/private/LUMEN_DEVELOPMENT_REQUIREMENTS_M0.1_RECONCILED.md",
+    "docs/private/TEMP_N9_REVIEWED_DOCUMENTS_CLOSEOUT_REQUIREMENTS_RECONCILED_2026-09-19.md",
+    "docs/private/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR_CLOSED_2026-09-19.md",
+    "docs/private/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP_RECONCILED_2026-09-19.md",
+    "docs/private/LUMEN_DEVELOPMENT_REQUIREMENTS_M0.1_RECONCILED_2026-09-19.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_REPLAY_OUTSTANDING_2026-09-13.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_REPLAY_OUTSTANDING_2026-09-19.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_STAGE_D5_ILLUMINATES_ONE_AUTHORIZATION_PRIVATE.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_SERVIRE_AUTHORIZATION_LIFECYCLE_3_PHASE_IMPLEMENTATION.md",
+    "docs/private/security/ILLUMINATES_ONE_D5.4_MONGODB_SETUP_PRIVATE.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_RUNTIME_CONFIGURATION_PI_AND_DOCKERISATION_PLAN_PRIVATE.md",
+    "docs/releases/M0.1/development-in-progress/ILLUMINATES_ONE_D5.4_MONGODB_SETUP_PRIVATE.md",
+    "docs/private/security",
+    "docs/private/New folder",
+    "docs/private",
+    "docs/New folder",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_PRIVATE_RESEARCH_REGISTRATION_AUTHORIZATION_AND_EVIDENCE_MODEL.md",
+    "docs/services/aestimare/RESEARCH_LEADS_ALL_IN_2026.md",
+    "docs/opportunities/RESEARCH_LEADS_ALL_IN_2026.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_PHASE_11_DISTRIBUTION_ARCHITECTURE_AND_RUNTIME_SECURITY_PLAN_PRIVATE.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_STAGE_D5_ILLUMINATES_ONE_AUTHORIZATION.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_RUNTIME_CONFIGURATION_PI_AND_DOCKERISATION_PLAN.md",
+    "docs/tools/OLLAMA_HEADLESS_WINDOWS_11.md",
+    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_PHASE_11_DISTRIBUTION_ARCHITECTURE_AND_RUNTIME_SECURITY_PLAN.md",
+    "docs/releases/M0.1/devlopment-archive/LUMEN_M0.1_SERVIRE_RUNTIME_CONFIGURATION_AND_BOOTSTRAP_IMPLEMENTATION_PLAN.md",
     "docs/releases/M0.1/development-in-progress-2026-09-12.zip",
     "docs/releases/M0.1/development-in-progress (2).zip",
-    "docs/releases/M0.1/development-in-progress/REVIEWED_DOCUMENTS_CARRY_FORWARD_NOT_IN_M0.1_ROADMAP.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_REPETERE_UI_UPDATE_REQUIREMENTS.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR.md",
-    "docs/releases/M0.1/development-in-progress/REPETERE_CHILD_OF_STAGED_REPLAY_UI_AND_STATE_CLEANUP.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_REPETERE_REPLAY_STAGE_ONE_SESSION_PREPARATION.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_REPLAY_IMPLEMENTATION_SEQUENCE.md",
-    "docs/opportunities/README.md",
     "docs/releases/M0.1/development-in-progress.zip",
-    "docs/releases/M0.1/work-in-progress/LUMEN_OBT_COMMAND_CATALOGUE.md",
-    "docs/releases/M0.1/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR.md",
-    "docs/releases/M0.1/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR(1).md",
     "docs/releases/M0.1/devlopment-archive",
     "docs/releases/M0.1/work-archive",
     "docs/releases/M0.1/New folder",
-    "docs/releases/M0.1/development-in-progress",
-    "docs/tools",
-    "docs/New folder",
-    "docs/engineering/ENGINEERING_DIARY",
     "docs/graphics/individual-logos/nuntius.png",
     "docs/graphics/individual-logos/servire.png",
     "docs/graphics/individual-logos/aestimare.png",

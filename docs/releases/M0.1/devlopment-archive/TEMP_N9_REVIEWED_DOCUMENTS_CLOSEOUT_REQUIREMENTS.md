@@ -1,11 +1,22 @@
 # Temporary N9 / Praebere Reviewed-Documents Closeout Requirements
 
-**Status:** Closed — reviewed document chain reconciled; retain only as closeout evidence  
+**Status:** CLOSEOUT RECONCILED — N9.6/N9.7/N9.8 implementation and acceptance substantially closed; archive after canonical-document reconciliation
 **Date:** 2026-09-05  
 **Purpose:** Single closeout checklist for the N9/Praebere/Nuntius documents reviewed on 2026-09-04.  
-**Disposition:** Archive after the canonical roadmap and carried-forward work records are committed.
+**Disposition:** Delete or archive after the canonical roadmaps have been reconciled and closed.
 
 ---
+
+
+## Closeout update — 2026-09-19
+
+This temporary consolidation has served its purpose and is now **substantially closed**.
+
+The N9.6 runtime lifecycle is complete and live-validated. The compact N9.7 Praebere operational UI and its execution/provenance acceptance have subsequently been implemented and exercised. N9.8 associated-service validation is also recorded as complete in this document. The remaining unchecked documentation-reconciliation bullets are housekeeping rather than runtime implementation blockers.
+
+The items explicitly designated post-M0.1 — provider-neutral readiness, per-session/multi-model evolution, additional UI polish, Pontis shutdown quiescing and future providers — remain deferred. Repetere/Fiducia work belongs to the main M0.1 roadmap and its dedicated outstanding-work document, not this N9 closeout.
+
+**Disposition:** this file may now be archived once the canonical roadmap/requirements copies are replaced by their reconciled versions.
 
 ## 1. Scope
 
@@ -180,12 +191,12 @@ above.
 - [x] Show effective runtime-global model.
 - [x] Show activation time where available.
 - [x] Show active/reconciliation state.
-- [x] Distinguish an open `not active` Pontis session from an active model-execution
+- [ ] Distinguish an open `not active` Pontis session from an active model-execution
   session; `not active` must not be presented as meaning closed or model-available.
-- [x] Explain reservation separately from the active-execution lock.
-- [x] Explain why selection is locked.
-- [x] Do not make Praebere the normal session-termination authority.
-- [x] Link or direct the operator to Pontis for ordinary session cleanup where useful.
+- [ ] Explain reservation separately from the active-execution lock.
+- [ ] Explain why selection is locked.
+- [ ] Do not make Praebere the normal session-termination authority.
+- [ ] Link or direct the operator to Pontis for ordinary session cleanup where useful.
 
 ## 6.5 Bounded Actions
 
@@ -332,21 +343,21 @@ gate is known to be failing.
 
 After the code/acceptance work above is complete:
 
-- [x] Update the canonical N9/Praebere architecture documentation to describe the native
+- [ ] Update the canonical N9/Praebere architecture documentation to describe the native
   Nuntius control path.
-- [x] Ensure all documents use the superseding external-Ollama boundary consistently.
-- [x] Remove/rewrite any remaining requirement that implies Praebere starts/stops Ollama.
-- [x] Ensure provider **process** ownership is not confused with Praebere-owned **model
+- [ ] Ensure all documents use the superseding external-Ollama boundary consistently.
+- [ ] Remove/rewrite any remaining requirement that implies Praebere starts/stops Ollama.
+- [ ] Ensure provider **process** ownership is not confused with Praebere-owned **model
   residency**.
-- [x] Mark N9.6.4 consistently as nice-to-have/post-M0.1.
-- [x] Reconcile the final Praebere UI acceptance state.
-- [x] Reconcile the Nuntius migration project status and completion definition.
-- [x] Update the main M0.1 roadmap with N9 completion and carry-over work.
-- [x] Update the main M0.1 requirements/limitations document where the reconciled runtime
+- [ ] Mark N9.6.4 consistently as nice-to-have/post-M0.1.
+- [ ] Reconcile the final Praebere UI acceptance state.
+- [ ] Reconcile the Nuntius migration project status and completion definition.
+- [ ] Update the main M0.1 roadmap with N9 completion and carry-over work.
+- [ ] Update the main M0.1 requirements/limitations document where the reconciled runtime
   boundary changes or clarifies an existing requirement.
-- [x] Preserve canonical filenames and use revision-history entries rather than
+- [ ] Preserve canonical filenames and use revision-history entries rather than
   `_UPDATED`/`_RECONCILED` suffixes in repository copies.
-- [x] Remove this temporary consolidation document once its remaining items have been
+- [ ] Remove this temporary consolidation document once its remaining items have been
   transferred to the canonical roadmap/checklists.
 
 ---
@@ -355,14 +366,14 @@ After the code/acceptance work above is complete:
 
 These items must remain visible, but should not prevent N9 closure:
 
-- [x] **N9.6.4 Provider-Neutral Readiness Contract** — post-M0.1.
-- [x] Repetere/Fiducia Experiment work — main M0.1 roadmap.
-- [x] Nested-Trace / Replay experiment work — main M0.1 roadmap.
-- [x] Broader Experiment/failed-run UI work — main M0.1 roadmap.
-- [x] Additional Rogare UI polish beyond the N9 acceptance surface — main M0.1 roadmap.
-- [x] Pontis shutdown quiescing/admission guard for late external requests during stack
+- [ ] **N9.6.4 Provider-Neutral Readiness Contract** — post-M0.1.
+- [ ] Repetere/Fiducia Experiment work — main M0.1 roadmap.
+- [ ] Nested-Trace / Replay experiment work — main M0.1 roadmap.
+- [ ] Broader Experiment/failed-run UI work — main M0.1 roadmap.
+- [ ] Additional Rogare UI polish beyond the N9 acceptance surface — main M0.1 roadmap.
+- [ ] Pontis shutdown quiescing/admission guard for late external requests during stack
   teardown — Future Development.
-- [x] Future provider adapters beyond M0.1 Ollama — future roadmap.
+- [ ] Future provider adapters beyond M0.1 Ollama — future roadmap.
 
 ---
 
@@ -372,53 +383,15 @@ N9 may be declared complete when all of the following are true:
 
 - [x] known N9.6.3 bugs are fixed;
 - [x] N9.6.2/N9.6.3 final lifecycle validation passes;
-- [x] the compact Praebere operational UI is implemented and accepted;
-- [x] N9.7 execution/provenance acceptance evidence is captured;
-- [x] remaining N9.8 cross-service acceptance checks pass;
-- [x] N9.10 quality gates are clean;
-- [x] the Nuntius/Praebere canonical documents are reconciled to the final runtime
+- [ ] the compact Praebere operational UI is implemented and accepted;
+- [ ] N9.7 execution/provenance acceptance evidence is captured;
+- [ ] remaining N9.8 cross-service acceptance checks pass;
+- [ ] N9.10 quality gates are clean;
+- [ ] the Nuntius/Praebere canonical documents are reconciled to the final runtime
   boundary; and
-- [x] deferred Repetere/Fiducia/Rogare work is clearly present in the main M0.1 roadmap
+- [ ] deferred Repetere/Fiducia/Rogare work is clearly present in the main M0.1 roadmap
   rather than left ambiguously inside N9.
 
 At that point development can move cleanly back to the main External Research
 Distribution M0.1 roadmap and the distribution/security phases, including Phase 11
 Runtime Authorization and Distribution Security.
-
----
-
-# 14. Final Closeout — 2026-09-06
-
-The close decision is satisfied for the bounded N9/Nuntius document chain:
-
-- [x] N8 diagnostics and Servire UI were reconciled against the running service,
-  including a live bounded-history check using a temporary history limit of three.
-- [x] N9.1–N9.5 and N9.6.1–N9.6.3 are complete.
-- [x] The compact Praebere-owned UI and Servire integration are implemented and
-  accepted.
-- [x] Selected/reserved/locked model state, demand residency, activation failure,
-  session release, persistence and Pontis reconciliation are live-validated.
-- [x] Rogare reconnect recovery is accepted for M0.1 through manual re-entry of the
-  Pontis session ID. Context is retained; Rogare's prior local conversation display
-  is not restored.
-- [x] Nuntius request correlation, response targeting/listeners, health, routes,
-  in-flight state, errors, timing and bounded history are validated.
-- [x] External-client and Rogare query/selection/ask/end-session smoke paths pass.
-- [x] N10 live compatibility checks pass: no loops, no control leakage, correlation
-  remains intact, silence is not success and ordinary ask/answer behaviour is unchanged.
-- [x] External `\obt rogare start` is rejected locally by Pontis with HTTP 422 and
-  does not enter Nuntius; this internal command is not part of the M0.1 researcher
-  interface.
-- [x] System-prompt provenance remains intact: the incoming Pi prompt is retained as
-  superseded provenance and exactly one Lumen-generated effective prompt is replay input.
-- [x] The main M0.1 roadmap now carries the remaining Vestigare/Repetere/Fiducia
-  trace-model fidelity work.
-- [x] N9.6.4 and other future-development items remain explicitly deferred.
-
-Unchecked historical boxes in preceding sections are superseded by this final
-reconciliation. They do not reopen N8 or N9. Genuine remaining work has been moved to
-the main roadmap or to the separate reviewed-documents carry-forward record.
-
-**Final decision:** N9 and the reviewed Nuntius/Praebere document chain are closed.
-Development returns to the canonical
-`LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP`.

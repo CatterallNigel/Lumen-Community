@@ -1,97 +1,209 @@
 # Lumen Development Requirements — External Research Distribution M0.1
 
 **Date:** 2026-08-22  
-**Status:** Current Development Requirements  
-**Components:** Repetere, Fiducia, Moderari, Servire, Pontis, Praebere, Nuntius, Vestigare, Rogare  
+**Status:** Reconciled 2026-09-20 — clean-install baseline validated;
+final release configuration, documentation and formal acceptance
+retained  
+**Components:** Repetere, Fiducia, Moderari, Servire, Pontis, Praebere,
+Nuntius, Vestigare, Rogare  
 **Origin:** External Research Distribution M0.1 planning
 
----
+------------------------------------------------------------------------
+
+## Reconciliation update — 2026-09-19
+
+This document has been reconciled against work completed since its
+previous status snapshot. Items are marked closed only where subsequent
+implementation/live evidence supports closure; final release-candidate
+acceptance and still-unproven negative/recovery paths remain open.
+
+**Now closed or substantially closed:** N9/Praebere runtime lifecycle
+and compact UI work; the implemented Repetere matched/divergent Replay
+behaviour; Fiducia scheduled Replay end-to-end acceptance; Fiducia Clear
+Logs acceptance; and the Servire/Illuminates.One/Licentia authorization
+lifecycle through Servire 0.8.29.5, including signed
+registration/renewal, GRACE, EXPIRED, signed LOCKED, automatic recovery,
+Stack gating and the authorization UI.
+
+**Still open / retained for explicit acceptance:** Fiducia/Servire
+deliberate stale-PID closure evidence; Replay prerequisite negative-path
+matrix; genuine cleanup/recovery-boundary acceptance; the deliberate
+final clean-start cross-service release-candidate pass; remaining
+Docker/distribution packaging and ingress work; any still-required
+stack-bound protected-service startup hardening; final
+distribution/security validation; and Phase 12 formal integrated M0.1
+acceptance.
+
+Post-M0.1/future-development items remain deferred rather than being
+treated as M0.1 blockers.
+
+## Reconciliation update — 2026-09-20
+
+The M0.1 Docker distribution has now completed a genuine clean-state
+installation exercise: prior M0.1 containers and persistent volumes were
+removed, the distribution was rebuilt without cache, a fresh
+installation identity was created, initial registration completed
+against Illuminates.One, the signed authorization lease was accepted,
+and the managed Stack started successfully.
+
+This closes the basic distribution/bootstrap question. The current
+release candidate has demonstrated:
+
+- clean Docker creation of the Lumen, HAProxy and MongoDB runtime;
+- fresh installation identity and registration;
+- signed Servire/Licentia/Illuminates.One authorization;
+- normal transition to `AUTHORISED`;
+- successful managed Stack startup after authorization;
+- LAN ingress through HAProxy after host bindings were changed from
+  loopback-only publication to host-interface publication;
+- Praebere provider-health handling and operational-log cleanup;
+- Rogare terminal provider-loss UI-state cleanup.
+
+The remaining release work is now principally final acceptance and
+release configuration rather than foundational implementation. In
+particular:
+
+- replace the deliberately short authorization lease/renewal/grace
+  timings on **both Lumen and Illuminates.One** with the agreed M0.1
+  distribution values before release;
+- retain the final signed authorization behaviour while changing only
+  those policy timings;
+- complete the final integrated researcher workflow/negative-path
+  acceptance still required by Phase 12;
+- complete final distribution-artifact/security inspection;
+- reconcile and publish the release documentation and known limitations.
+
+M0.1 remains a **single-machine research distribution**. Local browser
+access through `localhost` / `127.0.0.1` is the supported operator path
+for M0.1. HAProxy can expose the interfaces on the LAN, but M0.1 does
+not provide HTTPS for the operator UI. Chrome may therefore block file
+downloads such as Servire operational-log exports when the UI is opened
+through a plain-HTTP LAN address. This is a browser security restriction
+rather than a Servire log-generation failure; localhost export has been
+validated.
 
 ## Document Revision History
 
-| Date | By | Version | Description |
-| --- | --- | --- | --- |
-| 2026-08-23 | Nigel Catterall | 1.0 | First reviewed release |
-| 2026-08-30 | Nigel Catterall | 1.1 | Defined Pontis session identity as authoritative for Vestigare Trace binding; added active-session selection, no-session Trace-start prevention, pre-first-interaction recording boundary, and multi-client Trace acceptance requirements. |
-| 2026-08-30 | Nigel Catterall | 1.2 | Defined N9 Praebere runtime model lifecycle: Ollama startup discovery, optional preferred model, established versus active-execution sessions, external-client explicit selection, Rogare dropdown state, and model locking during active execution. |
-| 2026-09-01 | Nigel Catterall | 1.3 | Added the N9.5 Pontis-owned session-management lifecycle: Rogare and external-client explicit closure, Pontis UI and commands, authorised orphan cleanup, Praebere execution release, persistence/reconciliation and reset boundaries. Clarified that the Servire authorization heartbeat is separate from session lifecycle. |
-| 2026-09-04 | Nigel Catterall | 1.4 | Reconciled N9 implementation status through N9.6.3; recorded N9.1–N9.5 and N9.6.1 as complete, N9.6.2 as implemented pending final acceptance evidence, N9.6.3 as implemented with final bug-fix/lifecycle validation remaining, and moved the full N9.6.4 provider-neutral readiness taxonomy to nice-to-have/post-M0.1. Retained the compact Praebere operational UI as an M0.1 requirement and aligned the document with Ollama as external infrastructure. |
-
+| Date       | By                       | Version | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|------------|--------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2026-08-23 | Nigel Catterall          | 1.0     | First reviewed release                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-08-30 | Nigel Catterall          | 1.1     | Defined Pontis session identity as authoritative for Vestigare Trace binding; added active-session selection, no-session Trace-start prevention, pre-first-interaction recording boundary, and multi-client Trace acceptance requirements.                                                                                                                                                                                                                     |
+| 2026-08-30 | Nigel Catterall          | 1.2     | Defined N9 Praebere runtime model lifecycle: Ollama startup discovery, optional preferred model, established versus active-execution sessions, external-client explicit selection, Rogare dropdown state, and model locking during active execution.                                                                                                                                                                                                           |
+| 2026-09-01 | Nigel Catterall          | 1.3     | Added the N9.5 Pontis-owned session-management lifecycle: Rogare and external-client explicit closure, Pontis UI and commands, authorised orphan cleanup, Praebere execution release, persistence/reconciliation and reset boundaries. Clarified that the Servire authorization heartbeat is separate from session lifecycle.                                                                                                                                  |
+| 2026-09-20 | Nigel Catterall / review | 1.5     | Reconciled the clean Docker installation, fresh registration/authorization and successful Stack startup; recorded LAN HTTP/browser-download limitation, accepted Praebere/Rogare closeout fixes, and retained final lease-policy timing changes plus formal release acceptance/documentation as outstanding.                                                                                                                                                   |
+| 2026-09-04 | Nigel Catterall          | 1.4     | Reconciled N9 implementation status through N9.6.3; recorded N9.1–N9.5 and N9.6.1 as complete, N9.6.2 as implemented pending final acceptance evidence, N9.6.3 as implemented with final bug-fix/lifecycle validation remaining, and moved the full N9.6.4 provider-neutral readiness taxonomy to nice-to-have/post-M0.1. Retained the compact Praebere operational UI as an M0.1 requirement and aligned the document with Ollama as external infrastructure. |
 
 ## 1. Purpose
 
-Planning for the Lumen External Research Distribution M0.1 has exposed a set of changes and validation requirements in Lumen proper.
+Planning for the Lumen External Research Distribution M0.1 has exposed a
+set of changes and validation requirements in Lumen proper.
 
 The original requirements concerned:
 
-1. representing repeated replay executions as an explicit **Experiment**, including visible replay divergence; and
-2. making **Moderari system-prompt handling configurable** rather than always replacing an incoming system prompt.
+1.  representing repeated replay executions as an explicit
+    **Experiment**, including visible replay divergence; and
+2.  making **Moderari system-prompt handling configurable** rather than
+    always replacing an incoming system prompt.
 
 Subsequent M0.1 design discussion has added four further requirements:
 
-3. saved and reusable custom system prompts;
-4. validation that the Lumen stack correctly isolates multiple simultaneous sessions;
-5. a common `\obt` control-command path through **Lumen Nuntius**, required as shared control-plane infrastructure for Replay, Moderari, Praebere and other Lumen services; and
-6. replay fidelity for the effective system prompt recorded in the source Trace.
+3.  saved and reusable custom system prompts;
+4.  validation that the Lumen stack correctly isolates multiple
+    simultaneous sessions;
+5.  a common `\obt` control-command path through **Lumen Nuntius**,
+    required as shared control-plane infrastructure for Replay,
+    Moderari, Praebere and other Lumen services; and
+6.  replay fidelity for the effective system prompt recorded in the
+    source Trace.
 
-Nuntius is now considered foundational M0.1 infrastructure rather than a later integration convenience. It should be implemented early because several of the remaining M0.1 changes consume `\obt` control commands.
+Nuntius is now considered foundational M0.1 infrastructure rather than a
+later integration convenience. It should be implemented early because
+several of the remaining M0.1 changes consume `\obt` control commands.
 
-These are Lumen engineering requirements motivated by the External Research Distribution. They should not be implemented as research-distribution-specific behaviour.
+These are Lumen engineering requirements motivated by the External
+Research Distribution. They should not be implemented as
+research-distribution-specific behaviour.
 
 Several related ideas have deliberately been kept outside M0.1:
 
 - Rogare human correctness/quality ratings;
 - multiple Pontis tool providers and a unified tool catalogue;
 - bounded-computational-resource behavioural research;
-- Servire single-active-operator enforcement for general research distribution.
+- Servire single-active-operator enforcement for general research
+  distribution.
 
-The last item is a **pre-general-research-release requirement**, but it is not required to define M0.1 itself.
+The last item is a **pre-general-research-release requirement**, but it
+is not required to define M0.1 itself.
 
----
+------------------------------------------------------------------------
 
-# 1.1 Current M0.1 Development Status — 2026-09-04
+# 1.1 Current M0.1 Development Status — superseded by 2026-09-19 reconciliation
 
-The N9 control-plane/provider-runtime work has now moved substantially beyond the original planning baseline in this document. The authoritative working status is:
+The N9 control-plane/provider-runtime work has now moved substantially
+beyond the original planning baseline in this document. The
+authoritative working status is:
 
 - **N9.1–N9.5:** complete and validated.
 - **N9.6.1 — MongoDB runtime-state persistence:** complete.
-- **N9.6.2 — Pontis reconciliation/deferred release:** implemented; final acceptance evidence remains.
-- **N9.6.3 — provider/runtime reality, atomic reservation and demand residency:** implemented; known closeout bugs and final lifecycle validation remain.
-- **N9.6.4 — full provider-neutral readiness taxonomy:** moved out of the M0.1 critical path to **nice-to-have/post-M0.1**. Concrete M0.1 operational readiness/state reporting remains required.
-- **Praebere operational UI:** remains required for M0.1, but is deliberately compact and consumes the concrete authoritative state already available; it does not require the full N9.6.4 taxonomy.
-- **Ollama:** external infrastructure for M0.1. Lumen verifies the configured endpoint and may load/unload model residency through Ollama, but must never start or stop the Ollama process.
+- **N9.6.2 — Pontis reconciliation/deferred release:** implemented;
+  final acceptance evidence remains.
+- **N9.6.3 — provider/runtime reality, atomic reservation and demand
+  residency:** implemented; known closeout bugs and final lifecycle
+  validation remain.
+- **N9.6.4 — full provider-neutral readiness taxonomy:** moved out of
+  the M0.1 critical path to **nice-to-have/post-M0.1**. Concrete M0.1
+  operational readiness/state reporting remains required.
+- **Praebere operational UI:** remains required for M0.1, but is
+  deliberately compact and consumes the concrete authoritative state
+  already available; it does not require the full N9.6.4 taxonomy.
+- **Ollama:** external infrastructure for M0.1. Lumen verifies the
+  configured endpoint and may load/unload model residency through
+  Ollama, but must never start or stop the Ollama process.
 
-The principal remaining M0.1 work after N9 closeout remains the Repetere/Fiducia Experiment and nested-Trace work, associated Trace/Replay provenance validation, remaining bounded Rogare UI work, Dockerised single-host distribution work, and Runtime Authorization/Distribution Security.
+The principal remaining M0.1 work after N9 closeout remains the
+Repetere/Fiducia Experiment and nested-Trace work, associated
+Trace/Replay provenance validation, remaining bounded Rogare UI work,
+Dockerised single-host distribution work, and Runtime
+Authorization/Distribution Security.
 
----
+------------------------------------------------------------------------
 
 # 2. Repetere — Experiment Structure and Divergence Visibility
 
 ## 2.1 Background
 
-Repetere currently allows a recorded Trace to be replayed and records the resulting execution through Vestigare.
+Repetere currently allows a recorded Trace to be replayed and records
+the resulting execution through Vestigare.
 
-Repeated replay executions are therefore related to the original Trace, but that relationship is not presently represented clearly enough in the UI.
+Repeated replay executions are therefore related to the original Trace,
+but that relationship is not presently represented clearly enough in the
+UI.
 
-Replay-created Traces appear substantially as independent Traces rather than as executions belonging to a controlled experiment.
+Replay-created Traces appear substantially as independent Traces rather
+than as executions belonging to a controlled experiment.
 
-In addition, although Repetere detects divergence during replay, the resulting Traces are not currently presented with a clear matched/divergent status.
+In addition, although Repetere detects divergence during replay, the
+resulting Traces are not currently presented with a clear
+matched/divergent status.
 
-This becomes particularly important when Fiducia is used to execute multiple repetitions of the same recorded Trace.
+This becomes particularly important when Fiducia is used to execute
+multiple repetitions of the same recorded Trace.
 
----
+------------------------------------------------------------------------
 
 ## 2.2 Experiment as a First-Class Concept
 
-A recorded Trace selected as the basis for controlled repeated execution should become the **source Trace of an Experiment**.
+A recorded Trace selected as the basis for controlled repeated execution
+should become the **source Trace of an Experiment**.
 
 The original Trace remains unchanged.
 
-An Experiment references that Trace and groups the replay executions generated from it.
+An Experiment references that Trace and groups the replay executions
+generated from it.
 
 Conceptually:
 
-```text
+``` text
 Experiment E-001
 Source Trace: T-143
 
@@ -110,45 +222,52 @@ The Experiment provides the relationship between:
 - the controlled repetitions;
 - the resulting evidence.
 
-The Trace data model should not be distorted simply to create a hierarchical UI representation.
+The Trace data model should not be distorted simply to create a
+hierarchical UI representation.
 
----
+------------------------------------------------------------------------
 
 ## 2.3 Experimental Model
 
 This formalises the existing Lumen research principle:
 
-> A single execution is an observation. Repeated controlled executions become an experiment. Multiple experiments begin to characterise behaviour. Longitudinal evidence allows us to detect behavioural change.
+> A single execution is an observation. Repeated controlled executions
+> become an experiment. Multiple experiments begin to characterise
+> behaviour. Longitudinal evidence allows us to detect behavioural
+> change.
 
-The Experiment therefore becomes the natural unit connecting Repetere, Fiducia and, eventually, Aestimare.
+The Experiment therefore becomes the natural unit connecting Repetere,
+Fiducia and, eventually, Aestimare.
 
----
+------------------------------------------------------------------------
 
 ## 2.4 Fiducia Relationship
 
-Fiducia should operate against the Experiment rather than treating repeated Repetere executions as unrelated replay requests.
+Fiducia should operate against the Experiment rather than treating
+repeated Repetere executions as unrelated replay requests.
 
 A researcher should be able to:
 
-1. Select a source Trace.
-2. Create an Experiment.
-3. Specify the required number of repetitions.
-4. Have Fiducia coordinate those repetitions.
-5. Have Repetere execute each replay.
-6. Have Vestigare capture each resulting execution.
-7. Review all resulting runs as members of the Experiment.
+1.  Select a source Trace.
+2.  Create an Experiment.
+3.  Specify the required number of repetitions.
+4.  Have Fiducia coordinate those repetitions.
+5.  Have Repetere execute each replay.
+6.  Have Vestigare capture each resulting execution.
+7.  Review all resulting runs as members of the Experiment.
 
 This keeps responsibilities separated:
 
 **Fiducia** coordinates repeated execution.
 
-**Repetere** reproduces the recorded execution and detects replay divergence.
+**Repetere** reproduces the recorded execution and detects replay
+divergence.
 
 **Vestigare** records what actually occurred.
 
 The Experiment associates the evidence.
 
----
+------------------------------------------------------------------------
 
 ## 2.5 Repetere Divergence Visibility
 
@@ -158,30 +277,33 @@ That information should be surfaced explicitly for every Experiment run.
 
 At minimum, the UI should distinguish:
 
-```text
+``` text
 MATCHED
 DIVERGED
 FAILED / INCOMPLETE
 ```
 
-Where existing Repetere evidence permits, a divergent run should also expose the first detected divergence point.
+Where existing Repetere evidence permits, a divergent run should also
+expose the first detected divergence point.
 
 For example:
 
-```text
+``` text
 Run 003
 Status: DIVERGED
 First divergence: Interaction 7
 Trace: T-153
 ```
 
-This information should be visible without requiring the researcher to manually inspect and compare every resulting Trace.
+This information should be visible without requiring the researcher to
+manually inspect and compare every resulting Trace.
 
----
+------------------------------------------------------------------------
 
 ## 2.6 Repetere Is Not Performing Assessment
 
-The distinction between **divergence detection** and **behavioural assessment** must remain explicit.
+The distinction between **divergence detection** and **behavioural
+assessment** must remain explicit.
 
 Repetere may state:
 
@@ -199,19 +321,22 @@ Those are assessment questions.
 
 Repetere reports an observed property of the reproduction process.
 
-Aestimare will eventually assess the significance, characteristics or implications of accumulated behavioural evidence.
+Aestimare will eventually assess the significance, characteristics or
+implications of accumulated behavioural evidence.
 
-This distinction is particularly important because Aestimare is not part of the External Research Distribution.
+This distinction is particularly important because Aestimare is not part
+of the External Research Distribution.
 
----
+------------------------------------------------------------------------
 
 ## 2.7 UI Representation
 
-The preferred UI representation should make the experimental relationship immediately apparent.
+The preferred UI representation should make the experimental
+relationship immediately apparent.
 
 For example:
 
-```text
+``` text
 Trace T-143
 Original execution
 
@@ -223,33 +348,45 @@ Original execution
     └── Run 005  DIVERGED
 ```
 
-This does not imply that the child Traces are physically embedded within the source Trace.
+This does not imply that the child Traces are physically embedded within
+the source Trace.
 
 It is a representation of their experimental relationship.
 
----
+------------------------------------------------------------------------
 
 # 2.8 Repetere — Effective System Prompt Replay Fidelity
 
-A replay must reproduce the **effective system prompt recorded in the source Trace**, not whatever Moderari happens to be configured to use at replay time.
+A replay must reproduce the **effective system prompt recorded in the
+source Trace**, not whatever Moderari happens to be configured to use at
+replay time.
 
-This is required because the system prompt is part of the execution context and can materially affect model behaviour.
+This is required because the system prompt is part of the execution
+context and can materially affect model behaviour.
 
-For M0.1, the source Trace is expected to contain the actual system prompt that reached the model. The existing MongoDB research data has been cleared, so compatibility with historical Traces that lack this evidence is not an M0.1 requirement.
+For M0.1, the source Trace is expected to contain the actual system
+prompt that reached the model. The existing MongoDB research data has
+been cleared, so compatibility with historical Traces that lack this
+evidence is not an M0.1 requirement.
 
-Before implementation, a fresh execution should be recorded and inspected to confirm exactly where and how the effective system prompt is represented in the current Trace structure.
+Before implementation, a fresh execution should be recorded and
+inspected to confirm exactly where and how the effective system prompt
+is represented in the current Trace structure.
 
 ## 2.8.1 Replay Behaviour
 
-Before Repetere begins replaying a source Trace, it must instruct Moderari to use **Pass-through** for the replay session.
+Before Repetere begins replaying a source Trace, it must instruct
+Moderari to use **Pass-through** for the replay session.
 
 This is a **blocking prerequisite** for Replay.
 
-Repetere must not begin sending the recorded execution context until Moderari has positively acknowledged that the session-scoped Pass-through change has been applied.
+Repetere must not begin sending the recorded execution context until
+Moderari has positively acknowledged that the session-scoped
+Pass-through change has been applied.
 
 Conceptually:
 
-```text
+``` text
 Source Trace
     |
     | contains effective system prompt
@@ -271,15 +408,21 @@ Moderari
             Pass-through not established
 ```
 
-Only after `200 OK` does Repetere replay the recorded execution context, including the original effective system prompt.
+Only after `200 OK` does Repetere replay the recorded execution context,
+including the original effective system prompt.
 
-The replay must not resolve the source Trace back to the **current** Moderari Default prompt or the **current** contents of a saved Custom prompt. The Trace is the authoritative evidence of what was actually supplied to the original execution.
+The replay must not resolve the source Trace back to the **current**
+Moderari Default prompt or the **current** contents of a saved Custom
+prompt. The Trace is the authoritative evidence of what was actually
+supplied to the original execution.
 
-If the required Pass-through state cannot be positively established, Repetere must abort before any model interaction from that replay begins.
+If the required Pass-through state cannot be positively established,
+Repetere must abort before any model interaction from that replay
+begins.
 
 For this prerequisite:
 
-```text
+``` text
 200
     Proceed with Replay.
 
@@ -296,25 +439,33 @@ timeout / unreachable
     Abort. The prerequisite state cannot be confirmed.
 ```
 
-A failed prerequisite should result in the corresponding Experiment run being recorded as `FAILED / INCOMPLETE`, with the control-plane failure retained as replay/operational evidence.
+A failed prerequisite should result in the corresponding Experiment run
+being recorded as `FAILED / INCOMPLETE`, with the control-plane failure
+retained as replay/operational evidence.
 
 ## 2.8.2 Session Scope
 
-The Pass-through instruction used by Replay must be scoped to the replay session.
+The Pass-through instruction used by Replay must be scoped to the replay
+session.
 
-It must not change Moderari's global configuration or alter the system-prompt policy of another active session.
+It must not change Moderari’s global configuration or alter the
+system-prompt policy of another active session.
 
-This requirement is part of the wider M0.1 concurrent-session isolation requirement.
+This requirement is part of the wider M0.1 concurrent-session isolation
+requirement.
 
 ## 2.8.3 Replay Execution Session Isolation
 
 Each Replay execution must run in a **new, isolated replay session**.
 
-This is required independently of whether the current implementation already behaves this way. Before changing Repetere, M0.1 development must inspect and test the existing Replay/session behaviour to establish the current baseline.
+This is required independently of whether the current implementation
+already behaves this way. Before changing Repetere, M0.1 development
+must inspect and test the existing Replay/session behaviour to establish
+the current baseline.
 
 For repeated executions of one source Trace:
 
-```text
+``` text
 Experiment E-001
 Source Trace T-001
 
@@ -323,15 +474,21 @@ Run 002 -> Replay Session R-002 -> Trace T-102
 Run 003 -> Replay Session R-003 -> Trace T-103
 ```
 
-The implementation must not allow a later Replay to inherit conversational context, temporary configuration, tool/session state, or model interaction state produced by an earlier Replay.
+The implementation must not allow a later Replay to inherit
+conversational context, temporary configuration, tool/session state, or
+model interaction state produced by an earlier Replay.
 
 The required rule is:
 
-> **Every Replay run within an Experiment executes in a newly created, isolated session whose initial execution context is derived solely from the source Trace and the explicitly defined experimental conditions. No state produced by another Replay run may enter that session.**
+> **Every Replay run within an Experiment executes in a newly created,
+> isolated session whose initial execution context is derived solely
+> from the source Trace and the explicitly defined experimental
+> conditions. No state produced by another Replay run may enter that
+> session.**
 
 The session lifecycle should conceptually be:
 
-```text
+``` text
 create new Replay session
         |
         v
@@ -354,32 +511,41 @@ Vestigare records new Trace
 close Replay session
 ```
 
-The existing session-scoped Moderari Pass-through requirement therefore applies to the newly created Replay session, not merely to the client or operator session that initiated the Replay.
+The existing session-scoped Moderari Pass-through requirement therefore
+applies to the newly created Replay session, not merely to the client or
+operator session that initiated the Replay.
 
-A Replay session must not reuse the preceding Replay session simply because both runs belong to the same Experiment.
+A Replay session must not reuse the preceding Replay session simply
+because both runs belong to the same Experiment.
 
-This isolation requirement is necessary for controlled repetition: otherwise the execution conditions of later runs may be polluted by evidence produced by earlier runs.
+This isolation requirement is necessary for controlled repetition:
+otherwise the execution conditions of later runs may be polluted by
+evidence produced by earlier runs.
 
 ## 2.8.4 Trace Validation and System-Prompt Provenance
 
-M0.1 development must first establish exactly what Vestigare records before any remediation is implemented.
+M0.1 development must first establish exactly what Vestigare records
+before any remediation is implemented.
 
 The investigation must compare fresh Traces produced under:
 
-1. current behaviour;
-2. Moderari `Pass-through`;
-3. Moderari `Custom`, using a deliberately distinct custom system prompt.
+1.  current behaviour;
+2.  Moderari `Pass-through`;
+3.  Moderari `Custom`, using a deliberately distinct custom system
+    prompt.
 
 The comparison must determine whether Vestigare records:
 
 - the incoming client system prompt;
 - the effective system prompt after Moderari processing;
 - both;
-- or an ambiguous representation that could cause Repetere to reconstruct more than one active system prompt.
+- or an ambiguous representation that could cause Repetere to
+  reconstruct more than one active system prompt.
 
-Where Moderari replaces an incoming system prompt, the Trace must preserve both facts as provenance:
+Where Moderari replaces an incoming system prompt, the Trace must
+preserve both facts as provenance:
 
-```text
+``` text
 incoming system prompt
     client-supplied prompt
     replay status: superseded
@@ -389,57 +555,91 @@ effective system prompt
     replay status: active
 ```
 
-The incoming prompt must not be hard-deleted or destructively overwritten. It remains evidence of what the client supplied.
+The incoming prompt must not be hard-deleted or destructively
+overwritten. It remains evidence of what the client supplied.
 
-However, from Repetere's point of view, a superseded incoming system prompt is a **soft-deleted replay element**: it remains visible in the Trace but must not be reconstructed as active model context.
+However, from Repetere’s point of view, a superseded incoming system
+prompt is a **soft-deleted replay element**: it remains visible in the
+Trace but must not be reconstructed as active model context.
 
 The required invariant is:
 
-> **Replay reconstructs exactly one effective system prompt: the system prompt that actually reached the model during the source execution. Superseded incoming system prompts remain provenance but are excluded from replay execution.**
+> **Replay reconstructs exactly one effective system prompt: the system
+> prompt that actually reached the model during the source execution.
+> Superseded incoming system prompts remain provenance but are excluded
+> from replay execution.**
 
-If Vestigare already captures this distinction correctly, no remediation is required.
+If Vestigare already captures this distinction correctly, no remediation
+is required.
 
-If it does not, Vestigare must be changed before Replay system-prompt fidelity can be considered complete. A candidate remediation is for Moderari, whenever it replaces the incoming system prompt, to send a correlated `\obt` control message through Nuntius identifying the effective system prompt. Vestigare can then mark the incoming prompt as superseded for Replay and identify the injected prompt as the active effective system prompt.
+If it does not, Vestigare must be changed before Replay system-prompt
+fidelity can be considered complete. A candidate remediation is for
+Moderari, whenever it replaces the incoming system prompt, to send a
+correlated `\obt` control message through Nuntius identifying the
+effective system prompt. Vestigare can then mark the incoming prompt as
+superseded for Replay and identify the injected prompt as the active
+effective system prompt.
 
-The `\obt` message itself must remain control-plane traffic and must not become a conversational Trace entry.
+The `\obt` message itself must remain control-plane traffic and must not
+become a conversational Trace entry.
 
----
+------------------------------------------------------------------------
 
 # 2.9 Trace Model/Provider Provenance and Replay Binding Investigation
 
-Before M0.1 defines any requirement to bind Replay to the provider/model used by a source Trace, or deliberately permits provider/model substitution, the current Vestigare and Repetere behaviour must be established.
+Before M0.1 defines any requirement to bind Replay to the provider/model
+used by a source Trace, or deliberately permits provider/model
+substitution, the current Vestigare and Repetere behaviour must be
+established.
 
 The investigation must determine:
 
 - whether Vestigare records the provider used for the source execution;
 - whether Vestigare records the model used for the source execution;
 - where and in what form provider/model identity is stored;
-- whether that information is descriptive provenance only or forms part of the replayable execution context;
-- whether Repetere currently reads or acts upon recorded provider/model identity;
-- whether provider/model identity appears indirectly in system, assistant or other conversational messages;
-- whether an unchanged source Trace can currently be replayed against a different selected provider/model; and
-- whether changing provider/model introduces hidden or model-specific context into the reconstructed execution.
+- whether that information is descriptive provenance only or forms part
+  of the replayable execution context;
+- whether Repetere currently reads or acts upon recorded provider/model
+  identity;
+- whether provider/model identity appears indirectly in system,
+  assistant or other conversational messages;
+- whether an unchanged source Trace can currently be replayed against a
+  different selected provider/model; and
+- whether changing provider/model introduces hidden or model-specific
+  context into the reconstructed execution.
 
 A representative investigation should:
 
-1. execute a fresh interaction against a known provider/model;
-2. inspect the raw Vestigare Trace and identify all provider/model-related evidence;
-3. determine what Repetere reconstructs from that Trace;
-4. select a different provider/model through the normal M0.1 control path;
-5. attempt Replay of the same source Trace without otherwise changing its recorded conversational context; and
-6. inspect both what is sent to the second model and the resulting Vestigare Trace.
+1.  execute a fresh interaction against a known provider/model;
+2.  inspect the raw Vestigare Trace and identify all
+    provider/model-related evidence;
+3.  determine what Repetere reconstructs from that Trace;
+4.  select a different provider/model through the normal M0.1 control
+    path;
+5.  attempt Replay of the same source Trace without otherwise changing
+    its recorded conversational context; and
+6.  inspect both what is sent to the second model and the resulting
+    Vestigare Trace.
 
 The investigation must distinguish:
 
-> **Provider/model provenance** — evidence describing the environment in which the source execution occurred.
+> **Provider/model provenance** — evidence describing the environment in
+> which the source execution occurred.
 
 from:
 
-> **Provider/model Replay binding** — information that actively causes or requires Repetere to reproduce the source execution using that provider/model.
+> **Provider/model Replay binding** — information that actively causes
+> or requires Repetere to reproduce the source execution using that
+> provider/model.
 
 These are not assumed to be the same thing.
 
-No M0.1 implementation should introduce a provider/model Replay override merely because comparative replay may be desirable. The existing behaviour must first be understood. The result may show that provider/model substitution already occurs naturally and that only provenance, UI clarity or explicit experimental-condition representation is required.
+No M0.1 implementation should introduce a provider/model Replay override
+merely because comparative replay may be desirable. The existing
+behaviour must first be understood. The result may show that
+provider/model substitution already occurs naturally and that only
+provenance, UI clarity or explicit experimental-condition representation
+is required.
 
 # 3. Moderari — Configurable System Prompt Policy
 
@@ -447,17 +647,21 @@ No M0.1 implementation should introduce a provider/model Replay override merely 
 
 Moderari currently owns the system prompt supplied to the model.
 
-An incoming client system message is removed and replaced with the Moderari system prompt.
+An incoming client system message is removed and replaced with the
+Moderari system prompt.
 
-This behaviour is appropriate for normal Lumen operation, but becomes problematic for controlled behavioural research.
+This behaviour is appropriate for normal Lumen operation, but becomes
+problematic for controlled behavioural research.
 
 A system prompt can materially affect model behaviour.
 
-Consequently, silently replacing a researcher-supplied system prompt changes the experimental conditions.
+Consequently, silently replacing a researcher-supplied system prompt
+changes the experimental conditions.
 
-System-prompt handling should therefore become an explicit Moderari configuration policy.
+System-prompt handling should therefore become an explicit Moderari
+configuration policy.
 
----
+------------------------------------------------------------------------
 
 ## 3.2 Required Modes
 
@@ -467,13 +671,14 @@ Moderari should support three system-prompt modes.
 
 Moderari does not replace the incoming system prompt.
 
-The client-provided context is passed through with its system prompt unchanged.
+The client-provided context is passed through with its system prompt
+unchanged.
 
 If the client supplies no system prompt, Moderari does not create one.
 
 Conceptually:
 
-```text
+``` text
 Client System Prompt
         │
         ▼
@@ -484,17 +689,18 @@ Client System Prompt
        Model
 ```
 
----
+------------------------------------------------------------------------
 
 ### Moderari Default
 
 This preserves the existing Lumen behaviour.
 
-Any incoming client system prompt is removed and Moderari injects its standard system prompt.
+Any incoming client system prompt is removed and Moderari injects its
+standard system prompt.
 
 Conceptually:
 
-```text
+``` text
 Client System Prompt ──► removed
 
 Moderari Default System Prompt
@@ -503,19 +709,21 @@ Moderari Default System Prompt
             Model
 ```
 
-This should remain the normal/default operating mode unless deliberately changed.
+This should remain the normal/default operating mode unless deliberately
+changed.
 
----
+------------------------------------------------------------------------
 
 ### Custom
 
 Any incoming client system prompt is removed.
 
-Moderari instead injects a user-defined system prompt configured through Servire.
+Moderari instead injects a user-defined system prompt configured through
+Servire.
 
 Conceptually:
 
-```text
+``` text
 Client System Prompt ──► removed
 
 Servire
@@ -529,42 +737,62 @@ Servire
             Model
 ```
 
-This allows a researcher to establish a controlled system-prompt condition without requiring the external client to manage it.
-
+This allows a researcher to establish a controlled system-prompt
+condition without requiring the external client to manage it.
 
 #### Custom Prompt Integrity and Tooling
 
 `Custom` is an **exact researcher-defined experimental condition**.
 
-Moderari currently performs tool-related system-prompt processing as part of its normal behaviour: tool information may be extracted from the incoming client system prompt and incorporated into the system prompt Moderari presents to the model. That behaviour may remain part of `Moderari Default`, but it must not be applied to `Custom`.
+Moderari currently performs tool-related system-prompt processing as
+part of its normal behaviour: tool information may be extracted from the
+incoming client system prompt and incorporated into the system prompt
+Moderari presents to the model. That behaviour may remain part of
+`Moderari Default`, but it must not be applied to `Custom`.
 
 When `Custom` is selected, Moderari must:
 
 - remove the incoming client system prompt;
-- inject the last explicitly Applied contents of the Custom System Prompt editor exactly as applied;
-- not extract tool instructions or descriptions from the removed client prompt and append them to the Custom prompt;
+- inject the last explicitly Applied contents of the Custom System
+  Prompt editor exactly as applied;
+- not extract tool instructions or descriptions from the removed client
+  prompt and append them to the Custom prompt;
 - not inject Moderari-generated tool guidance into the Custom prompt;
 - not merge, rewrite, normalise or otherwise augment the Custom prompt.
 
-Tool availability and tool instructions in the system prompt are separate concerns. A tool provider may remain available to the session, but that does not permit Moderari to modify the Custom prompt to advertise or describe those tools.
+Tool availability and tool instructions in the system prompt are
+separate concerns. A tool provider may remain available to the session,
+but that does not permit Moderari to modify the Custom prompt to
+advertise or describe those tools.
 
-If a researcher wants tool descriptions or tool-use instructions in a Custom system prompt, those instructions must be explicitly included in the saved or entered Custom prompt. If they are omitted, Moderari must not add them automatically.
+If a researcher wants tool descriptions or tool-use instructions in a
+Custom system prompt, those instructions must be explicitly included in
+the saved or entered Custom prompt. If they are omitted, Moderari must
+not add them automatically.
 
-> **Custom means the exact researcher-defined system prompt. Tooling information is included in that prompt only when the researcher explicitly puts it there.**
+> **Custom means the exact researcher-defined system prompt. Tooling
+> information is included in that prompt only when the researcher
+> explicitly puts it there.**
 
----
+------------------------------------------------------------------------
 
 # 4. Moderari System Prompt Policy UI and Servire Exposure
 
 The System Prompt Policy is owned by **Moderari**.
 
-Moderari provides the policy selection, Custom prompt editor, saved-prompt operations and active runtime state. Servire does not mediate these operations or send a separate control command to Moderari when the user selects `Apply`.
+Moderari provides the policy selection, Custom prompt editor,
+saved-prompt operations and active runtime state. Servire does not
+mediate these operations or send a separate control command to Moderari
+when the user selects `Apply`.
 
-Servire exposes the Moderari System Prompt Policy UI within the Moderari service tab as part of the operational interface. Whether the Moderari UI is viewed directly or through Servire does not change the ownership or execution path.
+Servire exposes the Moderari System Prompt Policy UI within the Moderari
+service tab as part of the operational interface. Whether the Moderari
+UI is viewed directly or through Servire does not change the ownership
+or execution path.
 
 Conceptually:
 
-```text
+``` text
 Moderari — System Prompt Policy
 
 Policy
@@ -595,35 +823,48 @@ Applied Prompt: Research Baseline / Current Editor Contents
 Status: Applied
 ```
 
-The saved-prompt selector and Custom prompt editor should only be enabled when `Custom` is selected.
+The saved-prompt selector and Custom prompt editor should only be
+enabled when `Custom` is selected.
 
 ## 4.1 Working Copy and Explicit Apply
 
-Selecting a saved prompt loads its contents into the Custom System Prompt editor as a **working copy**.
+Selecting a saved prompt loads its contents into the Custom System
+Prompt editor as a **working copy**.
 
 The user may use that working copy unchanged or edit it.
 
 Editing the working copy must not:
 
 - alter the stored saved prompt;
-- alter Moderari's active runtime configuration;
+- alter Moderari’s active runtime configuration;
 - implicitly apply the edited contents.
 
-The contents of the editor have no runtime effect until the user explicitly selects `Apply`.
+The contents of the editor have no runtime effect until the user
+explicitly selects `Apply`.
 
-`Apply` makes the complete current contents of the editor Moderari's active Custom system prompt.
+`Apply` makes the complete current contents of the editor Moderari’s
+active Custom system prompt.
 
-The applied prompt is used **verbatim**, subject only to unavoidable transport/serialization representation. Moderari must not add, remove, rewrite, merge, normalise, augment or inject tooling information into it.
+The applied prompt is used **verbatim**, subject only to unavoidable
+transport/serialization representation. Moderari must not add, remove,
+rewrite, merge, normalise, augment or inject tooling information into
+it.
 
 The required rule is:
 
-> **Moderari is bound to its last explicitly Applied system-prompt configuration, not to the mutable contents of the Custom System Prompt editor.**
+> **Moderari is bound to its last explicitly Applied system-prompt
+> configuration, not to the mutable contents of the Custom System Prompt
+> editor.**
 
-Because the System Prompt Policy UI belongs to Moderari, `Apply` is a local Moderari configuration action. It does not require a Servire → Nuntius → Moderari request/response exchange.
+Because the System Prompt Policy UI belongs to Moderari, `Apply` is a
+local Moderari configuration action. It does not require a Servire →
+Nuntius → Moderari request/response exchange.
 
-The UI must make the distinction between editor state and active runtime state explicit. For example, after loading `Research Baseline` and modifying the editor without applying it:
+The UI must make the distinction between editor state and active runtime
+state explicit. For example, after loading `Research Baseline` and
+modifying the editor without applying it:
 
-```text
+``` text
 Saved Prompt: Research Baseline
 Editor State: Modified
 
@@ -633,9 +874,13 @@ Applied Prompt: Research Baseline
 Status: Applied
 ```
 
-The researcher can therefore see that the editor contains unapplied changes.
+The researcher can therefore see that the editor contains unapplied
+changes.
 
-After `Apply`, the active configuration must truthfully identify the current editor contents as the applied condition rather than implying that the unchanged saved object is active when the editor has diverged from it.
+After `Apply`, the active configuration must truthfully identify the
+current editor contents as the applied condition rather than implying
+that the unchanged saved object is active when the editor has diverged
+from it.
 
 ## 4.2 Saved-Prompt Operations
 
@@ -643,7 +888,7 @@ Persistence and runtime application are separate operations.
 
 The M0.1 UI should provide explicit actions:
 
-```text
+``` text
 Apply
     Make the current editor contents the active Moderari Custom prompt.
     Does not alter the saved-prompt catalogue.
@@ -665,11 +910,14 @@ Delete Saved
 
 There is deliberately no implicit overwrite operation.
 
-A normal `Save` action must not infer that the researcher intends to replace the saved prompt from which the editor contents were derived. Where persistence of edited contents is required, the researcher must explicitly choose either `Save As…` or `Update Saved`.
+A normal `Save` action must not infer that the researcher intends to
+replace the saved prompt from which the editor contents were derived.
+Where persistence of edited contents is required, the researcher must
+explicitly choose either `Save As…` or `Update Saved`.
 
 The conceptual lifecycle is:
 
-```text
+``` text
 Saved Prompt
      |
      | select
@@ -690,17 +938,22 @@ Working Copy in Editor
                             explicit replacement of selected saved object
 ```
 
-Deleting or updating a saved prompt must not affect historical Traces that used it. The actual effective system prompt recorded in those Traces remains the authoritative evidence of what was supplied to the model.
+Deleting or updating a saved prompt must not affect historical Traces
+that used it. The actual effective system prompt recorded in those
+Traces remains the authoritative evidence of what was supplied to the
+model.
 
 ## 4.3 Saved-Prompt Persistence
 
 Saved Custom system prompts require persistent storage.
 
-M0.1 should introduce a dedicated MongoDB collection for Moderari saved system prompts.
+M0.1 should introduce a dedicated MongoDB collection for Moderari saved
+system prompts.
 
-The exact implementation schema may follow existing Lumen persistence conventions, but the stored object must support at least:
+The exact implementation schema may follow existing Lumen persistence
+conventions, but the stored object must support at least:
 
-```text
+``` text
 prompt_id
 name
 content
@@ -710,19 +963,30 @@ created_at
 updated_at
 ```
 
-`prompt_id` must provide stable object identity independently of the human-readable name.
+`prompt_id` must provide stable object identity independently of the
+human-readable name.
 
-For M0.1, `owner_id` may identify the installation/default research user because general multi-user operation is not part of the release. The field must nevertheless exist so saved prompts are not modelled as permanently unowned global objects.
+For M0.1, `owner_id` may identify the installation/default research user
+because general multi-user operation is not part of the release. The
+field must nevertheless exist so saved prompts are not modelled as
+permanently unowned global objects.
 
-`scope` should likewise exist in the M0.1 schema. Its M0.1 semantics may remain deliberately simple, for example a user/default scope, while leaving room for future ownership and organisational policy.
+`scope` should likewise exist in the M0.1 schema. Its M0.1 semantics may
+remain deliberately simple, for example a user/default scope, while
+leaving room for future ownership and organisational policy.
 
-Saved-prompt names should not be required to be globally unique. Where uniqueness is enforced, it should be scoped appropriately to ownership/scope rather than preventing different future users or organisations from using the same human-readable prompt name.
+Saved-prompt names should not be required to be globally unique. Where
+uniqueness is enforced, it should be scoped appropriately to
+ownership/scope rather than preventing different future users or
+organisations from using the same human-readable prompt name.
 
-The saved-prompt document must not contain an `is_active` flag merely to represent Moderari runtime state.
+The saved-prompt document must not contain an `is_active` flag merely to
+represent Moderari runtime state.
 
-Saved-prompt persistence and active Moderari configuration are separate concepts:
+Saved-prompt persistence and active Moderari configuration are separate
+concepts:
 
-```text
+``` text
 Saved Prompt Collection
     reusable prompt definitions
 
@@ -730,17 +994,23 @@ Moderari Runtime State
     last explicitly Applied policy/prompt
 ```
 
-`Save As…`, `Update Saved` and `Delete Saved` mutate the saved-prompt collection.
+`Save As…`, `Update Saved` and `Delete Saved` mutate the saved-prompt
+collection.
 
-`Apply` changes Moderari runtime state and does not mutate the saved-prompt collection.
+`Apply` changes Moderari runtime state and does not mutate the
+saved-prompt collection.
 
-The selected policy and the last successfully Applied Custom prompt should form part of Moderari's runtime configuration.
+The selected policy and the last successfully Applied Custom prompt
+should form part of Moderari’s runtime configuration.
 
 ## 4.4 Future Ownership and Organisational Policy
 
-M0.1 does **not** define the full semantics of prompt ownership, sharing or organisational policy.
+M0.1 does **not** define the full semantics of prompt ownership, sharing
+or organisational policy.
 
-The explicit `owner_id` and `scope` fields are future-compatibility hooks, not an invitation to implement multi-user prompt governance in M0.1.
+The explicit `owner_id` and `scope` fields are future-compatibility
+hooks, not an invitation to implement multi-user prompt governance in
+M0.1.
 
 Future development must separately consider, among other possibilities:
 
@@ -749,21 +1019,26 @@ Future development must separately consider, among other possibilities:
 - installation-wide prompts;
 - centrally managed organisational prompts;
 - prompts an organisation may require users to use;
-- permissions to create, view, update, delete, share, mandate or override prompts.
+- permissions to create, view, update, delete, share, mandate or
+  override prompts.
 
-These questions belong in `development/future` and are explicitly outside the M0.1 scope.
+These questions belong in `development/future` and are explicitly
+outside the M0.1 scope.
 
----
+------------------------------------------------------------------------
 
 # 5. Trace Behaviour
 
-Vestigare must preserve sufficient evidence to distinguish **incoming execution context** from the **effective execution context presented to the model**.
+Vestigare must preserve sufficient evidence to distinguish **incoming
+execution context** from the **effective execution context presented to
+the model**.
 
-This distinction is required because Moderari may replace an incoming client system prompt.
+This distinction is required because Moderari may replace an incoming
+client system prompt.
 
 For example:
 
-```text
+``` text
 Client supplies:
     system = USER-A
 
@@ -777,17 +1052,20 @@ Model receives:
     system = CUSTOM-X
 ```
 
-Both `USER-A` and `CUSTOM-X` are relevant evidence, but they do not have the same Replay meaning.
+Both `USER-A` and `CUSTOM-X` are relevant evidence, but they do not have
+the same Replay meaning.
 
 Vestigare must preserve the architectural principle:
 
 > **Trace records what actually happened.**
 
-Therefore the client-supplied prompt should remain visible as provenance rather than being hard-deleted or overwritten.
+Therefore the client-supplied prompt should remain visible as provenance
+rather than being hard-deleted or overwritten.
 
-Where Moderari replaces it, however, the Trace must make the transformation unambiguous:
+Where Moderari replaces it, however, the Trace must make the
+transformation unambiguous:
 
-```text
+``` text
 Incoming System Prompt
     USER-A
     status: superseded for Replay
@@ -800,13 +1078,16 @@ Effective System Prompt
     status: active execution context
 ```
 
-For Repetere, the superseded incoming prompt is effectively soft-deleted: it remains observable evidence but is excluded when the replayable model context is reconstructed.
+For Repetere, the superseded incoming prompt is effectively
+soft-deleted: it remains observable evidence but is excluded when the
+replayable model context is reconstructed.
 
-Replay must never combine the superseded incoming prompt with the effective system prompt.
+Replay must never combine the superseded incoming prompt with the
+effective system prompt.
 
 The required Replay result is:
 
-```text
+``` text
 Source execution:
     Model received CUSTOM-X
 
@@ -817,36 +1098,49 @@ Replay:
 
 and never:
 
-```text
+``` text
 Replay:
     system = USER-A
     system = CUSTOM-X
 ```
 
-The selected Moderari policy, saved-prompt identity/name/hash and transformation information may be retained as additional provenance, but none may replace the actual effective system-prompt content.
+The selected Moderari policy, saved-prompt identity/name/hash and
+transformation information may be retained as additional provenance, but
+none may replace the actual effective system-prompt content.
 
 ## 5.1 Investigation Before Remediation
 
-No Vestigare implementation change should be assumed until the current behaviour has been tested.
+No Vestigare implementation change should be assumed until the current
+behaviour has been tested.
 
 The M0.1 investigation must:
 
-- create a fresh baseline Trace and inspect its system-prompt representation;
+- create a fresh baseline Trace and inspect its system-prompt
+  representation;
 - repeat with Moderari in `Pass-through`;
-- repeat with Moderari in `Custom` using a clearly distinguishable prompt;
+- repeat with Moderari in `Custom` using a clearly distinguishable
+  prompt;
 - compare the stored Trace records;
 - determine exactly which prompt Repetere currently reconstructs;
-- determine whether Replay can currently produce two active system messages.
+- determine whether Replay can currently produce two active system
+  messages.
 
-At least one behavioural test should use deliberately distinguishable or contradictory system-prompt instructions so that an incorrect duplicate-system-prompt replay is likely to produce an observable difference, rather than relying only on simple tasks whose answer may remain unchanged.
+At least one behavioural test should use deliberately distinguishable or
+contradictory system-prompt instructions so that an incorrect
+duplicate-system-prompt replay is likely to produce an observable
+difference, rather than relying only on simple tasks whose answer may
+remain unchanged.
 
 ## 5.2 Candidate Vestigare Remediation
 
-If the investigation shows that Vestigare records the incoming prompt before Moderari replacement without a reliable representation of the effective prompt, M0.1 should add explicit correction/provenance information.
+If the investigation shows that Vestigare records the incoming prompt
+before Moderari replacement without a reliable representation of the
+effective prompt, M0.1 should add explicit correction/provenance
+information.
 
 A candidate control flow is:
 
-```text
+``` text
 Moderari
     |
     | policy = Default or Custom
@@ -869,32 +1163,26 @@ Vestigare would use the correlated information to:
 - mark it as superseded for Replay;
 - retain the actual injected system prompt;
 - mark the injected prompt as the effective active system prompt;
-- ensure Repetere receives only the effective prompt when reconstructing model context.
+- ensure Repetere receives only the effective prompt when reconstructing
+  model context.
 
-This is a candidate remediation, not a pre-judgement of the existing implementation. The exact implementation should follow the evidence produced by the investigation.
+This is a candidate remediation, not a pre-judgement of the existing
+implementation. The exact implementation should follow the evidence
+produced by the investigation.
 
----
-# 6. Research Significance
-
-Making system-prompt handling configurable turns an existing hidden environmental condition into an explicit experimental variable.
-
-A researcher could deliberately execute equivalent experiments under:
-
-```text
-Experiment A — Client system prompt passed through
-Experiment B — Moderari default system prompt
-Experiment C — Controlled custom system prompt
-```
-
-The resulting Traces would contain the actual contexts presented to the model.
-
-This allows behavioural differences associated with system-prompt conditions to be observed and reproduced rather than inadvertently introduced by Lumen itself.
-
----
+|                                                                                                                                                                  |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| \# 6. Research Significance                                                                                                                                      |
+| Making system-prompt handling configurable turns an existing hidden environmental condition into an explicit experimental variable.                              |
+| A researcher could deliberately execute equivalent experiments under:                                                                                            |
+| `text Experiment A — Client system prompt passed through Experiment B — Moderari default system prompt Experiment C — Controlled custom system prompt`           |
+| The resulting Traces would contain the actual contexts presented to the model.                                                                                   |
+| This allows behavioural differences associated with system-prompt conditions to be observed and reproduced rather than inadvertently introduced by Lumen itself. |
 
 # 7. External Research Distribution M0.1 Relevance
 
-Both requirements were identified while defining the first Lumen External Research Distribution.
+Both requirements were identified while defining the first Lumen
+External Research Distribution.
 
 The proposed research distribution includes:
 
@@ -909,40 +1197,56 @@ The proposed research distribution includes:
 - Nuntius
 - MongoDB
 
-The distribution is intended to be Dockerised and operate over a private Lumen Docker network.
+The distribution is intended to be Dockerised and operate over a private
+Lumen Docker network.
 
-For M0.1, the complete distribution is a **single-host installation**. All Lumen services and supporting services must run on the same host machine.
+For M0.1, the complete distribution is a **single-host installation**.
+All Lumen services and supporting services must run on the same host
+machine.
 
-Distributed multi-host operation is outside the M0.1 development and validation boundary, even though the service architecture may support network communication between components.
+Distributed multi-host operation is outside the M0.1 development and
+validation boundary, even though the service architecture may support
+network communication between components.
 
 Aestimare is explicitly **not included** in the research distribution.
 
-Consequently, researchers must be able to see the experimental structure and objective divergence evidence without relying upon Aestimare to interpret it.
+Consequently, researchers must be able to see the experimental structure
+and objective divergence evidence without relying upon Aestimare to
+interpret it.
 
-External researchers may bring their own clients, model providers and system prompts. Moderari must therefore allow the system-prompt policy to be controlled rather than silently altering an externally defined experimental condition.
+External researchers may bring their own clients, model providers and
+system prompts. Moderari must therefore allow the system-prompt policy
+to be controlled rather than silently altering an externally defined
+experimental condition.
 
 ### External Client Tool Responsibility
 
-When an external client is used, the external client is responsible for its own tool environment.
+When an external client is used, the external client is responsible for
+its own tool environment.
 
 This includes responsibility for:
 
 - declaring or exposing the tools available to the model;
-- providing any tool definitions required by the client/model interaction;
+- providing any tool definitions required by the client/model
+  interaction;
 - executing tool calls;
 - returning tool results into the continuing client/model interaction.
 
-Lumen does not prescribe or manage the external client's tool environment in M0.1.
+Lumen does not prescribe or manage the external client’s tool
+environment in M0.1.
 
-From Lumen's perspective, client-managed tools form part of the external client's execution environment.
+From Lumen’s perspective, client-managed tools form part of the external
+client’s execution environment.
 
-M0.1 therefore makes no claim of compatibility with, or responsibility for, arbitrary external-client tool implementations.
+M0.1 therefore makes no claim of compatibility with, or responsibility
+for, arbitrary external-client tool implementations.
 
 ### Rogare Tool Responsibility
 
 Rogare has no native tool environment.
 
-Where tool use is required, Rogare relies upon an external tool provider.
+Where tool use is required, Rogare relies upon an external tool
+provider.
 
 For M0.1:
 
@@ -951,10 +1255,12 @@ For M0.1:
 - Rogare uses the existing Lumen integration to access Pi;
 - alternative tool providers are not supported through Rogare in M0.1.
 
-Broader tool-provider discovery, configurable provider locations, multiple simultaneous providers and alternative tool-provider integrations remain outside the M0.1 scope unless separately validated and brought into the release.
+Broader tool-provider discovery, configurable provider locations,
+multiple simultaneous providers and alternative tool-provider
+integrations remain outside the M0.1 scope unless separately validated
+and brought into the release.
 
----
-
+------------------------------------------------------------------------
 
 # 8. Multi-Session Isolation Validation
 
@@ -962,52 +1268,64 @@ Broader tool-provider discovery, configurable provider locations, multiple simul
 
 M0.1 must be tested with more than one active Lumen session.
 
-The purpose of this investigation is to establish that transactions occurring within multiple concurrent sessions remain bounded to their originating session and that no session-specific conversational context, responses, Trace evidence or other session-specific state leaks between sessions.
+The purpose of this investigation is to establish that transactions
+occurring within multiple concurrent sessions remain bounded to their
+originating session and that no session-specific conversational context,
+responses, Trace evidence or other session-specific state leaks between
+sessions.
 
-Testing should verify that interactions initiated within one session remain associated with that session throughout the relevant Lumen execution path.
+Testing should verify that interactions initiated within one session
+remain associated with that session throughout the relevant Lumen
+execution path.
 
 ## 8.2 Execution-Condition Scope
 
-For M0.1, provider/model selection is runtime-global and becomes locked while any
-active execution session exists, while Moderari system-prompt policy is session scoped.
+For M0.1, provider/model selection is runtime-global and becomes locked
+while any active execution session exists, while Moderari system-prompt
+policy is session scoped.
 
-A successful Praebere model selection changes the provider/model used by subsequent
-model requests from all active sessions. By contrast, each established Moderari
-session retains its own active system-prompt policy and, where applicable, Applied
-Custom prompt state.
+A successful Praebere model selection changes the provider/model used by
+subsequent model requests from all active sessions. By contrast, each
+established Moderari session retains its own active system-prompt policy
+and, where applicable, Applied Custom prompt state.
 
-The M0.1 investigation must validate session isolation while preserving this explicit
-difference in scope.
+The M0.1 investigation must validate session isolation while preserving
+this explicit difference in scope.
 
-
----
-
+------------------------------------------------------------------------
 
 # 8.3 Vestigare — Active Session Selection and Recording Boundary
 
-Pontis is authoritative for session identity. Vestigare must bind an active Trace to
-one explicit Pontis `session_id`; it must not infer the recorded session from creation
-order, recency or activity.
+Pontis is authoritative for session identity. Vestigare must bind an
+active Trace to one explicit Pontis `session_id`; it must not infer the
+recorded session from creation order, recency or activity.
 
 M0.1 requires:
 
 - only one active Vestigare recording across the installation;
-- Trace Start to be unavailable/rejected when there are no active Lumen sessions;
+- Trace Start to be unavailable/rejected when there are no active Lumen
+  sessions;
 - the Vestigare UI to obtain/display eligible active Pontis sessions;
 - automatic explicit binding when exactly one eligible session exists;
-- researcher selection of the session to record when multiple eligible sessions exist;
-- the selected Pontis `session_id` to be persisted as the Trace session binding;
-- traffic from all unselected sessions to continue normally without entering the active Trace;
-- complete-session recording to begin before the selected session's first model interaction;
-- Trace Start to be rejected for a session that has already performed model interaction rather than silently creating an incomplete Trace.
+- researcher selection of the session to record when multiple eligible
+  sessions exist;
+- the selected Pontis `session_id` to be persisted as the Trace session
+  binding;
+- traffic from all unselected sessions to continue normally without
+  entering the active Trace;
+- complete-session recording to begin before the selected session’s
+  first model interaction;
+- Trace Start to be rejected for a session that has already performed
+  model interaction rather than silently creating an incomplete Trace.
 
-A later request may carry earlier conversational messages, but that cannot reconstruct
-all execution events and provenance that Vestigare failed to observe. M0.1 must not
-present a mid-session capture as a complete research Trace.
+A later request may carry earlier conversational messages, but that
+cannot reconstruct all execution events and provenance that Vestigare
+failed to observe. M0.1 must not present a mid-session capture as a
+complete research Trace.
 
 The normal supported sequence is:
 
-```text
+``` text
 client connects
     |
     v
@@ -1023,27 +1341,34 @@ Vestigare binds trace_id -> session_id
 first model interaction
 ```
 
-Explicit partial/mid-session Trace support and multiple simultaneous recordings remain
-future development.
-
+Explicit partial/mid-session Trace support and multiple simultaneous
+recordings remain future development.
 
 # 9. Nuntius / Servire — Common `\obt` Control Plane
 
 ## 9.1 Requirement
 
-M0.1 development should consolidate Lumen control commands around `\obt` and introduce **Lumen Nuntius** as the lightweight command-routing and response-distribution service.
+M0.1 development should consolidate Lumen control commands around `\obt`
+and introduce **Lumen Nuntius** as the lightweight command-routing and
+response-distribution service.
 
-Nuntius is foundational M0.1 infrastructure because Replay system-prompt fidelity, Praebere discovery/selection and other control operations require a common path.
+Nuntius is foundational M0.1 infrastructure because Replay system-prompt
+fidelity, Praebere discovery/selection and other control operations
+require a common path.
 
 The control plane should not require callers to know:
 
 - which service owns a command;
 - where that service is running;
-- whether a successful query response is required by another Lumen service.
+- whether a successful query response is required by another Lumen
+  service.
 
 The responsibility is divided deliberately:
 
-> **Servire defines the active control-plane topology. Nuntius materialises that topology into a runtime routing dictionary. Domain services execute their commands. Pontis owns external client/session return routing.**
+> **Servire defines the active control-plane topology. Nuntius
+> materialises that topology into a runtime routing dictionary. Domain
+> services execute their commands. Pontis owns external client/session
+> return routing.**
 
 ## 9.2 Existing Behaviour Must Be Reused
 
@@ -1053,41 +1378,45 @@ Before implementing Nuntius, inspect the existing `\obt` behaviour in:
 - Moderari;
 - Pontis.
 
-Establish the current command format, injection behaviour, response propagation, request/session correlation and Trace interaction.
+Establish the current command format, injection behaviour, response
+propagation, request/session correlation and Trace interaction.
 
-Nuntius should consolidate and generalise existing behaviour rather than introduce another incompatible mechanism.
+Nuntius should consolidate and generalise existing behaviour rather than
+introduce another incompatible mechanism.
 
 ## 9.3 Standard `\obt` Service Capability
 
-Participating Lumen services should expose a common lightweight `\obt` receiving contract.
+Participating Lumen services should expose a common lightweight `\obt`
+receiving contract.
 
 Servire configuration should include:
 
-```text
+``` text
 obt_enabled
 ```
 
 If:
 
-```text
+``` text
 obt_enabled = false
 ```
 
 the service control endpoint may immediately return:
 
-```text
+``` text
 204 No Content
 ```
 
-If enabled, the request is passed to the service's local `\obt` handler.
+If enabled, the request is passed to the service’s local `\obt` handler.
 
-An enabled service may still return `204` for an unrecognised or irrelevant command.
+An enabled service may still return `204` for an unrecognised or
+irrelevant command.
 
 ## 9.4 Response Contract
 
 The M0.1 control-plane response semantics are:
 
-```text
+``` text
 204 No Content
     Command not handled by this service.
 
@@ -1103,21 +1432,28 @@ The M0.1 control-plane response semantics are:
 
 The distinction between `200` with and without a body is intentional.
 
-A command such as model selection is an execution and may return `200` with no body.
+A command such as model selection is an execution and may return `200`
+with no body.
 
-A command such as model discovery is a request/query and returns `200` with a body.
+A command such as model discovery is a request/query and returns `200`
+with a body.
 
-For execution commands, `200` means the requested operation has been **successfully applied**, not merely that the command was received.
+For execution commands, `200` means the requested operation has been
+**successfully applied**, not merely that the command was received.
 
-This is especially important for commands that establish prerequisites for subsequent work. A caller may proceed only after the authoritative command owner has returned `200`.
+This is especially important for commands that establish prerequisites
+for subsequent work. A caller may proceed only after the authoritative
+command owner has returned `200`.
 
 ## 9.5 Servire as Control-Plane Configuration Authority
 
 Servire already describes and manages the operational service topology.
 
-M0.1 should extend the Servire service configuration so it can also describe the information Nuntius requires for routing.
+M0.1 should extend the Servire service configuration so it can also
+describe the information Nuntius requires for routing.
 
-For each active `\obt`-capable service, Servire should be able to describe:
+For each active `\obt`-capable service, Servire should be able to
+describe:
 
 - service identity;
 - service endpoint;
@@ -1127,7 +1463,7 @@ For each active `\obt`-capable service, Servire should be able to describe:
 
 Conceptually:
 
-```yaml
+``` yaml
 service: praebere
 obt_enabled: true
 
@@ -1143,7 +1479,8 @@ commands:
       - rogare
 ```
 
-The exact configuration representation should follow existing Servire conventions.
+The exact configuration representation should follow existing Servire
+conventions.
 
 Nuntius consumes this configuration but does not define the policy.
 
@@ -1151,19 +1488,20 @@ Nuntius consumes this configuration but does not define the policy.
 
 On startup Nuntius sends Servire a direct:
 
-```text
+``` text
 \obt services
 ```
 
 Servire returns the active control-plane catalogue.
 
-A successful response containing no active services is valid and represents a healthy Nuntius startup.
+A successful response containing no active services is valid and
+represents a healthy Nuntius startup.
 
 Nuntius materialises the response into an in-memory routing dictionary.
 
 Conceptually:
 
-```text
+``` text
 replay list
     owner: repetere
     response_targets:
@@ -1178,24 +1516,29 @@ models
 
 Servire remains authoritative.
 
-When Servire starts or stops a service, it sends a control-plane catalogue update through Pontis to Nuntius.
+When Servire starts or stops a service, it sends a control-plane
+catalogue update through Pontis to Nuntius.
 
-Nuntius must also be able to discard and rebuild its local dictionary from Servire.
+Nuntius must also be able to discard and rebuild its local dictionary
+from Servire.
 
 ## 9.7 Targeted Routing
 
-The normal M0.1 routing path should be targeted rather than broadcast-to-all.
+The normal M0.1 routing path should be targeted rather than
+broadcast-to-all.
 
 For example:
 
-```text
+``` text
 \obt replay list -> Repetere
 \obt models      -> Praebere
 ```
 
-This avoids unnecessary control-plane traffic and avoids sending potentially large query results to services that do not require them.
+This avoids unnecessary control-plane traffic and avoids sending
+potentially large query results to services that do not require them.
 
-`204` remains a useful common/defensive service response but should not be used as the normal mechanism for discovering command ownership.
+`204` remains a useful common/defensive service response but should not
+be used as the normal mechanism for discovering command ownership.
 
 ## 9.8 External Request/Response Routing
 
@@ -1203,7 +1546,7 @@ Pontis remains the external session bridge.
 
 For a client-originated command:
 
-```text
+``` text
 External Client
       |
       v
@@ -1220,7 +1563,7 @@ Pontis must preserve the client/session/request correlation.
 
 For a query response:
 
-```text
+``` text
 command owner
       |
       | 200 + body
@@ -1236,17 +1579,20 @@ originating client/session
 
 The boundary is:
 
-> **Pontis owns client/session correlation. Nuntius owns command/service routing and configured response distribution.**
+> **Pontis owns client/session correlation. Nuntius owns command/service
+> routing and configured response distribution.**
 
 ## 9.9 Shared Query Responses
 
-Some query results are required by the originating client and by another Lumen service.
+Some query results are required by the originating client and by another
+Lumen service.
 
-This requirement should be explicit in Servire configuration rather than inferred by Nuntius.
+This requirement should be explicit in Servire configuration rather than
+inferred by Nuntius.
 
 For example:
 
-```text
+``` text
 \obt models
 
 owner: Praebere
@@ -1257,7 +1603,7 @@ response_targets:
 
 The flow is:
 
-```text
+``` text
 External Client
       |
     Pontis
@@ -1278,17 +1624,22 @@ originating client
 
 Praebere remains authoritative for the model list.
 
-Nuntius transports the response but does not become an authoritative shared-state store.
+Nuntius transports the response but does not become an authoritative
+shared-state store.
 
-Response bodies should be sent only to configured consumers rather than broadcast to every active service.
+Response bodies should be sent only to configured consumers rather than
+broadcast to every active service.
 
 ## 9.10 Trace Boundary
 
-Nuntius traffic is control-plane traffic and must remain outside the normal ask/answer path.
+Nuntius traffic is control-plane traffic and must remain outside the
+normal ask/answer path.
 
-`\obt` commands must not appear as user/model conversational turns in Vestigare Trace records.
+`\obt` commands must not appear as user/model conversational turns in
+Vestigare Trace records.
 
-Where a command changes an execution condition, the resulting condition remains traceable.
+Where a command changes an execution condition, the resulting condition
+remains traceable.
 
 Examples include:
 
@@ -1298,35 +1649,57 @@ Examples include:
 
 The rule remains:
 
-> **Trace records the execution context and conditions that actually reached or affected the model, not the internal control message used to establish them.**
+> **Trace records the execution context and conditions that actually
+> reached or affected the model, not the internal control message used
+> to establish them.**
 
 ## 9.11 Replay System-Prompt Control
 
-Before Repetere replays a source Trace, it must use the common Nuntius path to instruct Moderari to use Pass-through for that replay session.
+Before Repetere replays a source Trace, it must use the common Nuntius
+path to instruct Moderari to use Pass-through for that replay session.
 
 The override must be session-scoped.
 
-This control command is synchronous from Repetere's perspective.
+This control command is synchronous from Repetere’s perspective.
 
-Nuntius must return Moderari's authoritative outcome to Repetere, and Repetere must receive `200 OK` before beginning the replay.
+Nuntius must return Moderari’s authoritative outcome to Repetere, and
+Repetere must receive `200 OK` before beginning the replay.
 
-The effective system prompt from the source Trace is then replayed unchanged.
+The effective system prompt from the source Trace is then replayed
+unchanged.
 
-If Nuntius cannot route the command, Moderari returns `204`, `4xx`, or `5xx`, or the request times out, Repetere must not start the model replay.
+If Nuntius cannot route the command, Moderari returns `204`, `4xx`, or
+`5xx`, or the request times out, Repetere must not start the model
+replay.
 
-This makes Nuntius a dependency of the M0.1 Replay fidelity requirement and makes positive command acknowledgement part of the Replay acceptance criteria.
+This makes Nuntius a dependency of the M0.1 Replay fidelity requirement
+and makes positive command acknowledgement part of the Replay acceptance
+criteria.
 
 ## 9.12 Praebere Discovery, Selection and Runtime Lifecycle
 
-**Implementation status (2026-09-04):** N9.1–N9.5 and N9.6.1 are complete. N9.6.2 is implemented with final acceptance evidence remaining. N9.6.3 is implemented with known closeout bugs/final lifecycle validation remaining. The full N9.6.4 provider-neutral readiness taxonomy is nice-to-have/post-M0.1.
+**Implementation status (2026-09-20):** N9.1–N9.6.3 are implemented and
+the M0.1 provider/runtime lifecycle has passed the current integrated
+clean-install baseline, including provider-loss cleanup and Praebere
+operational logging closeout. The full N9.6.4 provider-neutral readiness
+taxonomy remains nice-to-have/post-M0.1.
 
-Praebere is the first native adopter of the common Nuntius control path. Provider/model discovery and selection are live through the agreed control contract. Pontis is authoritative for session lifecycle and atomically owns the runtime-global model reservation; Praebere owns provider/model state, execution activation and any model residency that it caused.
+Praebere is the first native adopter of the common Nuntius control path.
+Provider/model discovery and selection are live through the agreed
+control contract. Pontis is authoritative for session lifecycle and
+atomically owns the runtime-global model reservation; Praebere owns
+provider/model state, execution activation and any model residency that
+it caused.
 
-For M0.1, Ollama is **external infrastructure**. It must already be available at the configured endpoint. Praebere verifies endpoint availability but must never start or stop the Ollama process. A configured model is an optional preferred model; absence of that model must not prevent Praebere startup.
+For M0.1, Ollama is **external infrastructure**. It must already be
+available at the configured endpoint. Praebere verifies endpoint
+availability but must never start or stop the Ollama process. A
+configured model is an optional preferred model; absence of that model
+must not prevent Praebere startup.
 
 The runtime lifecycle is:
 
-```text
+``` text
 connect / establish Pontis session
         |
         v
@@ -1354,49 +1727,75 @@ final active execution ends -> unload only Praebere-owned residency
 final reserving session ends -> Pontis releases model reservation
 ```
 
-A different model must be rejected while a reservation exists. Concurrent requests for different models must have one atomic winner. Clients update their displayed model only from Pontis-confirmed authoritative state.
+A different model must be rejected while a reservation exists.
+Concurrent requests for different models must have one atomic winner.
+Clients update their displayed model only from Pontis-confirmed
+authoritative state.
 
-Praebere persists selected provider/model state, residency ownership and active execution registrations and reconciles restart state against Pontis. Deferred release after Praebere unavailability must reconcile automatically and remain observable until complete.
+Praebere persists selected provider/model state, residency ownership and
+active execution registrations and reconciles restart state against
+Pontis. Deferred release after Praebere unavailability must reconcile
+automatically and remain observable until complete.
 
 ### Compact Praebere Operational UI
 
-M0.1 retains a compact Praebere-owned UI exposed through Servire. It must present the concrete authoritative state needed by an operator, including provider reachability, selected/preferred model, reservation/selection state, active executions, residency ownership and reconciliation/degraded state where applicable. It must provide only the bounded administration/recovery actions required by the M0.1 lifecycle.
+M0.1 retains a compact Praebere-owned UI exposed through Servire. It
+must present the concrete authoritative state needed by an operator,
+including provider reachability, selected/preferred model,
+reservation/selection state, active executions, residency ownership and
+reconciliation/degraded state where applicable. It must provide only the
+bounded administration/recovery actions required by the M0.1 lifecycle.
 
-The UI does **not** require implementation of the complete N9.6.4 `Selected / Available / Resident / Warmable / Ready / Degraded / Unavailable` abstraction before M0.1 release. That broader provider-neutral readiness contract is deferred as an architectural enhancement.
+The UI does **not** require implementation of the complete N9.6.4
+`Selected / Available / Resident / Warmable / Ready / Degraded / Unavailable`
+abstraction before M0.1 release. That broader provider-neutral readiness
+contract is deferred as an architectural enhancement.
 
-### N9 Closeout Remaining
+### N9 Closeout — SUBSTANTIALLY CLOSED
 
 Before N9 is closed for M0.1:
 
 - fix the known N9.6.3 closeout bugs;
-- complete the final N9.6.2/N9.6.3 lifecycle acceptance run and retain evidence;
+- complete the final N9.6.2/N9.6.3 lifecycle acceptance run and retain
+  evidence;
 - complete/validate the compact Praebere operational UI;
-- complete remaining execution/provenance evidence and quality gates required by the N9 closeout documents; and
+- complete remaining execution/provenance evidence and quality gates
+  required by the N9 closeout documents; and
 - reconcile final N9 documentation.
 
 ## 9.13 Operational Logging Boundary
 
-Servire provides an **Operations Log** giving the operator a consolidated view of meaningful operational activity across the Lumen services.
+Servire provides an **Operations Log** giving the operator a
+consolidated view of meaningful operational activity across the Lumen
+services.
 
-Nuntius command-routing and transport diagnostics must not be written into the normal Servire Operations Log.
+Nuntius command-routing and transport diagnostics must not be written
+into the normal Servire Operations Log.
 
-Nuntius should maintain its own diagnostic logging, exposed through the **Nuntius UI within Servire**, where command routing, responses, failures, timeouts and related control-plane activity can be inspected when required.
+Nuntius should maintain its own diagnostic logging, exposed through the
+**Nuntius UI within Servire**, where command routing, responses,
+failures, timeouts and related control-plane activity can be inspected
+when required.
 
 The intended boundary is:
 
 > **Servire Operations Log = operator-relevant Lumen activity.**  
-> **Nuntius diagnostics = internal control-command transport activity.**  
+> **Nuntius diagnostics = internal control-command transport activity.**
 
-One known exception remains in M0.1: Rogare currently polls for status updates, and this internal activity may appear in the Servire Operations Log and obscure more meaningful user activity.
+One known exception remains in M0.1: Rogare currently polls for status
+updates, and this internal activity may appear in the Servire Operations
+Log and obscure more meaningful user activity.
 
-Separating Rogare polling/internal activity from user-session operational activity is not required for M0.1 and remains future development.
-
+Separating Rogare polling/internal activity from user-session
+operational activity is not required for M0.1 and remains future
+development.
 
 ## 9.14 M0.1 Development Priority
 
-The original Nuntius/Praebere dependency sequence has substantially completed. The remaining priority is now:
+The original Nuntius/Praebere dependency sequence has substantially
+completed. The remaining priority is now:
 
-```text
+``` text
 1. Close the remaining N9.6.3 bugs and final N9 lifecycle validation.
 2. Complete the compact Praebere operational UI and N9 closeout evidence.
 3. Complete Repetere/Fiducia Experiment, nested-Trace and Replay-fidelity work.
@@ -1407,13 +1806,15 @@ The original Nuntius/Praebere dependency sequence has substantially completed. T
 8. Run complete M0.1 integration/regression/release acceptance and reconcile documentation.
 ```
 
-This establishes the control plane before extending the services that consume it.
+This establishes the control plane before extending the services that
+consume it.
 
----
+------------------------------------------------------------------------
 
 # 10. Servire — Runtime Authorization and Distribution Security
 
-M0.1 development must implement the trust boundary defined by **M0.1 Runtime Authorization and Code Protection**.
+M0.1 development must implement the trust boundary defined by **M0.1
+Runtime Authorization and Code Protection**.
 
 This is a release requirement, not a later commercial-licensing feature.
 
@@ -1423,28 +1824,38 @@ Each external installation must have:
 
 - a Distribution ID identifying the issued release artifact;
 - a Service Group UUID identifying the installed Lumen stack;
-- an installation-specific cryptographic public/private key pair or equivalent established asymmetric identity.
+- an installation-specific cryptographic public/private key pair or
+  equivalent established asymmetric identity.
 
 The Service Group UUID must not be accepted as proof of authorization.
 
-The installation private key must remain local to the installation and should use hardware-backed, operating-system-protected or encrypted local storage where available.
+The installation private key must remain local to the installation and
+should use hardware-backed, operating-system-protected or encrypted
+local storage where available.
 
-Illuminates.One must retain the corresponding registered public identity associated with the Service Group UUID and Distribution ID.
+Illuminates.One must retain the corresponding registered public identity
+associated with the Service Group UUID and Distribution ID.
 
 ## 10.2 Signed Runtime Authorization
 
-Servire must establish authorization with Illuminates.One over TLS/HTTPS.
+Servire must establish authorization with Illuminates.One over
+TLS/HTTPS.
 
 The exchange must provide attribution in both directions:
 
-- Servire signs or otherwise cryptographically authenticates the request using the installation identity;
+- Servire signs or otherwise cryptographically authenticates the request
+  using the installation identity;
 - Illuminates.One verifies the installation identity;
 - Illuminates.One returns a signed authorization assertion;
-- Servire verifies that assertion using distributed public verification material.
+- Servire verifies that assertion using distributed public verification
+  material.
 
-The authorization exchange must include freshness protection, including a cryptographically secure nonce or an equivalent established mechanism, so that a captured successful response cannot simply be replayed.
+The authorization exchange must include freshness protection, including
+a cryptographically secure nonce or an equivalent established mechanism,
+so that a captured successful response cannot simply be replayed.
 
-Established cryptographic standards and libraries must be used. M0.1 must not invent proprietary cryptography.
+Established cryptographic standards and libraries must be used. M0.1
+must not invent proprietary cryptography.
 
 ## 10.3 Authorization Lease and Heartbeat
 
@@ -1456,39 +1867,63 @@ Servire must:
 - renew authorization periodically;
 - tolerate bounded temporary connectivity failure;
 - enter a defined grace state where policy permits;
-- refuse continued authorised operation once the lease and grace period expire.
+- refuse continued authorised operation once the lease and grace period
+  expire.
 
-Deliberate heartbeat suppression and persistent inability to renew authorization must ultimately produce the same security outcome: the installation cannot continue indefinitely as an authorised Lumen runtime.
+Deliberate heartbeat suppression and persistent inability to renew
+authorization must ultimately produce the same security outcome: the
+installation cannot continue indefinitely as an authorised Lumen
+runtime.
 
-The exact lease and grace durations should remain server-side/configurable policy rather than hard-coded product constants.
+The exact lease and grace durations remain configurable policy rather
+than hard-coded product constants. The deliberately short
+development/test timings currently in use must be replaced with the
+agreed M0.1 distribution timings on **both Lumen and Illuminates.One**
+before the release is frozen.
 
 ## 10.4 Servire-Controlled Service Lifecycle
 
-For the external M0.1 runtime, Servire is the operational authority for the protected service group.
+For the external M0.1 runtime, Servire is the operational authority for
+the protected service group.
 
 Normal service startup must occur through Servire.
 
-Protected services must be capable of validating that startup was authorised by Servire, using a short-lived mechanism tied to the installation and service. The exact launch-authorization mechanism remains an implementation decision.
+Protected services must be capable of validating that startup was
+authorised by Servire, using a short-lived mechanism tied to the
+installation and service. The exact launch-authorization mechanism
+remains an implementation decision.
 
-A service must not inherit enough authority to start or authorize other protected services independently.
+A service must not inherit enough authority to start or authorize other
+protected services independently.
 
-Direct command-line startup may remain available in the development environment, but it is not a supported authorised external M0.1 execution path.
+Direct command-line startup may remain available in the development
+environment, but it is not a supported authorised external M0.1
+execution path.
 
 ## 10.5 Protected Runtime Configuration
 
-Protected operational configuration distributed with M0.1 must be encrypted at rest where appropriate.
+Protected operational configuration distributed with M0.1 must be
+encrypted at rest where appropriate.
 
-The distributed installation alone must not contain a permanent standalone secret sufficient to unlock all protected runtime configuration.
+The distributed installation alone must not contain a permanent
+standalone secret sufficient to unlock all protected runtime
+configuration.
 
-Valid Illuminates.One authorization must contribute to making protected configuration usable.
+Valid Illuminates.One authorization must contribute to making protected
+configuration usable.
 
-Where practical, decrypted configuration should exist only in process memory and should not be written back to persistent storage as plaintext.
+Where practical, decrypted configuration should exist only in process
+memory and should not be written back to persistent storage as
+plaintext.
 
-The precise key-derivation/envelope-encryption design requires implementation security review and must use established primitives.
+The precise key-derivation/envelope-encryption design requires
+implementation security review and must use established primitives.
 
 ## 10.6 Copy Resistance
 
-M0.1 must validate that copying the release artifact or installed filesystem does not automatically create another authorised installation.
+M0.1 must validate that copying the release artifact or installed
+filesystem does not automatically create another authorised
+installation.
 
 Possession of:
 
@@ -1501,11 +1936,13 @@ Possession of:
 
 must not, by itself, be sufficient for normal authorised operation.
 
-Where practical, the installation private identity should be OS- or hardware-bound so filesystem copying does not reproduce it.
+Where practical, the installation private identity should be OS- or
+hardware-bound so filesystem copying does not reproduce it.
 
 ## 10.7 Distributed Secrets
 
-The external distribution must not contain secrets whose security depends upon researchers being unable to inspect the distributed code.
+The external distribution must not contain secrets whose security
+depends upon researchers being unable to inspect the distributed code.
 
 In particular, it must not contain:
 
@@ -1522,54 +1959,79 @@ Public verification material may be distributed.
 M0.1 security acceptance requires demonstrating that:
 
 - a provisioned installation can authenticate to Illuminates.One;
-- Illuminates.One can authenticate the installation independently of its UUID;
-- Servire rejects an invalid, stale, mismatched or cryptographically unverifiable authorization;
-- a captured authorization response cannot simply be reused for a fresh challenge;
+- Illuminates.One can authenticate the installation independently of its
+  UUID;
+- Servire rejects an invalid, stale, mismatched or cryptographically
+  unverifiable authorization;
+- a captured authorization response cannot simply be reused for a fresh
+  challenge;
 - a valid authorization lease permits normal operation;
+- a genuinely clean Docker installation can create a fresh installation
+  identity, register it, obtain a signed lease and start the managed
+  Stack without relying on prior containers or volumes;
+- the final release uses the agreed non-test lease/renewal/grace timings
+  consistently on both Lumen and Illuminates.One;
 - temporary connectivity loss follows the defined lease/grace behaviour;
 - expired authorization prevents continued normal authorised operation;
 - protected services validate Servire-authorised startup;
-- unsupported direct startup does not constitute authorised external operation;
-- protected configuration is not normally available in plaintext at rest;
+- unsupported direct startup does not constitute authorised external
+  operation;
+- protected configuration is not normally available in plaintext at
+  rest;
 - copied installation material alone does not establish authorization;
-- distributed artifacts contain no Illuminates.One private authority or permanent master unlock secret;
-- the complete M0.1 distribution operates successfully as a single-host installation.
+- distributed artifacts contain no Illuminates.One private authority or
+  permanent master unlock secret;
+- the complete M0.1 distribution operates successfully as a single-host
+  installation.
 
-The implementation must also document the unavoidable boundary that software running on researcher-controlled hardware cannot be made absolutely tamper-proof.
+The implementation must also document the unavoidable boundary that
+software running on researcher-controlled hardware cannot be made
+absolutely tamper-proof.
 
----
+------------------------------------------------------------------------
 
 # 11. Explicitly Deferred from M0.1
 
-The following work has been identified but is not part of the M0.1 development requirement:
+The following work has been identified but is not part of the M0.1
+development requirement:
 
 ## Rogare Human Assessment
 
-Future Rogare capability to record independent 1–10 user ratings for answer correctness and answer quality, allowing later comparison with Aestimare assessment.
+Future Rogare capability to record independent 1–10 user ratings for
+answer correctness and answer quality, allowing later comparison with
+Aestimare assessment.
 
 ## Pontis Multiple Tool Providers
 
-Future investigation of multiple simultaneous tool providers, provider discovery, tool namespaces and a unified Pontis tool catalogue.
+Future investigation of multiple simultaneous tool providers, provider
+discovery, tool namespaces and a unified Pontis tool catalogue.
 
 M0.1 may retain a single-tool-provider limitation.
 
 ## Bounded Computational Resources Research
 
-Future controlled research into whether resource constraints alter observable model behaviour rather than merely response speed.
+Future controlled research into whether resource constraints alter
+observable model behaviour rather than merely response speed.
 
 ## Operational Log Classification
 
-Future Servire/Rogare work should distinguish user-session actions from internal polling, health, discovery and control-plane maintenance so the default operational view is not dominated by internal activity.
+Future Servire/Rogare work should distinguish user-session actions from
+internal polling, health, discovery and control-plane maintenance so the
+default operational view is not dominated by internal activity.
 
-This should not add `log_class` or equivalent metadata to the initial M0.1 Nuntius contract.
+This should not add `log_class` or equivalent metadata to the initial
+M0.1 Nuntius contract.
 
 ## Servire Single-Active-Operator Enforcement
 
-Required before unrestricted/general Research Distribution, but not required for M0.1.
+Required before unrestricted/general Research Distribution, but not
+required for M0.1.
 
-The intended mechanism is a single active Servire operator lease per installation, allowing legitimate remote operation while politely declining a second simultaneous operator.
+The intended mechanism is a single active Servire operator lease per
+installation, allowing legitimate remote operation while politely
+declining a second simultaneous operator.
 
----
+------------------------------------------------------------------------
 
 # 12. Internal M0.1 Acceptance Criteria
 
@@ -1585,44 +2047,71 @@ The intended mechanism is a single active Servire operator lease per installatio
 - Surface the first divergence point where available.
 - Keep divergence detection separate from behavioural assessment.
 - Replay the effective system prompt recorded in the source Trace.
-- Instruct Moderari to use Pass-through for the replay session before replay begins.
-- Require `200 OK` from Moderari before Replay sends any recorded model interaction.
-- Abort Replay on `204`, `4xx`, `5xx`, timeout, or unreachable prerequisite state.
-- Record prerequisite failure as `FAILED / INCOMPLETE` with the failure reason retained.
+- Instruct Moderari to use Pass-through for the replay session before
+  replay begins.
+- Require `200 OK` from Moderari before Replay sends any recorded model
+  interaction.
+- Abort Replay on `204`, `4xx`, `5xx`, timeout, or unreachable
+  prerequisite state.
+- Record prerequisite failure as `FAILED / INCOMPLETE` with the failure
+  reason retained.
 - Ensure the Replay Pass-through override is session-scoped.
 - Create a new isolated session for every Replay execution.
-- Ensure a Replay session is initialised only from the source Trace and explicitly defined experimental conditions.
-- Prevent context or temporary state produced by one Replay from entering another Replay run.
-- Verify the effective system prompt is present in a fresh Vestigare Trace.
-- Distinguish incoming client system-prompt provenance from the effective system prompt used by the model.
-- Preserve superseded incoming prompts as evidence while excluding them from Replay reconstruction.
+- Ensure a Replay session is initialised only from the source Trace and
+  explicitly defined experimental conditions.
+- Prevent context or temporary state produced by one Replay from
+  entering another Replay run.
+- Verify the effective system prompt is present in a fresh Vestigare
+  Trace.
+- Distinguish incoming client system-prompt provenance from the
+  effective system prompt used by the model.
+- Preserve superseded incoming prompts as evidence while excluding them
+  from Replay reconstruction.
 - Verify Replay reconstructs exactly one active effective system prompt.
 
 ## Moderari / Servire
 
-- Replace mandatory system-prompt replacement with a configurable policy.
+- Replace mandatory system-prompt replacement with a configurable
+  policy.
 - Support `Pass-through`.
 - Support `Moderari Default`.
 - Support `Custom`.
 - Treat `Custom` as an exact researcher-defined system-prompt condition.
-- Do not add, remove, rewrite, merge, normalise or augment the selected Custom prompt.
-- Do not carry tool instructions/descriptions from the removed client system prompt into the Custom prompt.
-- Keep tool availability separate from tool instructions contained in the Custom system prompt.
-- Require any desired tool-related system instructions to be explicitly included by the researcher in the Custom prompt.
-- Preserve current Moderari behaviour, including existing tool-related system-prompt processing, in `Moderari Default`.
-- Make the System Prompt Policy UI and runtime state a Moderari responsibility.
-- Expose Moderari's System Prompt Policy UI through the Moderari tab in Servire without making Servire the configuration intermediary.
-- Add a Custom system-prompt editor with explicit working-copy and applied-state visibility.
-- Require explicit `Apply` before editor contents affect Moderari runtime.
+- Do not add, remove, rewrite, merge, normalise or augment the selected
+  Custom prompt.
+- Do not carry tool instructions/descriptions from the removed client
+  system prompt into the Custom prompt.
+- Keep tool availability separate from tool instructions contained in
+  the Custom system prompt.
+- Require any desired tool-related system instructions to be explicitly
+  included by the researcher in the Custom prompt.
+- Preserve current Moderari behaviour, including existing tool-related
+  system-prompt processing, in `Moderari Default`.
+- Make the System Prompt Policy UI and runtime state a Moderari
+  responsibility.
+- Expose Moderari’s System Prompt Policy UI through the Moderari tab in
+  Servire without making Servire the configuration intermediary.
+- Add a Custom system-prompt editor with explicit working-copy and
+  applied-state visibility.
+- Require explicit `Apply` before editor contents affect Moderari
+  runtime.
 - Keep `Apply` separate from saved-prompt persistence.
-- Add saved named Custom system prompts in a dedicated MongoDB collection.
-- Add stable `prompt_id`, `owner_id` and `scope` fields to the M0.1 saved-prompt schema.
-- Provide explicit `Save As…`, `Update Saved` and `Delete Saved` operations.
-- Never implicitly overwrite a saved prompt merely because its loaded working copy was edited.
-- Ensure saved-prompt persistence operations do not silently alter the active Moderari runtime prompt.
-- Ensure Pass-through genuinely leaves client-provided system context unchanged.
-- Ensure Vestigare records the effective system prompt that actually reaches the model.
-- Where Moderari replaces a client system prompt, preserve the original as superseded provenance rather than active Replay context.
+- Add saved named Custom system prompts in a dedicated MongoDB
+  collection.
+- Add stable `prompt_id`, `owner_id` and `scope` fields to the M0.1
+  saved-prompt schema.
+- Provide explicit `Save As…`, `Update Saved` and `Delete Saved`
+  operations.
+- Never implicitly overwrite a saved prompt merely because its loaded
+  working copy was edited.
+- Ensure saved-prompt persistence operations do not silently alter the
+  active Moderari runtime prompt.
+- Ensure Pass-through genuinely leaves client-provided system context
+  unchanged.
+- Ensure Vestigare records the effective system prompt that actually
+  reaches the model.
+- Where Moderari replaces a client system prompt, preserve the original
+  as superseded provenance rather than active Replay context.
 
 ## Multi-Session Validation
 
@@ -1630,112 +2119,159 @@ The intended mechanism is a single active Servire operator lease per installatio
 - Verify session-state isolation across the stack.
 - Verify Trace ownership and execution evidence cannot cross sessions.
 - Verify configuration/control state remains correctly scoped.
-- Verify sequential and concurrent Replay runs use distinct isolated sessions.
-- Verify Pontis provides the authoritative `session_id` used for Vestigare Trace binding.
-- Verify Trace Start is unavailable/rejected when no active session exists.
-- Verify Vestigare displays/selects the sole eligible session when exactly one exists.
-- Verify Vestigare requires explicit session selection when multiple eligible sessions exist.
-- Verify Vestigare never selects a session implicitly from recency or activity.
-- Verify a Trace can start after session establishment but before that session's first model interaction.
-- Verify Trace Start is rejected once the selected session has already performed model interaction.
-- With multiple clients active, verify only traffic for the selected `session_id` enters the active Trace.
+- Verify sequential and concurrent Replay runs use distinct isolated
+  sessions.
+- Verify Pontis provides the authoritative `session_id` used for
+  Vestigare Trace binding.
+- Verify Trace Start is unavailable/rejected when no active session
+  exists.
+- Verify Vestigare displays/selects the sole eligible session when
+  exactly one exists.
+- Verify Vestigare requires explicit session selection when multiple
+  eligible sessions exist.
+- Verify Vestigare never selects a session implicitly from recency or
+  activity.
+- Verify a Trace can start after session establishment but before that
+  session’s first model interaction.
+- Verify Trace Start is rejected once the selected session has already
+  performed model interaction.
+- With multiple clients active, verify only traffic for the selected
+  `session_id` enters the active Trace.
 
 ## Nuntius / Pontis / Praebere / Servire
 
-- [x] Treat Nuntius as foundational M0.1 infrastructure and implement it early.
-- [x] Review existing Repetere, Moderari and Pontis `\obt` implementations.
+- [x] Treat Nuntius as foundational M0.1 infrastructure and implement it
+  early.
+- [x] Review existing Repetere, Moderari and Pontis `\obt`
+  implementations.
 - [x] Establish `\obt` as the common Lumen control-command language.
 - [x] Add a common `obt_enabled` service capability.
-- [x] Define `204`, `200` without body, `200` with body, and error semantics.
-- [ ] Extend Servire configuration with command ownership and query-response targets.
+- [x] Define `204`, `200` without body, `200` with body, and error
+  semantics.
+- [ ] Extend Servire configuration with command ownership and
+  query-response targets.
 - [x] Make Servire authoritative for the active control-plane topology.
 - [x] Bootstrap Nuntius directly from Servire using `\obt services`.
 - [x] Accept an empty Servire catalogue as healthy.
-- [x] Build an in-memory Nuntius routing dictionary from Servire configuration.
+- [x] Build an in-memory Nuntius routing dictionary from Servire
+  configuration.
 - [x] Keep the dictionary current as Servire starts/stops services.
-- [x] Route commands directly to configured owners rather than broadcasting normally.
+- [x] Route commands directly to configured owners rather than
+  broadcasting normally.
 - [x] Preserve external request/session correlation in Pontis.
-- [x] Return query results through Nuntius to Pontis and the correct originating client.
-- [ ] Deliver query response bodies only to additional services configured by Servire.
+- [x] Return query results through Nuntius to Pontis and the correct
+  originating client.
+- [ ] Deliver query response bodies only to additional services
+  configured by Servire.
 - [x] Keep Nuntius control traffic out of conversational Trace records.
 - [ ] Preserve resulting execution conditions in Trace.
 - [ ] Use the common path for Replay Pass-through control.
-- [ ] Return the authoritative Moderari execution result to Repetere and require positive acknowledgement before Replay proceeds.
-- [x] Use the common path for Praebere provider/model discovery and selection.
-- [x] Expose Pontis client-scoped session status/end/new commands and restricted
-  administrative list/end/force-close commands through the common control path.
-- [x] Provide the Pontis session-management UI and verify it displays authoritative
-  session, execution, in-flight and Praebere release state.
-- [x] Verify Rogare End Session, New Session, stop and restart close the current
-  Pontis session correctly.
-- [ ] Verify ending one activated session releases only its Praebere registration
-  and model selection unlocks only after the final active execution session ends.
-- [ ] Verify orphan cleanup is explicit, restricted, confirmed, idempotent and
-  audited; idle time alone must not close a session.
-- [ ] Verify Praebere persists execution-lock state across restart and reconciles
-  it against Pontis before selection changes resume.
-- [ ] Defer operational-log user/internal classification from the initial M0.1 control-plane implementation.
+- [ ] Return the authoritative Moderari execution result to Repetere and
+  require positive acknowledgement before Replay proceeds.
+- [x] Use the common path for Praebere provider/model discovery and
+  selection.
+- [x] Expose Pontis client-scoped session status/end/new commands and
+  restricted administrative list/end/force-close commands through the
+  common control path.
+- [x] Provide the Pontis session-management UI and verify it displays
+  authoritative session, execution, in-flight and Praebere release
+  state.
+- [x] Verify Rogare End Session, New Session, stop and restart close the
+  current Pontis session correctly.
+- [ ] Verify ending one activated session releases only its Praebere
+  registration and model selection unlocks only after the final active
+  execution session ends.
+- [ ] Verify orphan cleanup is explicit, restricted, confirmed,
+  idempotent and audited; idle time alone must not close a session.
+- [ ] Verify Praebere persists execution-lock state across restart and
+  reconciles it against Pontis before selection changes resume.
+- [ ] Defer operational-log user/internal classification from the
+  initial M0.1 control-plane implementation.
 
+**N9 closeout status:** N9.1–N9.5 and N9.6.1 are complete. N9.6.2 is
+implemented pending final acceptance evidence. N9.6.3 is implemented
+pending known bug fixes and final lifecycle validation. N9.6.4 full
+provider-neutral readiness taxonomy is deferred to
+nice-to-have/post-M0.1. The compact Praebere operational UI remains
+required. \## Servire / Runtime Authorization Security
 
-
-**N9 closeout status:** N9.1–N9.5 and N9.6.1 are complete. N9.6.2 is implemented pending final acceptance evidence. N9.6.3 is implemented pending known bug fixes and final lifecycle validation. N9.6.4 full provider-neutral readiness taxonomy is deferred to nice-to-have/post-M0.1. The compact Praebere operational UI remains required.
-## Servire / Runtime Authorization Security
-
-- Establish Distribution ID, Service Group UUID and installation cryptographic identity.
-- Treat the Service Group UUID as an identifier, not an authentication secret.
-- Authenticate Servire authorization requests using the installation identity.
+- Establish Distribution ID, Service Group UUID and installation
+  cryptographic identity.
+- Treat the Service Group UUID as an identifier, not an authentication
+  secret.
+- Authenticate Servire authorization requests using the installation
+  identity.
 - Verify Illuminates.One signed authorization independently of TLS.
 - Protect authorization freshness with nonce/challenge semantics.
 - Implement time-limited authorization lease, renewal, grace and expiry.
-- Prevent indefinite authorised operation after heartbeat/authorization loss.
+- Prevent indefinite authorised operation after heartbeat/authorization
+  loss.
 - Make Servire the supported external service-lifecycle authority.
 - Require protected services to validate Servire-authorised startup.
-- Protect operational configuration at rest and couple normal unlock/use to valid authorization.
-- Prevent copied release material alone from establishing an authorised installation.
-- Keep Illuminates.One private authority and permanent master unlock secrets out of the distribution.
-- Validate and document the boundary that source-distributed software on third-party hardware is not absolutely tamper-proof.
+- Protect operational configuration at rest and couple normal unlock/use
+  to valid authorization.
+- Prevent copied release material alone from establishing an authorised
+  installation.
+- Keep Illuminates.One private authority and permanent master unlock
+  secrets out of the distribution.
+- Validate and document the boundary that source-distributed software on
+  third-party hardware is not absolutely tamper-proof.
 
 ## 12.1 Replay Prerequisite Acceptance
 
-Replay system-prompt fidelity is not accepted merely because the Pass-through command can be sent.
+Replay system-prompt fidelity is not accepted merely because the
+Pass-through command can be sent.
 
 Acceptance requires demonstrating that:
 
-- Repetere sends the session-scoped Pass-through command through Nuntius;
+- Repetere sends the session-scoped Pass-through command through
+  Nuntius;
 - Moderari returns `200 OK` only after the change has been applied;
 - Nuntius returns that authoritative result to Repetere;
 - Repetere does not begin replay until the `200` is received;
-- `204`, `4xx`, `5xx`, timeout, and unreachable cases prevent Replay from starting;
+- `204`, `4xx`, `5xx`, timeout, and unreachable cases prevent Replay
+  from starting;
 - the failed run is represented as `FAILED / INCOMPLETE`;
-- another active session's Moderari policy remains unchanged;
+- another active session’s Moderari policy remains unchanged;
 - each Replay run is created in a new session;
-- no prior Replay context/state is present in a subsequent Replay session;
-- the Replay session contains only source-Trace context and explicitly established execution conditions;
-- a replaced incoming system prompt remains visible as provenance but is excluded from Replay model context;
+- no prior Replay context/state is present in a subsequent Replay
+  session;
+- the Replay session contains only source-Trace context and explicitly
+  established execution conditions;
+- a replaced incoming system prompt remains visible as provenance but is
+  excluded from Replay model context;
 - exactly one effective system prompt is reconstructed for Replay;
-- a deliberately system-prompt-sensitive validation demonstrates that duplicate/incorrect system prompts are not being sent to the model.
+- a deliberately system-prompt-sensitive validation demonstrates that
+  duplicate/incorrect system prompts are not being sent to the model.
 
-
----
+------------------------------------------------------------------------
 
 # 13. Architectural Principle
 
 These requirements preserve a broader Lumen principle:
 
-> **Experimental conditions should be explicit, reproducible and observable. Lumen should record what happened without unnecessarily altering the conditions being investigated.**
+> **Experimental conditions should be explicit, reproducible and
+> observable. Lumen should record what happened without unnecessarily
+> altering the conditions being investigated.**
 
-Repetere and Fiducia establish the relationship between an observation and its controlled repetitions.
+Repetere and Fiducia establish the relationship between an observation
+and its controlled repetitions.
 
-Repetere reproduces the effective system context recorded in the source Trace rather than substituting current configuration.
+Repetere reproduces the effective system context recorded in the source
+Trace rather than substituting current configuration.
 
 Moderari determines how system-level context is handled.
 
 Praebere determines the model/provider execution environment.
 
-Servire remains authoritative for operational service state and defines the active control-plane routing configuration.
+Servire remains authoritative for operational service state and defines
+the active control-plane routing configuration.
 
-Nuntius materialises that configuration into runtime command and response routing without acquiring domain knowledge.
+Nuntius materialises that configuration into runtime command and
+response routing without acquiring domain knowledge.
 
 Vestigare records the execution that actually occurred.
 
-Aestimare, when present in the commercial Lumen distribution, can subsequently assess the behavioural evidence produced by those experiments.
+Aestimare, when present in the commercial Lumen distribution, can
+subsequently assess the behavioural evidence produced by those
+experiments.
