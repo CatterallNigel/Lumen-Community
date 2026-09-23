@@ -2,11 +2,10 @@
 
 ## Document Revision History
 
-  -----------------------------------------------------------------------
+  -----------------------------------------------------------------------------
   Version           Date              Author            Description
-  ----------------- ----------------- ----------------- -----------------
-  1.0               2026-08-23        Nigel Catterall   First reviewed
-                                                        release
+  ----------------- ----------------- ----------------- -----------------------
+  1.0               2026-08-23        Nigel Catterall   First reviewed release
 
   1.1               2026-08-26        Nigel Catterall   Added Nuntius
                                                         control/event
@@ -15,19 +14,20 @@
                                                         migration
 
   1.2               2026-08-26        Nigel Catterall   Added future
-                                                        multi-session
-                                                        Trace recording
-                                                        capability
+                                                        multi-session Trace
+                                                        recording capability
 
   1.3               2026-08-26        Nigel Catterall   Added Rogare control
                                                         error presentation
                                                         polish and optional
-                                                        \obt Easter Eggs
+                                                        `\obt `{=tex}Easter
+                                                        Eggs
 
   1.4               2026-08-27        Nigel Catterall   Added explicit legacy
                                                         Moderari/backchannel
-                                                        compatibility retirement
-                                                        to Nuntius consolidation
+                                                        compatibility
+                                                        retirement to Nuntius
+                                                        consolidation
 
   1.5               2026-08-27        Nigel Catterall   Recorded M0.1 decision
                                                         to disable the Moderari
@@ -35,26 +35,49 @@
                                                         announcement and defer
                                                         its future purpose
 
-  1.6               2026-08-27        Nigel Catterall   Deferred direct \obt
-                                                        Custom policy selection
-                                                        while preserving generic
+  1.6               2026-08-27        Nigel Catterall   Deferred direct
+                                                        `\obt`{=tex} Custom
+                                                        policy selection while
+                                                        preserving generic
                                                         policy status reporting
 
   1.7               2026-08-28        Nigel Catterall   Added Rogare dynamic
-                                                        \obt command discovery
-                                                        and command-picker UX
+                                                        `\obt `{=tex}command
+                                                        discovery and
+                                                        command-picker UX
 
-   1.8               2026-08-30        Nigel Catterall   Defined M0.1 provider/model
-                                                        selection as runtime-global
-                                                        and retained per-session
-                                                        provider/model selection as
-                                                        future development
+  1.8               2026-08-30        Nigel Catterall   Defined M0.1
+                                                        provider/model
+                                                        selection as
+                                                        runtime-global and
+                                                        retained per-session
+                                                        provider/model
+                                                        selection as future
+                                                        development
 
-   1.9               2026-09-04        Nigel Catterall   Recorded the disabled legacy
-                                                        Moderari provider/model startup
-                                                        validation and deferred the
-                                                        removal decision
-  -----------------------------------------------------------------------
+  1.9               2026-09-04        Nigel Catterall   Recorded the disabled
+                                                        legacy Moderari
+                                                        provider/model startup
+                                                        validation and deferred
+                                                        the removal decision
+                                                        Reconciled post-M0.1
+                                                        work identified during
+                                                        release closeout:
+                                                        lease-derived
+                                                        authorization renewal,
+                                                        authorization/privacy
+                                                        documentation,
+                                                        HTTPS/remote UI, OCI
+                                                        distribution, Replay
+                                                        hardening,
+                                                        provider/tool evolution
+                                                        and release-update
+                                                        handling Added Nuntius
+                                                        catalogue-driven
+                                                        listener fan-out for
+                                                        internal control and
+                                                        lifecycle events
+  -----------------------------------------------------------------------------
 
 **Status:** Living Document\
 **Purpose:** Index of accepted future development that is intentionally
@@ -78,6 +101,130 @@ requirements and acceptance criteria.
 
 ------------------------------------------------------------------------
 
+## Runtime Authorization --- Lease-Derived Renewal Scheduling
+
+**Area:** Servire / Illuminates.One Authorization\
+**Document:**
+`LUMEN_M0.1_RUNTIME_AUTHORIZATION_AND_CODE_PROTECTION_RELEASE_POSITION.md`
+/ future authorization extension
+
+Replace Servire's independently configured normal renewal interval with
+a schedule derived from the authorization lease issued by
+Illuminates.One. The authorization authority remains authoritative for
+lease duration; Servire calculates an appropriate renewal point from
+that lease rather than embedding a release-specific normal-refresh
+interval.
+
+The initial target policy is to renew at approximately one quarter of
+the issued lease duration. For example, a 24-hour lease would normally
+cause Servire to attempt renewal after approximately 6 hours.
+Failure/retry policy remains a separate concern and must continue to
+allow controlled recovery from temporary connectivity or authority
+failure.
+
+This is deliberately post-M0.1. M0.1 retains the validated fixed release
+configuration so that release closeout does not change authorization
+scheduling semantics.
+
+## Runtime Authorization --- Researcher-Facing Privacy Statement
+
+**Area:** Illuminates.One / Servire / Distribution / Documentation\
+**Document:** Future Illuminates.One privacy and authorization
+documentation
+
+Provide a concise researcher-facing privacy statement describing the
+technical information used for registration and periodic licence
+authorization, its purpose and applicable retention policy. The
+statement should distinguish data deliberately sent by Lumen from
+ordinary transport/server information observed by Illuminates.One.
+
+This documentation must remain separate from the Research Licence and
+from private authorization/security design material. It should not
+expose implementation details that are unnecessary for a researcher to
+understand what information is communicated and why.
+
+## Distribution --- HTTPS for Remote Operator Access
+
+**Area:** HAProxy / Servire / Distribution / Browser Access\
+**Document:** M0.1 External Research Distribution limitations / future
+distribution-security design
+
+Add a supported HTTPS/TLS path for operator-facing browser access when
+Lumen is accessed remotely or across a LAN. M0.1 deliberately supports
+the local loopback browser path and does not claim plain-HTTP LAN access
+as a complete secure browser experience.
+
+Future work should define certificate provisioning, trust,
+hostname/address handling and HAProxy termination without unnecessarily
+exposing internal Lumen services. This should also remove browser
+restrictions such as blocked downloads from insecure non-loopback
+origins.
+
+## Distribution --- OCI Registry and Managed Release Delivery
+
+**Area:** Illuminates.One / Docker / Distribution\
+**Document:** Future Lumen distribution architecture
+
+Move beyond the pragmatic M0.1 downloadable Docker-image archive toward
+a proper OCI-compatible distribution mechanism when repeated external
+releases justify it. The future mechanism should support immutable
+release identity, integrity verification, controlled availability and a
+clean upgrade path without requiring researchers to build Lumen from
+source.
+
+This should be designed together with release/update notification rather
+than introducing a registry solely as infrastructure for its own sake.
+
+## Replay --- Deferred Negative and Recovery-Path Hardening
+
+**Area:** Repetere / Fiducia / Pontis / Praebere / Vestigare / Servire\
+**Document:** M0.1 Replay Outstanding Work / post-M0.1 acceptance
+extension
+
+Carry forward the prerequisite negative-path matrix and recovery-path
+acceptance work deliberately deferred at M0.1 release closeout. These
+checks are not M0.1 release blockers, but should be incorporated into
+later hardening/regression acceptance so failure and recovery behaviour
+remains explicit as Replay evolves.
+
+The work should concentrate on reproducible failure conditions,
+convergent cleanup, retained experimental evidence and recovery without
+stale session, model-reservation or recording state.
+
+## Provider Discovery --- Automatic Catalogue Reconciliation
+
+**Area:** Praebere / Ollama / Provider Discovery\
+**Document:** Future provider-discovery architecture
+
+Consider extending Praebere's automatic provider-health detection so
+that provider recovery can optionally reconcile the available model
+catalogue without requiring an explicit **Refresh Models** action.
+Provider availability and model-catalogue authority must remain distinct
+concepts: successful health recovery alone must not silently imply that
+a previously cached catalogue is current unless reconciliation has
+actually succeeded.
+
+Any automatic refresh policy should preserve the existing fail-safe rule
+that a failed discovery does not silently replace the last known-good
+catalogue with an empty or partial result.
+
+## Tool Integration --- Provider-Neutral Rogare Tool Boundary
+
+**Area:** Rogare / Pontis / Tool Integration / Distribution\
+**Document:** Future Rogare tool-provider architecture
+
+Generalise the M0.1 Rogare tool path beyond its validated Pi plus
+`pi-acp` integration. Tool providers should remain external to Lumen's
+reasoning and recording responsibilities, with a provider-neutral
+boundary that can support alternative implementations without embedding
+one provider's lifecycle or protocol assumptions throughout Rogare or
+Pontis.
+
+Future work should define provider discovery, capability description,
+connection lifecycle, failure semantics and how tool-provider identity
+is represented in execution provenance where it materially affects the
+experimental condition.
+
 ## Fiducia --- Experiment-Scoped Moderari Execution Policy
 
 **Area:** Fiducia / Moderari / Repetere / Nuntius\
@@ -95,11 +242,11 @@ lifecycle.
 **Area:** Servire / Illuminates.One Authorization / Distribution\
 **Document:** M0.1 runtime authorization architecture (future extension)
 
-Allow the periodic runtime-authorization/heartbeat exchange to report
-that a newer Lumen release is available for the authorised installation.
-The future mechanism should distinguish an update that is merely
-available from one that is recommended or required, and may also
-indicate when updated licence terms apply.
+Allow the periodic licence-authorization exchange to report that a newer
+Lumen release is available for the authorised installation. The future
+mechanism should distinguish an update that is merely available from one
+that is recommended or required, and may also indicate when updated
+licence terms apply.
 
 The exact update-notification protocol, version policy, acceptance flow,
 upgrade mechanics, and enforcement behaviour are intentionally not
@@ -157,9 +304,10 @@ experimental framework for behavioural assessment.
 Validation / future extension
 
 Extend concurrent-session support so that individual active sessions may
-independently select and retain their own provider and model without affecting
-other sessions. Moderari system-prompt policy is already session scoped in M0.1
-and therefore does not need to wait for this future provider/model work.
+independently select and retain their own provider and model without
+affecting other sessions. Moderari system-prompt policy is already
+session scoped in M0.1 and therefore does not need to wait for this
+future provider/model work.
 
 Future development must define how these execution conditions are
 scoped, bound to session identity, changed safely during session
@@ -168,10 +316,46 @@ required configuration ownership, locking or isolation semantics across
 Moderari, Praebere and the wider Lumen control path.
 
 The M0.1 rule remains deliberately simpler for provider/model state:
-Praebere maintains one runtime-global provider/model selection shared by all
-active sessions. A model change therefore affects subsequent model requests
-from every session. Moderari system-prompt policy is a separate execution
-condition and is already session scoped in M0.1.
+Praebere maintains one runtime-global provider/model selection shared by
+all active sessions. A model change therefore affects subsequent model
+requests from every session. Moderari system-prompt policy is a separate
+execution condition and is already session scoped in M0.1.
+
+## Nuntius --- Catalogue-Driven Listener Fan-Out
+
+**Area:** Nuntius / Servire / Pontis / Internal Control Messaging\
+**Document:** Future Nuntius control-plane fan-out design
+
+Implement the listener fan-out capability already represented in the
+Servire service catalogue and retained by Nuntius. Services may declare
+`listeners` in the catalogue, but Nuntius currently records and exposes
+that relationship without distributing a control/event message to those
+listeners.
+
+The future implementation should allow an originating service to emit
+one authoritative internal lifecycle or state event to Nuntius. Nuntius
+then uses the current Servire catalogue to deliver appropriately
+addressed copies to every configured listener, preserving the
+originating `session_id`, request correlation and event meaning. The
+originating service must not need to know or hard-code each consumer.
+
+A motivating example is Pontis session termination. Rather than Pontis
+separately sending service-specific termination notifications to
+Moderari and Rogare, Pontis should emit one session-termination event
+and Nuntius should fan it out according to Pontis's configured
+listeners. This keeps service topology and subscription ownership in the
+Servire catalogue and message distribution in Nuntius.
+
+Fan-out must attempt delivery to all configured listeners even when one
+listener fails. Individual delivery results must remain observable and
+correlated with the parent event so that partial delivery is diagnosable
+without turning the originating service into the distribution
+coordinator.
+
+This is deliberately deferred from M0.1. The current direct
+notifications may remain as the release-safe implementation until
+generic Nuntius fan-out, delivery semantics, failure handling and
+diagnostics are defined and accepted.
 
 ## Nuntius --- Unified Internal Control, Event and Status Messaging
 
@@ -199,100 +383,114 @@ behaviour, and what minimal Nuntius activity---if any---should remain
 visible in Servire Operational Logs. The migration should be incremental
 and should not alter the ordinary ask/answer model path.
 
-As part of this consolidation, retain the historical Moderari compatibility
-handling defensively while supported callers may still depend upon it, but treat
-Nuntius as the authoritative path for explicit external `\obt` control traffic.
-Once remaining historical backchannel/status traffic has migrated to Nuntius,
-remove the obsolete Moderari conversational/backchannel interception and
-compatibility implementation as part of the same cleanup rather than as an
-isolated change.
+As part of this consolidation, retain the historical Moderari
+compatibility handling defensively while supported callers may still
+depend upon it, but treat Nuntius as the authoritative path for explicit
+external `\obt` control traffic. Once remaining historical
+backchannel/status traffic has migrated to Nuntius, remove the obsolete
+Moderari conversational/backchannel interception and compatibility
+implementation as part of the same cleanup rather than as an isolated
+change.
 
-Before retirement, validate that retained compatibility handling cannot cause
-duplicate command execution and cannot leak historical `[Lumen Command]` or
-other operational/backchannel traffic into external-client conversational
-output, model context, or conversational Trace. The compatibility path is not an
-M0.1 usability blocker provided these safety properties hold.
+Before retirement, validate that retained compatibility handling cannot
+cause duplicate command execution and cannot leak historical
+`[Lumen Command]` or other operational/backchannel traffic into
+external-client conversational output, model context, or conversational
+Trace. The compatibility path is not an M0.1 usability blocker provided
+these safety properties hold.
 
 ## Moderari --- Informational Command Announcement
 
 **Area:** Moderari / External Clients / Nuntius / Control UX\
-**Document:** N7+ --- Moderari System-Prompt Policy / future Moderari control UX
+**Document:** N7+ --- Moderari System-Prompt Policy / future Moderari
+control UX
 
-The historical Moderari informational announcement that identifies the Moderari
-version and explains that commands beginning with `\obt` are handled by Lumen is
-deliberately **disabled for M0.1**.
+The historical Moderari informational announcement that identifies the
+Moderari version and explains that commands beginning with `\obt` are
+handled by Lumen is deliberately **disabled for M0.1**.
 
-Testing during N7+ showed inconsistent client-visible presentation: the announcement
-could appear in Pi after a clean Moderari start while Rogare did not present it, and
-later sessions did not necessarily receive it. The important control-boundary
-validation found no `\obt` command leakage into ordinary model execution. Continuing
-to investigate the presentation behaviour is therefore not justified for M0.1.
+Testing during N7+ showed inconsistent client-visible presentation: the
+announcement could appear in Pi after a clean Moderari start while
+Rogare did not present it, and later sessions did not necessarily
+receive it. The important control-boundary validation found no `\obt`
+command leakage into ordinary model execution. Continuing to investigate
+the presentation behaviour is therefore not justified for M0.1.
 
-For M0.1 the preferred behaviour is deterministic absence: external clients should
-not receive this unsolicited informational announcement. The underlying implementation
-should be disabled rather than treated as a required M0.1 feature.
+For M0.1 the preferred behaviour is deterministic absence: external
+clients should not receive this unsolicited informational announcement.
+The underlying implementation should be disabled rather than treated as
+a required M0.1 feature.
 
-Future development may reconsider whether an equivalent message has a useful,
-well-defined purpose, such as explicit client capability discovery, session metadata,
-or control-path guidance. Any reintroduction must define its lifecycle and scope
-clearly and must preserve the architectural rule that operational/control information
+Future development may reconsider whether an equivalent message has a
+useful, well-defined purpose, such as explicit client capability
+discovery, session metadata, or control-path guidance. Any
+reintroduction must define its lifecycle and scope clearly and must
+preserve the architectural rule that operational/control information
 cannot become model prompt or conversational context.
 
-This item is therefore **closed for M0.1 by deliberate disablement**, with any
-redesign or reintroduction deferred to future development.
+This item is therefore **closed for M0.1 by deliberate disablement**,
+with any redesign or reintroduction deferred to future development.
 
 ## Moderari --- Legacy Provider and Model Startup Validation Removal
 
 **Area:** Moderari / Praebere / Provider Readiness / Startup Lifecycle\
-**Document:** Praebere N9.6 Runtime and Readiness Reconciliation Mini-Roadmap
+**Document:** Praebere N9.6 Runtime and Readiness Reconciliation
+Mini-Roadmap
 
-Moderari historically checked Ollama availability, enumerated the configured model
-and optionally sent a live chat-completion probe during startup. This originated in
-the earlier OBT architecture, when Moderari was responsible for validating and warming
-its configured model. The live probe could load that model with long-lived residency
-before any Lumen session performed an ask.
+Moderari historically checked Ollama availability, enumerated the
+configured model and optionally sent a live chat-completion probe during
+startup. This originated in the earlier OBT architecture, when Moderari
+was responsible for validating and warming its configured model. The
+live probe could load that model with long-lived residency before any
+Lumen session performed an ask.
 
-N9.6 assigns provider availability, model discovery and model residency to Praebere.
-Moderari's provider/model startup checks are therefore deliberately disabled for M0.1.
-The implementation remains present behind the disabled
-`startup_validation.provider_model_checks_enabled` compatibility flag, while Moderari
-continues to validate only its configuration, filesystem and MongoDB dependencies.
+N9.6 assigns provider availability, model discovery and model residency
+to Praebere. Moderari's provider/model startup checks are therefore
+deliberately disabled for M0.1. The implementation remains present
+behind the disabled `startup_validation.provider_model_checks_enabled`
+compatibility flag, while Moderari continues to validate only its
+configuration, filesystem and MongoDB dependencies.
 
-A future development decision must determine whether to remove the retained provider
-and model validation code, its configuration fields and related tests completely, or
-whether a provider-neutral diagnostic use remains valid outside the normal startup
-lifecycle. Any retained diagnostic must be explicitly invoked, must not establish
-provider authority, and must not load, warm or alter model residency implicitly.
+A future development decision must determine whether to remove the
+retained provider and model validation code, its configuration fields
+and related tests completely, or whether a provider-neutral diagnostic
+use remains valid outside the normal startup lifecycle. Any retained
+diagnostic must be explicitly invoked, must not establish provider
+authority, and must not load, warm or alter model residency implicitly.
 
-The earlier orphaned `llama-server` observations may have been contributed to by this
-legacy live startup probe and its long-lived model residency. That historical cause no
-longer affects the M0.1 architecture because Ollama is externally operated and Moderari
-no longer probes it during startup.
+The earlier orphaned `llama-server` observations may have been
+contributed to by this legacy live startup probe and its long-lived
+model residency. That historical cause no longer affects the M0.1
+architecture because Ollama is externally operated and Moderari no
+longer probes it during startup.
 
 ## Moderari --- Direct `\\obt` Selection of Custom System-Prompt Policy
 
 **Area:** Moderari / Nuntius / System-Prompt Policy / Control UX\
 **Document:** Future Moderari system-prompt control design
 
-M0.1 provides direct `\\obt` switching between the existing **Default** system-prompt
-policy and **Pass-through**, together with `\\obt moderari prompt status` to report the
-currently active policy mode.
+M0.1 provides direct `\\obt` switching between the existing **Default**
+system-prompt policy and **Pass-through**, together with
+`\\obt moderari prompt status` to report the currently active policy
+mode.
 
-Direct command selection of **Custom** is intentionally deferred. A future command may
-provide an equivalent capability such as:
+Direct command selection of **Custom** is intentionally deferred. A
+future command may provide an equivalent capability such as:
 
-```text
+``` text
 \\obt moderari prompt custom
 ```
 
-but it should only be introduced once Custom prompt selection, saved-prompt identity,
-working-copy state and application semantics are sufficiently defined that a command
-cannot select an ambiguous or unintended prompt.
+but it should only be introduced once Custom prompt selection,
+saved-prompt identity, working-copy state and application semantics are
+sufficiently defined that a command cannot select an ambiguous or
+unintended prompt.
 
-The policy-status contract should not need to change when this capability is added.
-`\\obt moderari prompt status` should always report only the active **mode** ---
-`default`, `pass-through`, or `custom` --- and should not expose which saved Custom
-prompt is selected or reveal the Custom prompt's contents.
+The policy-status contract should not need to change when this
+capability is added. `\\obt moderari prompt status` should always report
+only the active **mode** --- `default`, `pass-through`, or `custom` ---
+and should not expose which saved Custom prompt is selected or reveal
+the Custom prompt's contents.
 
 ## Vestigare --- Concurrent Session-Bound Trace Recordings
 
@@ -328,7 +526,6 @@ recovery after client/service failure, UI representation of multiple
 active recordings, and how Repetere selects and replays each resulting
 session-bound Trace independently.
 
-
 ## Rogare / Nuntius --- Dynamic `\obt` Command Discovery and Picker
 
 **Area:** Rogare / Nuntius / `\obt` Services / Control UX\
@@ -344,16 +541,16 @@ The command list must be discovered dynamically rather than duplicated
 as a hard-coded Rogare or Nuntius catalogue. Nuntius already knows the
 active `\obt`-capable services and enough routing information to address
 them, while each service remains authoritative for the commands it owns.
-Discovery should therefore use the service control path: Nuntius requests
-the authoritative help/command catalogue from each relevant active
-service, analogous to the existing `\obt moderari help` behaviour,
-aggregates those responses, and returns the available command set to
-Rogare.
+Discovery should therefore use the service control path: Nuntius
+requests the authoritative help/command catalogue from each relevant
+active service, analogous to the existing `\obt moderari help`
+behaviour, aggregates those responses, and returns the available command
+set to Rogare.
 
 The future discovery response should be machine-readable and should
-support at least the service, command/template and a concise description.
-Parameterized commands may be presented as editable templates such as
-`\obt session resume <number|session_id>` or
+support at least the service, command/template and a concise
+description. Parameterized commands may be presented as editable
+templates such as `\obt session resume <number|session_id>` or
 `\obt model select <model>`. Rogare may group or filter discovered
 commands by service and availability, but it must not become a second
 source of truth for command ownership or syntax.
@@ -361,65 +558,73 @@ source of truth for command ownership or syntax.
 This remains a usability layer over the existing control architecture:
 Rogare inserts ordinary `\obt` command text into the composer and the
 user explicitly sends it through the normal Pontis/Nuntius path. Command
-discovery must not create a parallel execution mechanism or cause control
-traffic to enter the model conversation.
+discovery must not create a parallel execution mechanism or cause
+control traffic to enter the model conversation.
 
 ## Rogare --- Friendly Control-Path Error Presentation
 
 **Area:** Rogare / Nuntius / Control Responses\
 **Document:** Future Rogare control-response presentation polish
 
-Improve Rogare's presentation of structured non-success responses returned
-through the Nuntius control path. Where a service returns a useful human-readable
-`message` together with structured error data, Rogare should present the message
-cleanly to the user rather than exposing the complete HTTP status and serialized
-response body as the primary conversational output.
+Improve Rogare's presentation of structured non-success responses
+returned through the Nuntius control path. Where a service returns a
+useful human-readable `message` together with structured error data,
+Rogare should present the message cleanly to the user rather than
+exposing the complete HTTP status and serialized response body as the
+primary conversational output.
 
-The underlying HTTP status, structured error code, request correlation and
-diagnostic data should remain available for debugging and observability. This is
-presentation polish only; it must not weaken the explicit control-path error
-semantics or cause failed `\obt` commands to enter model execution.
+The underlying HTTP status, structured error code, request correlation
+and diagnostic data should remain available for debugging and
+observability. This is presentation polish only; it must not weaken the
+explicit control-path error semantics or cause failed `\obt` commands to
+enter model execution.
 
 ## Nuntius / Services --- `\obt` Easter Eggs
 
-**Area:** Nuntius / Rogare / Pontis / Moderari / Repetere / Other `\obt` Services\
+**Area:** Nuntius / Rogare / Pontis / Moderari / Repetere / Other `\obt`
+Services\
 **Document:** Future control-plane interaction polish
 
-Consider adding a very small set of deliberate Easter Eggs to the explicit
-`\obt <service> <text>` command space. Engineers and researchers are likely to
-probe service-addressed command combinations naturally while exploring Lumen;
-an intentionally playful response to selected otherwise-invalid combinations
-could acknowledge that behaviour without exposing additional control
-capabilities.
+Consider adding a very small set of deliberate Easter Eggs to the
+explicit `\obt <service> <text>` command space. Engineers and
+researchers are likely to probe service-addressed command combinations
+naturally while exploring Lumen; an intentionally playful response to
+selected otherwise-invalid combinations could acknowledge that behaviour
+without exposing additional control capabilities.
 
-Easter Eggs must remain subordinate to the control architecture. They must not
-masquerade as real commands, reveal hidden or privileged controls, weaken
-authorization, make command discovery ambiguous, or ever fall through into the
-model path. Unknown commands should continue to fail normally unless they match
-an explicit Easter Egg owned by the addressed service.
+Easter Eggs must remain subordinate to the control architecture. They
+must not masquerade as real commands, reveal hidden or privileged
+controls, weaken authorization, make command discovery ambiguous, or
+ever fall through into the model path. Unknown commands should continue
+to fail normally unless they match an explicit Easter Egg owned by the
+addressed service.
 
-This is optional future polish, not an M0.1 requirement. If implemented, the
-responses should be sparse enough that discovering one feels intentional rather
-than turning the `\obt` namespace into a novelty interface.
+This is optional future polish, not an M0.1 requirement. If implemented,
+the responses should be sparse enough that discovering one feels
+intentional rather than turning the `\obt` namespace into a novelty
+interface.
 
 ## Rogare --- Conversation Copy and Export
 
 **Area:** Rogare / Research UX / Conversation Records\
 **Document:** Future Rogare conversation export design
 
-Add explicit copy/export functionality to Rogare's Conversation window so that a
-researcher or engineer can capture the complete human-readable conversation without
-manually selecting individual messages. The initial useful capability should include
-**Copy Conversation** and **Export as Markdown**. A structured **Export as JSON** may
-also preserve roles, session identity, timestamps and other appropriate conversational
+Add explicit copy/export functionality to Rogare's Conversation window
+so that a researcher or engineer can capture the complete human-readable
+conversation without manually selecting individual messages. The initial
+useful capability should include **Copy Conversation** and **Export as
+Markdown**. A structured **Export as JSON** may also preserve roles,
+session identity, timestamps and other appropriate conversational
 metadata for later analysis.
 
-This export represents the conversation as presented through Rogare and must remain
-semantically distinct from a Vestigare Trace. Rogare exports the human-readable
-interaction record; Vestigare preserves execution evidence suitable for inspection,
-Replay and behavioural analysis. Exporting a Rogare conversation must therefore not be
-treated as exporting or reconstructing the authoritative Trace.
+This export represents the conversation as presented through Rogare and
+must remain semantically distinct from a Vestigare Trace. Rogare exports
+the human-readable interaction record; Vestigare preserves execution
+evidence suitable for inspection, Replay and behavioural analysis.
+Exporting a Rogare conversation must therefore not be treated as
+exporting or reconstructing the authoritative Trace.
 
-This is future research/usability functionality rather than an M0.1 requirement. It
-should only be promoted into M0.1 if manual conversation extraction becomes a material
-impediment during external research testing.
+This is future research/usability functionality rather than an M0.1
+requirement. It should only be promoted into M0.1 if manual conversation
+extraction becomes a material impediment during external research
+testing.
