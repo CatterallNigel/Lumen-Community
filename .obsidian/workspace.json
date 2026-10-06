@@ -4,38 +4,95 @@
     "type": "split",
     "children": [
       {
-        "id": "40693c7136990719",
+        "id": "6ed5838b2ae642fb",
         "type": "tabs",
         "children": [
           {
-            "id": "cdcb0ab851b65fe1",
+            "id": "6ffef1854f2324a8",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/tools/OLLAMA_HEADLESS_WINDOWS_11.md",
+                "file": "docs/private/services/moderari/Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "OLLAMA_HEADLESS_WINDOWS_11"
+              "title": "Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated"
             }
           },
           {
-            "id": "a7dbb11fadd1e2e8",
+            "id": "9e6b185ec03ba1c8",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
+                "file": "docs/private/services/moderari/Lumen_Moderari_Filter_Architecture_02026-10-03_Consolidated.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP"
+              "title": "Lumen_Moderari_Filter_Architecture_02026-10-03_Consolidated"
+            }
+          },
+          {
+            "id": "ca6831014fbc538b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/private/services/moderari/Lumen_Moderari_Adapter_Architecture_02026-10-03_Consolidated.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Lumen_Moderari_Adapter_Architecture_02026-10-03_Consolidated"
+            }
+          },
+          {
+            "id": "78027756c225a2e6",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/private/services/moderari/Lumen_Moderari_Canonical_Interaction_Model_Architecture_02026-10-03_Consolidated.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Lumen_Moderari_Canonical_Interaction_Model_Architecture_02026-10-03_Consolidated"
+            }
+          },
+          {
+            "id": "ed3374696f0bfaa3",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/private/services/moderari/Lumen_Praebere_Rogare_Pontis_Vestigare_Repetere_Companion_Changes_02026-10-03_Consolidated.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Lumen_Praebere_Rogare_Pontis_Vestigare_Repetere_Companion_Changes_02026-10-03_Consolidated"
+            }
+          },
+          {
+            "id": "6a7731cb3ab1da9d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/private/services/moderari/Lumen_Moderari_IP-01_Standalone_Interaction_Engine_Implementation_Plan_02026-10-04.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Lumen_Moderari_IP-01_Standalone_Interaction_Engine_Implementation_Plan_02026-10-04"
             }
           }
-        ]
+        ],
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -199,47 +256,49 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "edge-tts:Read note aloud": false,
+      "read-aloud:Read aloud / pause": false
     }
   },
-  "active": "cdcb0ab851b65fe1",
+  "active": "6a7731cb3ab1da9d",
   "lastOpenFiles": [
-    "docs/releases/M0.1/user-manuals/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_REQUIREMENTS_AND_LIMITATIONS_FINAL.md",
-    "docs/releases/M0.1/user-manuals/SERVIRE_USER_MANUAL_v0.1.pdf",
-    "docs/releases/M0.1/user-manuals/LUMEN_OBT_COMMAND_CATALOGUE.md",
-    "docs/releases/M0.1/user-manuals/SERVIRE_USER_MANUAL_v0.1.docx",
-    "docs/releases/M0.1/user-manuals",
-    "docs/releases/M0.1/User-Manuals/SERVIRE_USER_MANUAL_v0.1.docx",
-    "docs/releases/M0.1/User-Manuals/LUMEN_OBT_COMMAND_CATALOGUE.md",
-    "docs/releases/M0.1/User-Manuals/SERVIRE_USER_MANUAL_v0.1.pdf",
-    "docs/releases/M0.1/User-Manuals",
-    "docs/releases/M0.1/New folder",
-    "docs/releases/M0.1/work-in-progress/LUMEN_OBT_COMMAND_CATALOGUE.md",
-    "docs/releases/M0.1/LUMEN_OBT_COMMAND_CATALOGUE.md",
-    "docs/tools/OLLAMA_HEADLESS_WINDOWS_11.md",
-    "docs/releases/M0.1/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
-    "docs/private/TEMP_N9_REVIEWED_DOCUMENTS_CLOSEOUT_REQUIREMENTS.md",
-    "docs/private/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR.md",
-    "docs/private/LUMEN_DEVELOPMENT_REQUIREMENTS_M0.1.md",
-    "docs/private/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP.md",
-    "docs/private/LUMEN_DEVELOPMENT_REQUIREMENTS_M0.1_RECONCILED.md",
-    "docs/private/TEMP_N9_REVIEWED_DOCUMENTS_CLOSEOUT_REQUIREMENTS_RECONCILED_2026-09-19.md",
-    "docs/private/LUMEN_REPETERE_MATCHED_AND_DIVERGENT_REPLAY_BEHAVIOUR_CLOSED_2026-09-19.md",
-    "docs/private/LUMEN_EXTERNAL_RESEARCH_DISTRIBUTION_M0.1_ROADMAP_RECONCILED_2026-09-19.md",
-    "docs/private/LUMEN_DEVELOPMENT_REQUIREMENTS_M0.1_RECONCILED_2026-09-19.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_REPLAY_OUTSTANDING_2026-09-13.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_REPLAY_OUTSTANDING_2026-09-19.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_STAGE_D5_ILLUMINATES_ONE_AUTHORIZATION_PRIVATE.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_SERVIRE_AUTHORIZATION_LIFECYCLE_3_PHASE_IMPLEMENTATION.md",
-    "docs/private/security/ILLUMINATES_ONE_D5.4_MONGODB_SETUP_PRIVATE.md",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_RUNTIME_CONFIGURATION_PI_AND_DOCKERISATION_PLAN_PRIVATE.md",
-    "docs/releases/M0.1/development-in-progress/ILLUMINATES_ONE_D5.4_MONGODB_SETUP_PRIVATE.md",
-    "docs/private/security",
-    "docs/private/New folder",
-    "docs/private",
-    "docs/releases/M0.1/development-in-progress/LUMEN_M0.1_PRIVATE_RESEARCH_REGISTRATION_AUTHORIZATION_AND_EVIDENCE_MODEL.md",
-    "docs/services/aestimare/RESEARCH_LEADS_ALL_IN_2026.md",
-    "docs/opportunities/RESEARCH_LEADS_ALL_IN_2026.md",
+    "docs/releases/Next/Lumen_Moderari_Adapter_Architecture_02026-10-03_Consolidated.md",
+    "docs/releases/Next/archive/Lumen_Praebere_Rogare_Pontis_Vestigare_Repetere_Companion_Changes_02026-10-01.md",
+    "docs/releases/Next/archive/Lumen_Moderari_v3.2.14.24_Responsiblity_Review.md",
+    "docs/releases/Next/archive/Lumen_Moderari_v3.2.14.24.md",
+    "docs/releases/Next/archive/Lumen_Moderari_Redesign_Proposal_02026-10-01.md",
+    "docs/releases/Next/archive/Lumen_Moderari_Redesign_High_Level_Implementation_Plan_02026-10-01.md",
+    "docs/releases/Next/archive/Lumen_Moderari_Filter_Architecture_02026-10-01.md",
+    "docs/releases/Next/archive/Lumen_Moderari_Canonical_Interaction_Model_Architecture_02026-10-01.md",
+    "docs/releases/Next/archive/Lumen_Moderari_Adapter_Architecture_02026-10-01.md",
+    "docs/releases/Next/archive",
+    "docs/releases/Next/Lumen_Praebere_Rogare_Pontis_Vestigare_Repetere_Companion_Changes_02026-10-03_Consolidated.md",
+    "docs/releases/Next/Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated.md",
+    "docs/releases/Next/Lumen_Moderari_Redesign_High_Level_Implementation_Plan_02026-10-01.md",
+    "docs/releases/Next/Lumen_Moderari_IP-01_Standalone_Interaction_Engine_Implementation_Plan_02026-10-04.md",
+    "docs/releases/Next/Lumen_Moderari_Filter_Architecture_02026-10-03_Consolidated.md",
+    "docs/releases/Next/Lumen_Moderari_Canonical_Interaction_Model_Architecture_02026-10-03_Consolidated.md",
+    "docs/releases/Next",
+    "docs/releases/New folder",
+    "docs/private/services/moderari/Lumen_Praebere_Rogare_Pontis_Vestigare_Repetere_Companion_Changes_02026-10-03_Consolidated.md",
+    "docs/private/services/moderari/Lumen_Moderari_IP-01_Standalone_Interaction_Engine_Implementation_Plan_02026-10-04.md",
+    "docs/private/services/moderari/Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated.zip",
+    "docs/private/services/moderari/Lumen_Moderari_Redesign_High_Level_Implementation_Plan_02026-10-01.md",
+    "docs/private/services/moderari/Lumen_Moderari_Canonical_Interaction_Model_Architecture_02026-10-03_Consolidated.md",
+    "docs/private/services/moderari/Lumen_Moderari_Adapter_Architecture_02026-10-03_Consolidated.md",
+    "docs/private/services/moderari/Lumen_Moderari_Filter_Architecture_02026-10-03_Consolidated.md",
+    "docs/private/services/moderari/Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated.md",
+    "docs/private/services/moderari/Lumen_Moderari_Filter_Architecture_02026-10-03_Consolidated (1).md",
+    "docs/private/services/moderari/Lumen_Moderari_Redesign_Proposal_02026-10-01.md",
+    "docs/private/services/moderari/Lumen_Moderari_Filter_Architecture_02026-10-01.md",
+    "docs/private/services/moderari/Lumen_Moderari_Canonical_Interaction_Model_Architecture_02026-10-01.md",
+    "docs/private/services/moderari/archive",
+    "docs/private/services/moderari/New folder",
+    "docs/private/services/moderari/Lumen_Moderari_Plus_Effected_Services_Architecture_02026-10-01.zip",
+    "docs/private/services/moderari/Lumen_Moderari_Adapter_Architecture_02026-10-01.zip",
+    "docs/private/services/moderari/Lumen_Moderari_v3.2.14.24_Responsiblity_Review",
+    "docs/private/services/moderari",
     "docs/graphics/individual-logos/nuntius.png",
     "docs/graphics/individual-logos/servire.png",
     "docs/graphics/individual-logos/aestimare.png",

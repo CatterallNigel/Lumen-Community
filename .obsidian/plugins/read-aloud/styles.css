@@ -1,0 +1,43 @@
+/* The sentence being read: a soft wash of the accent color, just enough to find
+   your place again when you look back at the screen. */
+.readaloud-current {
+  background-color: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 16%, transparent);
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Reading view: the same, as a highlight over the rendered text. */
+::highlight(readaloud-current) {
+  background-color: color-mix(in srgb, var(--interactive-accent) 22%, transparent);
+}
+
+/* Status bar controls: label, previous sentence, pause/resume, next sentence, stop. */
+.readaloud-status {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: default;
+}
+
+.readaloud-status-label {
+  margin-right: 4px;
+}
+
+.readaloud-status-button {
+  padding: 2px;
+}
+
+.readaloud-status-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.readaloud-help {
+  width: min(720px, 92vw);
+}
+
+.readaloud-error {
+  color: var(--text-error);
+}

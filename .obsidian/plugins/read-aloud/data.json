@@ -1,0 +1,9 @@
+{
+  "calibreDebug": "",
+  "voicesDir": "",
+  "voice": "en_GB-alba-medium",
+  "speed": 1,
+  "maxLength": 300,
+  "paragraphPause": 0.5,
+  "follow": true
+}

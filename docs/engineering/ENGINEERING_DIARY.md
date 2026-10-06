@@ -4,6 +4,8 @@
 
 | Version | Date | Change |
 |---|---|---|
+| 1.6 | 2026-10-06 | Added 28 September–6 October post-M0.1 architecture consolidation: Moderari/Praebere responsibility boundaries, session configuration and first-Ask materialisation, Canonical Interaction Model, Base and Specialised Adapters, Filter architecture and loopback, Vestigare/Repetere evidence boundaries, standalone IP-01 implementation strategy, and `research-foundation-next` as the next external research-build target. |
+| 1.5 | 2026-09-27 | Added 15–27 September M0.1 distribution closeout: containerisation and network boundary, runtime authorization and research licensing, integrated acceptance and provider resilience, external research distribution, Colibri provider investigation, Reasoning Assurance direction, and post-M0.1 multi-session roadmap. |
 | 1.4 | 2026-09-14 | Added 11–14 September Replay closeout: Repetere UI/state convergence, durable Experiment/Run/child-Trace hierarchy, cleanup and deletion semantics, Fiducia contract compatibility, roadmap reconciliation, and M0.1 release position. |
 | 1.3 | 2026-09-11 | Added 7–11 September Repetere Phase 9 progress: Experiment/Run/child-Trace model, Replay session isolation, model enforcement, matched/divergent lifecycle, forced-divergence recording-boundary investigation, consolidated UI requirements and revised M0.1 release position. |
 | 1.2 | 2026-09-06 | Added the 4–6 September N9.6.3 completion, authoritative reservation lifecycle, Nuntius timeout correction, Praebere UI, cached discovery policy, Trace routing findings, Replay model requirements and N9 closeout. |
@@ -14216,3 +14218,1490 @@ Repetere now treats Replay as controlled experimental execution with durable pro
 The remaining M0.1 work is therefore primarily about **trusting and packaging the complete system**, rather than defining how Replay itself should behave.
 
 ---
+
+# 2026-09-15 to 2026-09-18
+
+## From Development System to Research Distribution
+
+### Observation
+
+With the N1–N10 development chain signed off, the remaining M0.1 problem changed character. Lumen was no longer primarily a collection of services being developed and tested independently. It now had to become a system that another researcher could install, start, authorize, observe and use without access to the development environment.
+
+This exposed a distinction that had previously been less important: a working development topology is not automatically a distributable product topology.
+
+### Analysis
+
+The distribution architecture was therefore simplified around an explicit external boundary.
+
+The intended M0.1 packaging became:
+
+```text
+Researcher's machine
+        │
+        ▼
+     HAProxy
+        │
+        ▼
+      Lumen
+  ┌─────┼──────────────────────────────────────────────┐
+  │ Servire · Pontis · Praebere · Moderari            │
+  │ Repetere · Vestigare · Rogare · Fiducia · Nuntius │
+  └─────┼──────────────────────────────────────────────┘
+        │
+        ├── MongoDB
+        │
+        └── External model provider
+            (initially Ollama)
+```
+
+HAProxy became the intended external entry point. The Lumen services remain independently addressable inside the distribution architecture, but their existence does not require the researcher to understand or manually orchestrate the service graph.
+
+MongoDB remains a separate container with authentication enabled. The model runtime also remains external to Lumen because model execution is a provider responsibility rather than part of Lumen itself.
+
+### Servire's Role
+
+Servire became the operational bootstrap and control surface for the distribution.
+
+Its responsibilities now include:
+
+- validating required external dependencies;
+- holding the configured model-provider endpoint;
+- gating Stack startup until required dependencies are valid;
+- initiating and exposing authorization state;
+- presenting licence acceptance;
+- starting and stopping the managed Stack;
+- exposing operational state to the researcher.
+
+This is an important refinement of terminology and responsibility.
+
+**Lumen** refers to the complete system, including Servire. The services managed by Servire are collectively **the Stack**. Servire is therefore not outside Lumen; it is Lumen's operational control plane.
+
+### Network Boundary
+
+Initial Docker testing exposed a practical distribution defect: services bound only to `127.0.0.1` were usable locally but unavailable through the intended LAN/HAProxy route.
+
+The distribution configuration was changed so required Lumen service listeners bind to `0.0.0.0`, while HAProxy remains responsible for the intended external routing boundary.
+
+This distinction matters because containerisation changes the meaning of `localhost`. A configuration that is correct for direct development execution may be incorrect once services are isolated by container networking.
+
+### Conclusion
+
+M0.1 containerisation is not merely packaging existing Python applications into Docker images. It establishes an operational boundary around Lumen and clarifies which responsibilities belong to Lumen, its Stack, external dependencies and the ingress layer.
+
+The engineering question has moved from:
+
+> Can all of the services run?
+
+Towards:
+
+> Can another researcher operate Lumen as a coherent system without knowing how it was developed?
+
+---
+
+## Pi and the Execution Boundary
+
+### Observation
+
+Pontis currently uses Pi as the execution client and spawns `pi-acp` through its ACP interface. During M0.1 testing, Pi's built-in tool capability was sufficient for the research distribution even though the longer-term architecture expects tools to become more explicitly external and independently governed.
+
+### Analysis
+
+Attempting to redesign tool ownership during distribution closeout would introduce a new architectural workstream into a release whose purpose is independent research evaluation.
+
+The existing Pi boundary therefore remains acceptable for M0.1 provided that it is documented accurately.
+
+### Decision
+
+For M0.1:
+
+- Pi remains the execution client used by Pontis;
+- Pi's current tools remain available where enabled by the session policy;
+- broader external tool architecture is deferred;
+- third-party Pi licensing is included with the research distribution.
+
+### Conclusion
+
+A research release does not need to contain the final form of every architectural boundary. It needs to make the existing boundary explicit, reproducible and sufficiently controlled for the research being undertaken.
+
+---
+
+# 2026-09-18 to 2026-09-22
+
+## Runtime Authorization Becomes an Operational Capability
+
+### Observation
+
+A distributable research build requires a way to distinguish an authorized research installation from an unrestricted copy of the development system.
+
+This requirement is operational rather than model-facing. It should not change prompts, model output, traces or research results.
+
+### Analysis
+
+Authorization was implemented as a periodic validation relationship between the Lumen installation and Illuminates.One.
+
+The research distribution has an installation identity and must periodically demonstrate that it remains authorized to operate. Temporary connectivity loss is tolerated by the authorization mechanism rather than immediately disabling the system.
+
+The authorization exchange was deliberately constrained to installation and software identity information required to make the licensing decision. It is not intended to transmit research prompts, model responses, traces, experiments or user-created research data.
+
+The identity data was defined around information such as:
+
+- installation UUID;
+- Lumen version;
+- component versions;
+- platform information;
+- Docker execution flag;
+- authorization timestamp.
+
+### Architectural Implication
+
+Authorization belongs at the operational control-plane boundary rather than inside individual reasoning services.
+
+Servire therefore gates operation based on authorization state while the reasoning and evidence services remain concerned with their own responsibilities.
+
+This preserves separation between:
+
+```text
+Can this installation operate?
+```
+
+and:
+
+```text
+What happened during this reasoning session?
+```
+
+### Conclusion
+
+Licensing and authorization are necessary properties of the research distribution, but they should remain orthogonal to the evidence being researched.
+
+The distribution should be able to establish that it is authorized without requiring Illuminates.One to observe the research being performed with it.
+
+---
+
+## Research Licence and Explicit Acceptance
+
+### Observation
+
+Once M0.1 became something that could be given to an external researcher, informal statements about intended use were no longer sufficient.
+
+The distribution needed an explicit licence defining what the researcher may do, what Lumen records or transmits, and what remains the researcher's own work.
+
+### Decision
+
+The **LUMEN M0.1 RESEARCH DISTRIBUTION LICENCE** was established as a single-user research licence.
+
+The principal boundaries include:
+
+- research use of the supplied Lumen distribution;
+- no claim by Lumen or Illuminates.One over research outputs produced using Lumen;
+- no redistribution;
+- no reverse engineering;
+- no derivative product or service based on the distribution;
+- no repurposing outside the intended research use;
+- single-user / single-machine operation;
+- no bypass of the authorization mechanism;
+- experimental/beta status and no warranty;
+- researcher responsibility for backups and research data.
+
+Licence acceptance occurs inside Servire before normal authorized operation. The licence remains available for later review from the Servire interface.
+
+Third-party licence material, including Pi's licence, is packaged separately and referenced by the distribution.
+
+### Privacy Boundary
+
+The licensing work also forced a useful architectural question:
+
+> What information does Illuminates.One actually need to know about a running Lumen installation?
+
+The answer is deliberately narrow.
+
+Authorization needs installation identity and software state. It does **not** require the contents of the researcher's work.
+
+This reinforces an important Lumen principle: evidence collected for reasoning assurance should not automatically become telemetry sent to the software vendor.
+
+### Conclusion
+
+The licence is not simply legal packaging added after engineering. Defining the licence and privacy boundary clarified the architecture by forcing explicit decisions about ownership, authorization, installation identity and research-data separation.
+
+---
+
+## M0.1 Integrated Acceptance and Provider Failure Recovery
+
+### Observation
+
+A release candidate must be tested as an integrated system rather than as a set of individually passing services.
+
+Particular attention was given to model-provider failure because a provider disappearing during a session is an expected operational failure mode, not an exceptional theoretical case.
+
+### Evaluation
+
+Testing verified the following lifecycle behaviour around Ollama and Praebere:
+
+- provider health is detected automatically;
+- model discovery can be explicitly refreshed;
+- a selected model is tracked by Praebere;
+- model ownership is released when the associated execution lifecycle ends;
+- Moderari detects provider loss;
+- Rogare and Repetere can cleanly terminate affected sessions;
+- Praebere detects provider disappearance and subsequent recovery;
+- models can be rediscovered after recovery.
+
+This established that provider state is part of the execution lifecycle rather than a static startup assumption.
+
+### Known Limitation
+
+Servire log export operates correctly during local development but fails in the Docker distribution.
+
+Because the failure does not prevent Lumen operation or invalidate research evidence, it is documented as an M0.1 known limitation rather than delaying the research release.
+
+### Engineering Principle
+
+Release acceptance does not require pretending that no defects remain.
+
+It requires distinguishing between:
+
+- defects that invalidate the intended research use;
+- defects that compromise evidence or lifecycle correctness;
+- operational limitations that can be documented without invalidating the release.
+
+### Conclusion
+
+M0.1 acceptance shifted the definition of "working" from successful service startup to controlled behaviour under failure and recovery.
+
+A model provider is not assumed to be permanently available. Lumen must observe its state, respond coherently when it disappears and leave the system in a recoverable condition.
+
+---
+
+## Clean Distribution Testing
+
+### Observation
+
+A development machine contains accumulated state that can conceal missing packaging, configuration and bootstrap requirements.
+
+### Action
+
+The M0.1 distribution was repeatedly exercised from a clean state by removing containers, volumes and persisted Lumen data before rebuilding the package.
+
+The process validated:
+
+- Docker/Compose creation from the distribution package;
+- MongoDB initialization and authentication;
+- HAProxy routing;
+- Lumen registration and authorization bootstrap;
+- provider configuration;
+- Stack startup;
+- model discovery and selection;
+- session termination and model unload;
+- persistence boundaries.
+
+### Conclusion
+
+Clean-install testing is part of architecture validation for a distributable system.
+
+If a release only works on the machine on which it was developed, the distribution architecture has not actually been tested.
+
+---
+
+# 2026-09-20 to 2026-09-27
+
+## M0.1 Becomes an External Research Artefact
+
+### Observation
+
+The first M0.1 research package is intended for independent use outside the development environment.
+
+This changes the significance of documentation. Installation instructions, the Servire user manual, command catalogue, licence and known limitations are no longer secondary developer notes. They form part of the research artefact because they define how an independent researcher encounters and operates the system.
+
+### Distribution Position
+
+The M0.1 package is intentionally bounded.
+
+It provides the research capabilities required to evaluate Lumen while avoiding unrelated expansion immediately before external use.
+
+The package includes the operational Lumen services, research licence material, installation guidance and user documentation. A registration identity is associated with the supplied distribution so authorization can be established through Illuminates.One.
+
+### External Researcher
+
+Monica Peters was identified as the first independent research candidate. Her environment and research interests make her a useful external user because she already works with local models and Docker-based workflows and can evaluate Lumen without requiring a managed demonstration environment.
+
+Her subsequent schedule means evaluation will not begin immediately.
+
+### Decision — External Feedback Is Asynchronous
+
+External feedback is valuable, but it must not become a development gate.
+
+M0.1 is therefore treated as a frozen research reference point. Monica can evaluate that reference build when her schedule permits, while Lumen development continues independently.
+
+Her eventual findings will be treated as external evidence against the known M0.1 baseline rather than as approval required before further development.
+
+### Architectural Importance
+
+This establishes a healthier relationship between engineering and research feedback:
+
+```text
+Build a defined research artefact
+        ↓
+Freeze its behaviour
+        ↓
+Allow independent evaluation
+        ↓
+Continue engineering
+        ↓
+Compare later feedback against the frozen baseline
+```
+
+Waiting for an external researcher would couple Lumen's engineering cadence to another person's availability and would reduce the value of having a versioned research distribution in the first place.
+
+### Conclusion
+
+M0.1 marks the transition from Lumen being solely an internally observed engineering system to becoming something that can generate independent evidence about its own usefulness and behaviour.
+
+External evaluation now runs alongside development rather than controlling it.
+
+---
+
+## Provider Independence Moves from Principle to Engineering Requirement
+
+### Observation
+
+Lumen has consistently been intended to remain independent of any particular model provider. Until now, however, practical development has predominantly used Ollama.
+
+Investigation of **Colibri** introduced a materially different provider implementation and demonstrated why provider independence must become an explicit architectural property rather than an assumption.
+
+### Experiment
+
+Colibri was built and run locally with the Qwen3.6-35B-A3B mixture-of-experts model.
+
+The model is approximately 23 GB locally and contains 256 experts per layer with top-8 expert selection. It was successfully exposed through Colibri's OpenAI-compatible API and executed on a CPU-only development environment.
+
+Inference was slow, but successful. The significance of the experiment was therefore not throughput.
+
+It demonstrated that a model substantially larger than those normally used in the Lumen development environment can be made available locally through a provider with different runtime and placement characteristics.
+
+### Analysis
+
+The initial temptation would be to treat every provider as an OpenAI-compatible endpoint because both Ollama and Colibri can expose familiar HTTP interfaces.
+
+That abstraction is likely to be insufficient.
+
+Different providers may have different:
+
+- protocols;
+- model discovery mechanisms;
+- model loading and unloading semantics;
+- reservation behaviour;
+- health models;
+- streaming behaviour;
+- tool capabilities;
+- context reporting;
+- lifecycle constraints.
+
+Consequently, the durable Lumen abstraction should not be "an OpenAI endpoint".
+
+It should be a session bound to a provider and model, where the provider supplies the protocol and lifecycle adapter required for that execution.
+
+Conceptually:
+
+```text
+Session
+   │
+   ├── Provider binding
+   │       │
+   │       └── Protocol / lifecycle adapter
+   │
+   └── Model binding
+```
+
+### Conclusion
+
+Colibri is valuable not merely because it provides another way to run Qwen.
+
+It exposes the architectural requirement that **provider**, **model** and **protocol** are related but distinct concepts.
+
+Multiple-provider implementation should therefore follow the session-model and concurrent-tracing work rather than precede it.
+
+---
+
+## Reasoning Assurance Becomes the Primary Architectural Frame
+
+### Observation
+
+Recent analysis of agentic systems highlighted a recurring weakness in conventional AI evaluation: systems are commonly judged by the request and the final answer while the execution that connected them can remain difficult to reconstruct.
+
+This becomes increasingly problematic when a task involves multiple agents, tools, models, delegated operations or external systems.
+
+A correct-looking final answer does not establish that the process used to obtain it was appropriate.
+
+Likewise, an incorrect or harmful outcome cannot necessarily be diagnosed from the final response alone.
+
+### Analysis
+
+Lumen's services increasingly form two complementary paths.
+
+The first is the **primary interaction path**, responsible for carrying work from a client through orchestration to execution and response.
+
+The second is an **evidence and assurance path**, responsible for preserving what happened so that execution can later be reconstructed and evaluated.
+
+This suggests a clearer description of Lumen's purpose:
+
+> **Lumen is a Reasoning Assurance Service.**
+
+The term does not imply that Lumen can inspect a model's hidden internal reasoning.
+
+It refers to assurance built from observable execution evidence: requests, sessions, model/provider identity, tool activity, traces, checkpoints, replay outcomes, lifecycle events and resulting artefacts.
+
+### Vestigare and Aestimare
+
+This also clarifies the boundary between Vestigare and Aestimare.
+
+**Vestigare records evidence.**
+
+It should preserve the observable execution record faithfully and with sufficient correlation identity to distinguish concurrent activity.
+
+**Aestimare interprets evidence.**
+
+It can later join traces, sessions, agents, models, tools and outcomes into a higher-level explanation of what happened and whether the evidence supports the expected behaviour.
+
+Vestigare therefore should not need to understand every relationship while recording it. It needs to preserve enough identity and provenance for those relationships to be reconstructed later.
+
+### Carried Identity
+
+Agentic and distributed execution strengthens the need for correlation identifiers.
+
+Different clients, agents or frameworks may use different identifiers. Lumen does not need to impose one universal global identifier on the entire AI ecosystem.
+
+Instead, it can preserve the identifiers that cross its boundary and record relationships between them.
+
+Aestimare can then reconstruct the graph later.
+
+Conceptually:
+
+```text
+Client Session ID
+        │
+        ├── Lumen Session ID
+        │       │
+        │       ├── Provider / Model
+        │       ├── Agent / ACP execution
+        │       ├── Tool activity
+        │       └── Trace IDs
+        │
+        └── External correlation IDs
+                    │
+                    ▼
+                Aestimare
+                    │
+                    ▼
+          Reconstructed execution
+```
+
+### Conclusion
+
+Observability answers:
+
+> What happened?
+
+Reasoning assurance asks the additional question:
+
+> Given the available evidence, what can we establish about how this result was produced and whether that execution was worth trusting?
+
+This provides a stronger unifying frame for the architecture that has emerged across Lumen.
+
+---
+
+# 2026-09-27
+
+## Post-M0.1 Engineering Direction — From One Interaction to Concurrent Sessions
+
+### Observation
+
+M0.1 establishes a coherent single research distribution, but several parts of the architecture still reflect Lumen's historical development around one dominant active interaction.
+
+The next architectural step is not primarily another provider or client integration.
+
+It is to make **session identity the authoritative unit of execution** throughout Lumen.
+
+Three immediate work areas have been identified:
+
+1. Moderari refresh and compaction review.
+2. Per-session model ownership.
+3. Concurrent Vestigare recording.
+
+These areas are related and should be treated as one architectural progression rather than independent feature requests.
+
+---
+
+## Moderari Refresh and Compaction Reassessment
+
+### Observation
+
+Moderari predates the current service architecture. It began before Lumen had evolved into the present collection of independently responsible services and therefore carries assumptions and UI behaviour inherited from an earlier system design.
+
+Its user interface now requires reconsideration, but the more important task is to redefine Moderari's responsibility within modern Lumen.
+
+### Compaction
+
+Compaction also needs to be revisited.
+
+Historically, compaction was primarily a mechanism for surviving bounded model context by replacing older active material with a distilled representation.
+
+Lumen's later evolution makes the operation itself significant evidence.
+
+A compaction event potentially changes what information remains directly available to the model. Reasoning assurance therefore benefits from knowing:
+
+- when compaction occurred;
+- what active context existed before it;
+- what representation replaced that context;
+- what was retained or omitted;
+- which checkpoint or continuity artefact became authoritative;
+- how subsequent behaviour differed after compaction.
+
+### Architectural Question
+
+The next Moderari work should begin with:
+
+> What is Moderari responsible for now?
+
+rather than:
+
+> How should the old Moderari UI be improved?
+
+The UI should follow the clarified responsibility.
+
+### Conclusion
+
+Moderari's refresh is an architectural reassessment with a UI consequence, not merely a presentation redesign.
+
+Compaction should likewise be treated as an observable state transition rather than an invisible context-management optimisation.
+
+---
+
+## Session-Bound Provider and Model Ownership
+
+### Observation
+
+The current Praebere lifecycle still contains runtime-global model-selection assumptions inherited from the earlier single-session architecture.
+
+This becomes restrictive as soon as Lumen is expected to operate multiple independent sessions concurrently.
+
+### Direction
+
+Model selection should become a property of the execution session.
+
+The durable relationship is expected to become:
+
+```text
+Session
+   │
+   ├── Provider
+   │
+   └── Model
+```
+
+For example:
+
+```text
+Session A → Ollama  → qwen2.5-coder:14b
+Session B → Ollama  → gemma3:4b
+Session C → Colibri → qwen36-35b-a3b
+```
+
+Each session can therefore have its own execution identity without requiring the entire Lumen runtime to share one selected model.
+
+### Architectural Implication
+
+This change is more important than exposing another model dropdown.
+
+It establishes the abstraction required for future:
+
+- multiple model providers;
+- provider-specific lifecycle behaviour;
+- multiple clients;
+- concurrent experiments;
+- model comparison;
+- independent session termination;
+- provider/model provenance in traces.
+
+### Conclusion
+
+The session should become the owner of its execution binding.
+
+Provider and model are properties of that session, not global properties of Lumen.
+
+---
+
+## Concurrent Vestigare Recording
+
+### Observation
+
+Once Lumen supports multiple active sessions with independent provider/model bindings, Vestigare must be able to record those sessions concurrently without ambiguity or shared-current-session assumptions.
+
+### Direction
+
+Vestigare should operate as a concurrent evidence recorder.
+
+Conceptually:
+
+```text
+                 ┌─ Session A ─ Provider A ─ Model A
+                 │
+Clients → Pontis ├─ Session B ─ Provider A ─ Model B
+                 │
+                 └─ Session C ─ Provider B ─ Model C
+                         │
+                         ▼
+                    Vestigare
+                         │
+             ┌───────────┼───────────┐
+             ▼           ▼           ▼
+           Trace A     Trace B     Trace C
+```
+
+Each event must carry sufficient session and correlation identity to be associated with the correct execution regardless of interleaving.
+
+### Separation of Responsibilities
+
+Vestigare should not attempt to infer the complete meaning of concurrent activity while recording it.
+
+Its responsibility is durable, correctly correlated evidence.
+
+Aestimare can subsequently determine higher-level relationships across sessions, agents, tools and models.
+
+### Conclusion
+
+Concurrent Vestigare recording is not simply a scalability enhancement.
+
+It is required to preserve trustworthy provenance once Lumen stops assuming that only one reasoning process matters at a time.
+
+---
+
+## Sequencing the Next Architecture
+
+### Decision
+
+The immediate post-M0.1 engineering sequence is:
+
+```text
+M0.1 frozen research baseline
+        │
+        ├── External research evaluation continues asynchronously
+        │
+        ▼
+Clarify modern Moderari responsibility
+        │
+        ▼
+Revisit compaction as an observable state transition
+        │
+        ▼
+Define Session → Provider → Model ownership
+        │
+        ▼
+Implement per-session model selection/lifecycle
+        │
+        ▼
+Enable concurrent Vestigare recording
+        │
+        ▼
+Validate simultaneous independent sessions
+        │
+        ▼
+Generalise provider/protocol adapters
+        │
+        ▼
+Add further providers and clients
+```
+
+### Reasoning
+
+Adding Colibri or additional clients before the session boundary is corrected would force provider and protocol requirements into architecture that still contains single-session assumptions.
+
+By establishing session ownership and concurrent evidence recording first, later integrations can attach to a stable execution model rather than repeatedly changing Lumen to accommodate each provider.
+
+### Conclusion
+
+The next phase can be described as a transition:
+
+> **Lumen moves from managing an interaction to managing multiple independent execution sessions while preserving the evidence required to understand each one.**
+
+This is the natural architectural continuation of M0.1.
+
+---
+
+## Engineering Diary as Public Narrative Source
+
+### Observation
+
+The Engineering Diary now records the evolution of Lumen from a context-continuity experiment into a multi-service reasoning-assurance architecture.
+
+That history contains material that is useful beyond internal development because it explains why services and boundaries exist rather than merely describing their current implementation.
+
+### Direction
+
+The diary will serve as a primary source for two parallel external communication streams:
+
+- a LinkedIn series introducing Lumen's architecture and engineering ideas progressively;
+- the `lumen.illuminates.one` website, providing a permanent and deeper account of Lumen's purpose, architecture, research history and services.
+
+The public material should be derived from the diary rather than replacing it.
+
+The diary remains the detailed append-only engineering record. Public material can then select, simplify and reorganise that history for different audiences without losing the provenance of the underlying ideas.
+
+### Conclusion
+
+Maintaining the Engineering Diary is itself part of Lumen's provenance discipline.
+
+The same principle Lumen applies to AI execution applies to its own development:
+
+> The final architecture is more useful when the reasoning that produced it has also been preserved.
+
+---
+# 2026-09-28 to 2026-10-06
+
+## Post-M0.1 Architecture Consolidation — `research-foundation-next`
+
+### Context
+
+M0.1 established a stable Research Foundation Build suitable for controlled external research distribution. With that baseline frozen, development shifted away from incremental additions to the existing interaction path and towards clarifying the architecture required for the next research build.
+
+The principal work during this period was architectural rather than implementation-driven.
+
+The objective was to remove responsibilities that had accumulated in the wrong services, establish explicit ownership of model knowledge and interaction compatibility, and define a model-independent interaction architecture capable of supporting additional providers, protocols, Filters and clients without repeatedly modifying Lumen Core.
+
+The resulting architecture has been consolidated into a set of authoritative design documents covering:
+
+- the Moderari redesign;
+- Adapter architecture;
+- Filter architecture;
+- the Canonical Interaction Model;
+- and companion changes to Praebere, Rogare, Pontis, Vestigare and Repetere.
+
+These documents now form the implementation baseline for the next development branch.
+
+---
+
+## Responsibility Boundaries Clarified
+
+### Observation
+
+Earlier Lumen iterations had accumulated overlapping responsibilities around model selection, model knowledge, compatibility translation, system-prompt behaviour and session execution.
+
+This was manageable while Lumen primarily operated as a single-client, single-provider research system, but would become increasingly difficult to reason about as additional providers and client protocols were introduced.
+
+### Decision
+
+The architecture now distinguishes four concepts explicitly:
+
+```text
+Praebere Model Profile  = knowledge
+Moderari Adapter        = compatibility
+Moderari Filter         = executable intentional transformation
+Moderari Filter Profile = user configuration convenience
+```
+
+The principal service boundaries are:
+
+**Praebere**
+
+Owns authoritative provider/model knowledge, provider discovery, model characteristics and provenance, provider interaction representation, per-session provider/model reservation and provider/model lifecycle.
+
+**Moderari**
+
+Owns controlled interaction transformation, representation recognition, Adapter resolution, the Canonical Interaction Model, Filter execution, Filter applicability and session-scoped execution state.
+
+**Pontis**
+
+Owns session identity/lifecycle and client request/response routing. It does not own model knowledge or classify interaction representations.
+
+**Rogare**
+
+Acts as the session configuration and interaction UI. It presents choices supplied by the responsible services rather than calculating model/Filter compatibility itself.
+
+**Vestigare**
+
+Records the exact Client ↔ Lumen interaction boundary and generic execution metadata.
+
+**Repetere**
+
+Replays the recorded client-boundary interaction either using the recorded Original Setup or a newly configured setup.
+
+### Conclusion
+
+A useful summary of the new boundary is:
+
+> **Praebere knows the facts. Moderari knows how to interact.**
+
+This separation allows provider/model knowledge to evolve independently from the mechanisms used to communicate with models.
+
+---
+
+## Praebere as Authoritative Model Knowledge
+
+### Observation
+
+An earlier design direction considered allowing Praebere to experimentally verify model capabilities.
+
+Further analysis showed that such verification is not neutral.
+
+To determine whether a model supports a behaviour such as tools or a particular interaction structure, Lumen must already know how to communicate correctly with that provider/model. That communication knowledge belongs to Moderari's Adapter architecture.
+
+### Decision
+
+Praebere will not experimentally interrogate models to establish capabilities.
+
+Model knowledge comes from:
+
+- provider/runtime discovery;
+- the Lumen catalogue;
+- a User Model Profile;
+- or remains `Unknown`.
+
+User-supplied characteristics are retained with `USER` provenance. Praebere does not test or challenge them.
+
+Praebere also knows nothing about Moderari Adapters, Filters or Filter Profiles.
+
+### Conclusion
+
+Model knowledge and interaction knowledge are deliberately separated.
+
+`Unknown` is a legitimate knowledge state rather than an invitation for Praebere to probe the model.
+
+---
+
+## Session Configuration Before Execution
+
+### Observation
+
+The previous architecture allowed some execution decisions to remain implicit until the first Ask.
+
+That made configuration, model activation and execution-state establishment harder to distinguish.
+
+### Decision
+
+The new lifecycle separates configuration from execution.
+
+Conceptually:
+
+```text
+Rogare
+   │ Start Session
+   ▼
+Pontis
+   │ session_id
+   ▼
+Rogare
+   │ select provider/model
+   ▼
+Praebere
+   ├── reserve provider/model for session
+   ├── resolve Effective Model Definition
+   ├── establish provider interaction representation
+   └── provide authoritative session/model facts
+            │
+            ▼
+         Moderari
+            ├── evaluate current Filter Profiles
+            └── return applicable Profiles
+            │
+            ▼
+Rogare
+   │ select Filter Profile or None
+   ▼
+Moderari
+   └── configure Filters for session
+
+READY FOR FIRST ASK
+```
+
+The first Ask therefore establishes only information that genuinely could not have been known during configuration.
+
+The primary remaining fact is the client's interaction representation.
+
+Moderari then resolves the effective Adapter path and finalises the immutable Session Execution State.
+
+### First-Ask Rule
+
+```text
+Client representation
+        │
+        ├── Unknown
+        │      ├── No Filters → pass through
+        │      └── Filters    → reject
+        │
+        └── Known
+               │
+               ▼
+          resolve path
+               │
+               ├── compatible   → execute
+               └── incompatible → reject
+```
+
+Provider interaction representation is already authoritative configuration input from Praebere.
+
+Missing provider-representation knowledge is therefore incomplete configuration, not another `Unknown` execution branch.
+
+### Conclusion
+
+> **Configuration happens during configuration; execution begins with the first Ask.**
+
+The first Ask should discover only what could not reasonably have been established earlier.
+
+---
+
+## Canonical Interaction Model
+
+### Observation
+
+Supporting multiple external AI interaction representations creates an N×N translation problem if every client representation is translated directly into every provider representation.
+
+For example, direct OpenAI ↔ Anthropic ↔ future protocol translation would cause compatibility logic to expand rapidly as additional representations are supported.
+
+### Decision
+
+Moderari will introduce a **Canonical Interaction Model (CIM)** as its controlled internal semantic bridge.
+
+Conceptually:
+
+```text
+OpenAI representation
+        │
+        ▼
+      CIM
+        │
+        ▼
+Anthropic representation
+```
+
+Each supported Base Representation Adapter maps:
+
+```text
+external representation → CIM
+CIM → external representation
+```
+
+The CIM is:
+
+- internal to Moderari's Adapter Framework;
+- semantic rather than provider-specific;
+- versioned;
+- not a network protocol;
+- not directly extensible by third parties.
+
+The first implementation will derive CIM 1.0 from the actual semantic overlap required by the initial OpenAI and Anthropic mappings rather than treating an illustrative schema as final.
+
+### Important Boundary
+
+Filters do **not** know or manipulate CIM.
+
+CIM exists solely to solve interaction-representation compatibility.
+
+### Conclusion
+
+CIM prevents compatibility translation from becoming a growing matrix of direct protocol-to-protocol transformations while preserving a controlled semantic boundary inside Lumen.
+
+---
+
+## Base and Specialised Adapters
+
+### Observation
+
+Two different compatibility problems had previously been at risk of being treated as one:
+
+1. translation between different published interaction representations;
+2. provider/model-specific deviations from an otherwise supported representation.
+
+The existing Qwen compatibility behaviour is an example of the second case.
+
+### Decision
+
+Moderari will support two Adapter classes.
+
+### Base Representation Adapters
+
+Lumen-controlled components that map a supported published interaction representation to/from CIM.
+
+The initial intended Base representations are:
+
+- OpenAI;
+- Anthropic.
+
+Third parties cannot introduce new Base Representation Adapters or extend CIM.
+
+### Specialised Adapters
+
+Provider/model-specific corrections to an existing Base representation.
+
+Qwen becomes the initial concrete example.
+
+Specialised Adapters may be externally developed, but must operate within a Lumen-defined Base representation and CIM boundary.
+
+### Deterministic Resolution
+
+Adapter resolution is intentionally mechanical:
+
+```text
+1. recognise client representation
+2. exact-model Specialised Adapter
+3. family Specialised Adapter
+4. same representation → No Adapter
+5. Base Representation Adapter path through CIM
+6. otherwise reject known incompatibility
+```
+
+Family matching is derived mechanically from the provider model identifier before the first `:`.
+
+For example:
+
+```text
+qwen2.5-coder:14b
+        ↓
+qwen2.5-coder
+```
+
+There is no Adapter priority, scope or stacking mechanism.
+
+An exact match replaces a family match.
+
+Duplicate provider+model registry keys are configuration errors and must prevent Moderari startup rather than produce ambiguous runtime behaviour.
+
+### Adapter State
+
+The user-facing normal execution state remains:
+
+```text
+Enabled
+Disabled
+```
+
+This control applies to normal client ↔ provider compatibility translation.
+
+It does not disable translation required internally by the Filter framework.
+
+### Conclusion
+
+Base Adapters solve **representation compatibility**.
+
+Specialised Adapters solve **provider/model deviations**.
+
+Model-specific compatibility should therefore disappear from Moderari Core.
+
+---
+
+## Filter Architecture
+
+### Observation
+
+Several behaviours previously treated as general Moderari orchestration are actually intentional transformations of interaction material.
+
+The most obvious example is System Prompt replacement/injection.
+
+Treating these behaviours as implicit Core behaviour makes experiments difficult to reproduce and obscures what Lumen changed before a request reached the model.
+
+### Decision
+
+Intentional transformations become explicit Moderari Filters.
+
+The initial Lumen-supplied Filters are:
+
+- System Prompt Filter;
+- Cognition Filter.
+
+Moderari no longer has a default System Prompt.
+
+Any Lumen/user System Prompt behaviour occurs only through the System Prompt Filter.
+
+Filters are:
+
+- self-describing;
+- discoverable;
+- independently configurable;
+- executable transformations;
+- able to declare positive model requirements;
+- evaluated against the Effective Model Definition supplied by Praebere.
+
+A positive Filter requirement is satisfied only by affirmative model knowledge.
+
+`Unknown` does not satisfy a positive requirement.
+
+### Filter Profiles
+
+A Filter Profile is a user convenience: a named collection of Filters and configuration.
+
+Profiles are not the durable execution evidence.
+
+For replay and provenance, Moderari materialises the actual Filters and configuration used for the session.
+
+### Conclusion
+
+Filters describe **intentional transformation**, not compatibility.
+
+This distinction makes it possible to ask independently:
+
+```text
+What did the user/client say?
+What transformation did Lumen intentionally apply?
+What compatibility translation was required?
+What did the provider/model receive?
+```
+
+---
+
+## Filter Loopback and Client Representation
+
+### Observation
+
+A Filter may naturally produce interaction material in a representation different from the representation used by the client.
+
+For example, a Lumen Filter may natively produce OpenAI-form interaction material while the active client uses Anthropic representation.
+
+The Filter result cannot simply be injected into the interaction in its native representation.
+
+### Decision
+
+The Filter Framework requires mandatory Adapter loopback.
+
+Conceptually:
+
+```text
+Filter
+   │
+   └── native Filter output
+           │
+           ▼
+      Adapter Framework
+           │
+           ▼
+   client representation
+           │
+           ▼
+   Final Filter Output
+```
+
+Only the **Final Filter Output** is treated as the Filter result.
+
+Transient Filter-native representations and CIM material are execution intermediates.
+
+Mandatory loopback remains active even if normal client→provider Adapter processing has been disabled.
+
+### Conclusion
+
+The normal execution Adapter path and Filter loopback are related but distinct responsibilities.
+
+The normal path establishes client/provider compatibility.
+
+Loopback ensures intentional Filter output is materialised back into the client's known interaction representation before normal execution continues.
+
+---
+
+## Filter Execution Identity and Provenance
+
+### Observation
+
+Once Filters may perform their own private model interactions, evidence must distinguish client-originated interaction from Filter-originated interaction without attempting to infer provenance from message content or protocol roles.
+
+### Decision
+
+Moderari owns a unique:
+
+```text
+filter_execution_id
+```
+
+for every Filter invocation.
+
+That identity correlates all artefacts belonging to the Filter execution, including private model Ask/Response activity where applicable.
+
+Origin is maintained as internal execution metadata.
+
+It is not injected into external protocol payloads.
+
+### Conclusion
+
+Provenance should be known because Lumen created the execution path, not reconstructed later by interpreting message content.
+
+---
+
+## Vestigare Evidence Boundary
+
+### Observation
+
+The redesign raised an important question: should Vestigare record every translated representation and internal transformation as alternative conversation traces?
+
+Doing so would make the evidence record increasingly difficult to interpret and would blur the distinction between what the client actually said and what Lumen did internally.
+
+### Decision
+
+Vestigare records the **Client ↔ Lumen boundary**:
+
+- exact Ask received from the client;
+- exact response returned to the client;
+- session/exchange correlation;
+- generic execution metadata.
+
+Provider-side translated representations and CIM are execution intermediates.
+
+Moderari records/materialises what its Filters and Adapter execution did.
+
+Vestigare does not need Filter-specific transformation schemas.
+
+### Conclusion
+
+> **Vestigare records what was said. Moderari records/materialises what it did.**
+
+This keeps the conversation evidence stable even as internal transformation architecture evolves.
+
+---
+
+## Repetere and Replay Semantics
+
+### Observation
+
+Replay becomes ambiguous if the recorded interaction is coupled to mutable Filter Profile names or if missing historical components are silently replaced with current equivalents.
+
+### Decision
+
+Repetere has two explicit replay modes.
+
+### Original Setup
+
+Repetere supplies the recorded self-contained Session Execution State to Moderari.
+
+Moderari determines whether that exact environment can still be constructed.
+
+If a required Adapter or Filter implementation/version is unavailable, Original Setup replay is rejected.
+
+There is no silent substitution.
+
+### New Setup
+
+A completely new normal Lumen session is configured using current provider/model and Filter Profile/None selections.
+
+Adapter and Filter decisions are resolved again using the current environment.
+
+Repetere does not selectively mutate the recorded Original Setup.
+
+### Conclusion
+
+Replay must distinguish:
+
+```text
+Can the original execution environment be reconstructed?
+```
+
+from:
+
+```text
+What happens if the same recorded conversation is executed under a new environment?
+```
+
+Those are different research questions and should remain different operations.
+
+---
+
+## Architecture Documentation Frozen for Implementation
+
+### Outcome
+
+By 3 October the redesign architecture had been consolidated into five authoritative documents:
+
+```text
+Lumen_Moderari_Redesign_Proposal
+Lumen_Moderari_Adapter_Architecture
+Lumen_Moderari_Filter_Architecture
+Lumen_Moderari_Canonical_Interaction_Model_Architecture
+Lumen_Praebere_Rogare_Pontis_Vestigare_Repetere_Companion_Changes
+```
+
+The documents were reviewed together for contradictions and unnecessary duplication.
+
+The architecture phase is considered sufficiently stable to begin implementation planning.
+
+Implementation may still expose practical choices that require discussion, but established service boundaries should not be casually redesigned simply because another implementation mechanism appears convenient.
+
+---
+
+## Revised Implementation Strategy — Standalone Interaction Engine First
+
+### Observation
+
+The initial high-level implementation sequence placed Praebere early because it assumed that the redesign would be introduced progressively into the running Lumen Stack.
+
+Further consideration identified a lower-risk path.
+
+CIM, Adapter resolution and Filter execution can be implemented and tested without Praebere, Pontis, Rogare, Vestigare, Repetere or a live provider.
+
+### Decision
+
+The first implementation package becomes:
+
+> **IP-01 — Moderari Standalone Interaction Engine: CIM, Adapter and Filter Foundations**
+
+The standalone engine receives synthetic equivalents of the facts that Praebere and session configuration will later supply.
+
+It should independently prove:
+
+- client representation recognition;
+- `Unknown` handling;
+- CIM 1.0;
+- OpenAI Base Adapter;
+- Anthropic Base Adapter;
+- deterministic Adapter resolution;
+- Specialised Adapter discovery and matching;
+- migration of Qwen compatibility into a Specialised Adapter;
+- Filter discovery and applicability;
+- Filter execution;
+- mandatory Filter loopback;
+- System Prompt Filter migration;
+- execution identity/provenance;
+- explicit semantic-loss handling;
+- architectural negative cases.
+
+No live Lumen service or provider is required.
+
+### Reasoning
+
+This changes the dependency direction.
+
+Praebere can subsequently be implemented against a **working Moderari interaction contract** rather than an interaction architecture that exists only in documentation.
+
+It also permits the most technically novel part of the redesign to be tested without destabilising the M0.1 Stack.
+
+### Conclusion
+
+The redesign should first prove the interaction engine in isolation, then integrate outward.
+
+---
+
+## Existing Code as Evidence, Not Architecture
+
+### Decision
+
+Existing Moderari code will be inspected selectively before implementation.
+
+The principal targets are:
+
+- current Qwen compatibility behaviour;
+- current System Prompt behaviour;
+- current Cognition behaviour;
+- useful context-manipulation code;
+- reusable request/response models;
+- provider/model conditionals that should disappear.
+
+Existing implementation will be classified as:
+
+```text
+RETAIN
+ADAPT
+MIGRATE
+DELETE
+DEFER
+```
+
+The current codebase is evidence of working behaviour, but the consolidated architecture is the design authority.
+
+### Conclusion
+
+The redesign should preserve valuable behaviour without preserving accidental architectural coupling.
+
+---
+
+## Branch and Release Target — `research-foundation-next`
+
+### Observation
+
+A branch named for the immediate Moderari work would describe only the first implementation activity.
+
+The intended outcome is considerably broader.
+
+Once the redesign has propagated through the affected Lumen services, the remaining global model-selection behaviour can be removed and Lumen can complete the transition to a session-owned:
+
+```text
+client → session → provider/model
+```
+
+execution model.
+
+At that point Lumen should represent a substantially more complete Research Foundation Build suitable for controlled use by a selected group of external researchers.
+
+### Decision
+
+The common development branch across the affected Lumen repositories is:
+
+```text
+research-foundation-next
+```
+
+`main` remains the M0.1 Research Foundation Build while this work proceeds.
+
+The branch name intentionally describes the destination rather than the first work package.
+
+Its expected scope includes:
+
+```text
+research-foundation-next
+    │
+    ├── IP-01 Moderari standalone interaction engine
+    ├── Praebere redesign
+    ├── affected service integration
+    ├── session-scoped provider/model ownership
+    ├── removal of global model selection
+    ├── full-stack integration
+    └── external-research hardening
+```
+
+The eventual release number does not need to be chosen yet.
+
+### Conclusion
+
+`research-foundation-next` provides a concrete engineering target without prematurely naming the release.
+
+IP-01 is the first implementation package, not the destination.
+
+The destination is a coherent Lumen Research Foundation Build in which the new interaction architecture and session-owned model execution are consistent throughout the Stack and suitable for broader controlled external research.
+
+---
+
+## Current Engineering Position — 6 October 2026
+
+The previous week was primarily an architecture week.
+
+The significant outcome was not new runtime functionality, but the removal of ambiguity around how the next Lumen architecture should divide responsibility.
+
+The immediate implementation sequence is now:
+
+```text
+M0.1 Research Foundation Build frozen on main
+        │
+        ▼
+research-foundation-next
+        │
+        ▼
+IP-01
+Moderari Standalone Interaction Engine
+CIM + Adapters + Filters
+        │
+        ▼
+Praebere
+authoritative provider/model/session facts
+        │
+        ▼
+Affected service integration
+        │
+        ▼
+Remove remaining global model-selection model
+        │
+        ▼
+Complete session-owned execution throughout Lumen
+        │
+        ▼
+Integration and external-research hardening
+        │
+        ▼
+Next Research Foundation Build
+```
+
+The engineering emphasis now moves from architecture definition to implementation evidence.
+
+The central test for the next phase is no longer whether the architecture can be described coherently.
+
+It is whether the architecture remains coherent once implemented.
