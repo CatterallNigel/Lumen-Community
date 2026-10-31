@@ -2,50 +2,51 @@
 
 ## Moderari Standalone Interaction Engine: CIM, Adapter and Filter Foundations
 
-**Date:** 02026-10-04\
-**Status:** Implementation planning baseline\
-**Scope:** Moderari standalone development, before Lumen Stack
-integration
+**Date:** 02026-10-06\
+**Status:** Revised implementation planning baseline\
+**Scope:** Moderari Standalone Interaction Engine (SIE), developed independently before Lumen Stack integration
 
 ------------------------------------------------------------------------
 
 # 1. Purpose
 
-IP-01 establishes the new Moderari interaction-engine foundations
-outside the running Lumen Stack so that the Canonical Interaction Model
-(CIM), Adapter Framework and Filter Framework can be implemented,
-exercised and verified independently before integration with Praebere,
-Pontis, Rogare, Vestigare, Repetere or Nuntius.
+IP-01 establishes the Moderari Standalone Interaction Engine (SIE) outside the
+running Lumen Stack.
 
-The work package is deliberately implementation-focused. It does not
-reopen the consolidated Moderari architecture.
+SIE is the interaction-processing boundary used by Moderari Core. Moderari Core
+passes interaction material into SIE; SIE determines whether no processing is
+required or whether discovered Adapters and/or Filters must participate, owns
+all CIM traversal and Filter loopback, and returns the resulting interaction
+material to Moderari Core.
 
-The principal objective is to produce a working, testable interaction
-engine that can accept synthetic session/model facts and interaction
-requests and deterministically:
+SIE is deliberately a framework rather than a collection of hard-coded
+protocol or Filter behaviours. It knows the contracts and structures required
+to discover, validate, instantiate and invoke components, but it does not know
+what an individual Adapter or Filter does.
 
-1.  recognise a supported client interaction representation or return
-    `Unknown`;
-2.  resolve the normal client-to-provider Adapter path;
-3.  translate between supported published representations through CIM
-    when required;
-4.  apply provider/model-specific Specialised Adapter behaviour without
-    introducing model-specific logic into Moderari Core;
-5.  discover, validate and execute Filters;
-6.  evaluate Filter requirements against supplied Effective Model
-    Definition facts;
-7.  materialise Filter output in the recognised client representation
-    using mandatory Adapter loopback when required;
-8.  preserve execution-path provenance and generic execution evidence
-    needed by later Moderari integration; and
-9.  reject unsupported or unsafe execution paths explicitly rather than
-    silently compensating.
+The foundation must therefore allow Base Adapters, Specialised Adapters and
+Filters to be self-describing and naturally extensible without changing SIE
+framework code.
 
-IP-01 is complete when these behaviours can be demonstrated through an
-isolated test harness without requiring any other running Lumen service
-or a live model provider.
+At configuration time SIE may evaluate discovered Filter requirements against
+the current Effective Model Definition (EMD) supplied by Praebere. This result
+is transient and is not retained as model knowledge or a persistent
+model-to-Filter compatibility catalogue.
 
-------------------------------------------------------------------------
+At first Ask, once the client representation is known, SIE revalidates the
+current configuration, resolves the required Adapter/Filter paths, contributes
+to materialisation of the immutable Session Execution Plan, and creates a
+minimal hot session-scoped Execution Instance keyed by `session_id`.
+
+Subsequent interactions use that already-resolved Execution Instance. The EMD
+is not repeatedly supplied or re-evaluated for every Ask. The Execution
+Instance is disposable runtime machinery and is destroyed when the session
+ends.
+
+IP-01 remains independently testable without a running Praebere, Pontis,
+Rogare, Vestigare, Repetere, Nuntius or live provider.
+
+------------------------------------------------------------------------------
 
 # 2. Architectural Baseline
 
@@ -56,6 +57,7 @@ The consolidated architecture documents are authoritative for IP-01:
 -   `Lumen_Moderari_Filter_Architecture_02026-10-03_Consolidated.md`
 -   `Lumen_Moderari_Canonical_Interaction_Model_Architecture_02026-10-03_Consolidated.md`
 -   `Lumen_Praebere_Rogare_Pontis_Vestigare_Repetere_Companion_Changes_02026-10-03_Consolidated.md`
+-   `Lumen_Moderari_Standalone_Interaction_Engine_Base_Architecture_02026-10-06.md`
 
 The previous high-level implementation plan remains useful background,
 but IP-01 deliberately changes the implementation sequence by developing
@@ -153,51 +155,65 @@ the engine must resolve the same execution path.
 
 # 4. IP-01 Scope
 
-IP-01 contains six implementation areas:
+IP-01 contains the following implementation areas:
 
-``` text
-Moderari Standalone Interaction Engine
+```text
+Moderari Standalone Interaction Engine (SIE)
+│
+├── Core ↔ SIE Boundary
+│   ├── interaction entry/exit contract
+│   ├── explicit processing direction
+│   ├── first-Ask materialisation
+│   └── session-scoped Execution Instance lifecycle
+│
+├── Component Framework
+│   ├── component identity/version
+│   ├── self-description / manifests
+│   ├── restart-based discovery
+│   └── registration
 │
 ├── Representation Framework
-│   ├── representation identities
+│   ├── discovered representation identities
 │   ├── request recognition
 │   └── Unknown handling
 │
 ├── CIM
-│   ├── schema/version
+│   ├── Lumen-defined schema/version
 │   ├── semantic objects
 │   └── validation
 │
 ├── Adapter Framework
-│   ├── Base Representation Adapters
-│   ├── Specialised Adapters
+│   ├── Base Representation Adapter contract
+│   ├── Specialised Adapter contract
 │   ├── registry/discovery
-│   ├── deterministic resolver
-│   ├── normal execution translation
-│   └── Filter loopback translation
+│   ├── deterministic path resolution
+│   └── bidirectional representation ↔ CIM translation
 │
 ├── Filter Framework
 │   ├── registry/discovery
-│   ├── requirement evaluation
-│   ├── configuration validation
-│   ├── execution
-│   └── Final Filter Output
+│   ├── required EMD attribute declaration
+│   ├── transient applicability evaluation
+│   ├── execution mode
+│   ├── private model-interaction support
+│   └── filter_execution_id
 │
-├── Execution Evidence
-│   ├── resolved component identity/version
-│   ├── filter_execution_id
-│   ├── provenance
-│   └── loss/incompatibility evidence
+├── SIE Execution
+│   ├── normal client ↔ provider processing
+│   ├── mandatory Filter loopback
+│   ├── private Filter model-interaction routing
+│   └── hot per-session Execution Instance
 │
 └── Standalone Harness
-    ├── synthetic model/session facts
+    ├── synthetic EMD/session inputs
     ├── request fixtures
     ├── extension fixtures
     └── acceptance scenarios
 ```
 
-------------------------------------------------------------------------
+The framework owns structure, discovery, routing and execution topology. It
+does not own the semantics of concrete Adapters, Filters or EMD attributes.
 
+------------------------------------------------------------------------------
 # 5. Explicitly Out of Scope
 
 IP-01 does **not** implement:
@@ -211,8 +227,9 @@ IP-01 does **not** implement:
 -   Servire administration UI;
 -   Vestigare transport or persistence;
 -   Repetere replay orchestration;
--   complete Moderari session lifecycle;
--   immutable production Session Execution State;
+-   complete Moderari/Pontis session lifecycle;
+-   persistence of Session Execution Plans;
+-   construction of the EMD;
 -   production MongoDB persistence;
 -   live Ollama/Colibri execution;
 -   hot loading/unloading of Python extensions;
@@ -230,15 +247,21 @@ it must not prematurely implement those services.
 
 # 6. Proposed Internal Package Boundary
 
-The exact filenames may change during implementation, but the code
-should preserve the following conceptual separation:
+The exact filenames may change during implementation. The important boundary is
+that SIE framework code is independent from concrete Adapter and Filter
+implementations.
 
-``` text
+```text
 moderari/
 └── interaction/
+    ├── components/
+    │   ├── identity.py
+    │   ├── manifest.py
+    │   ├── discovery.py
+    │   └── registry.py
+    │
     ├── representations/
-    │   ├── types.py
-    │   ├── resolver.py
+    │   ├── contract.py
     │   ├── registry.py
     │   └── recognition.py
     │
@@ -249,29 +272,22 @@ moderari/
     │   └── version.py
     │
     ├── adapters/
-    │   ├── contracts.py
+    │   ├── base.py
+    │   ├── specialised.py
     │   ├── registry.py
     │   ├── discovery.py
     │   ├── resolver.py
-    │   ├── execution.py
-    │   ├── loopback.py
-    │   ├── openai/
-    │   ├── anthropic/
-    │   └── specialised/
-    │       └── qwen/
+    │   └── execution.py
     │
     ├── filters/
-    │   ├── contracts.py
+    │   ├── contract.py
     │   ├── registry.py
     │   ├── discovery.py
-    │   ├── requirements.py
-    │   ├── execution.py
-    │   └── builtins/
+    │   └── execution.py
     │
     ├── execution/
-    │   ├── facts.py
-    │   ├── decisions.py
-    │   ├── provenance.py
+    │   ├── instance.py
+    │   ├── engine.py
     │   └── errors.py
     │
     └── harness/
@@ -280,82 +296,134 @@ moderari/
         └── runner.py
 ```
 
-The purpose of this structure is separation of responsibility, not
-directory structure for its own sake.
+Concrete Lumen Base Adapters, Specialised Adapters and Filters may initially
+ship in the same repository/package, but they are implementations of the
+framework contracts and must not be hard-coded into framework resolution.
 
-------------------------------------------------------------------------
+Representation identities are contributed by discovered Base Adapter
+implementations rather than enumerated in SIE framework code.
+
+The purpose of this structure is separation of responsibility, not directory
+structure for its own sake.
+
+------------------------------------------------------------------------------
 
 # 7. Core Standalone Input Model
 
-The standalone engine requires explicit synthetic inputs corresponding
-to facts that the integrated Stack will later supply.
+The standalone harness supplies synthetic inputs corresponding to information
+that the integrated Stack will later provide.
 
-A minimum execution input should distinguish:
+Configuration-time inputs include:
 
-``` text
-Session Configuration Facts
-├── provider identifier
-├── provider interaction representation
-├── provider model identifier
-├── Effective Model Definition
-├── Adapter execution state: Enabled / Disabled
-└── selected Filter configuration, or None
-
-First-Ask Facts
-└── raw client request boundary
+```text
+session_id
+provider identifier
+provider interaction representation
+provider model identifier
+current Effective Model Definition (EMD)
+Adapter Enabled / Disabled state
+selected Filter configuration, or None
 ```
 
-The engine must not derive provider/model facts from the request.
+The EMD is authoritative input from Praebere. SIE does not construct it,
+interpret the provenance of its values, or define a model-characteristic
+ontology.
 
-The client representation is established only from the request boundary
-by the Representation Resolver.
+A Filter may declare the names of EMD attributes it requires. SIE evaluates
+only whether the current EMD supplies those requirements with an applicable
+state (`true`, `false` or `unknown` as supplied by the EMD contract). SIE does
+not interpret Filter-specific thresholds or boundaries. Those belong to the
+Filter.
 
-Provider interaction representation is supplied as authoritative
-configuration input.
+Applicability evaluation is transient. SIE does not retain a persistent claim
+that a Filter is compatible with a provider/model because a later EMD may
+differ.
 
-A missing provider representation is therefore an incomplete
-configuration error in the standalone harness, not the
-`Unknown client representation` path.
+At first Ask the raw client request becomes available. SIE recognises the
+client representation and revalidates the selected configuration against the
+current EMD and the now-known representation path.
 
-------------------------------------------------------------------------
+Successful first-Ask validation results in:
 
-# 8. Work Stage IP-01.1 --- Foundation Types and Execution Results
+1. materialisation of the immutable Session Execution Plan; and
+2. creation of a minimal hot `ExecutionInstance` attached to `session_id`.
 
-Implement the common typed objects required by the standalone engine
-before implementing translation behaviour.
+The Execution Instance contains only the live resolved machinery SIE requires
+for subsequent execution, such as resolved component instances/references and
+request/response/loopback paths. It is not a duplicate of the Session Execution
+Plan and does not retain the EMD merely as model knowledge.
 
-Initial types should cover:
+Subsequent interactions provide `session_id` plus interaction material. SIE
+uses the existing Execution Instance rather than rediscovering components or
+re-evaluating the EMD.
 
--   representation identity;
--   known/Unknown client representation result;
--   provider/model execution facts;
--   Effective Model Definition fixture;
--   Adapter state;
--   Adapter identity/version;
--   Filter identity/version;
--   Filter configuration;
--   execution-path decision;
--   translation result;
--   Filter execution result;
--   Final Filter Output;
--   incompatibility/failure result;
--   provenance/origin; and
--   semantic-loss reporting.
+A missing provider representation remains incomplete configuration, not the
+Unknown-client path.
 
-Avoid large generic dictionaries where a stable domain type is already
-known.
+------------------------------------------------------------------------------
+
+# 8. Work Stage IP-01.1 --- SIE Foundation Contracts
+
+Implement the minimum contracts required to establish SIE as an extensible
+interaction framework before implementing concrete translation behaviour.
+
+IP-01.1 deliberately does **not** create a generic decision framework,
+provenance framework, model-characteristic ontology, or duplicate session-facts
+object.
+
+The initial foundation should establish:
+
+- generic component identity and implementation/API version metadata;
+- self-description/manifest structure;
+- generic representation identity without hard-coded representation values;
+- Base Adapter contract shape;
+- Specialised Adapter contract shape;
+- Filter contract shape;
+- minimal EMD structural contract sufficient for requirement availability
+  checks;
+- explicit Filter execution-mode declaration, including whether a Filter
+  requires a private model interaction;
+- Core ↔ SIE interaction boundary;
+- explicit processing direction;
+- session-scoped Execution Instance contract/lifecycle;
+- `session_id` ownership/reference;
+- `filter_execution_id` ownership for Filter invocation; and
+- only those base errors demonstrated by the foundation implementation.
+
+A Base Adapter definition must be able to declare the representation it owns
+and the operations by which that representation maps to and from CIM. SIE must
+not contain hard-coded OpenAI, Anthropic or other representation identities.
+
+A Filter definition must be able to declare required EMD attributes and its
+native/output representation. The framework determines whether required
+information is available; the Filter owns the interpretation of values,
+thresholds and boundaries.
+
+A Filter that requires a private model interaction must declare that structural
+execution requirement. The Filter must not call the provider directly. SIE
+retains control of the Filter invocation and uses the Moderari Core boundary to
+perform the provider interaction and return the corresponding response to the
+same Filter invocation.
 
 ### Acceptance
 
--   Core types can be instantiated without any Lumen service.
--   Known representation and `Unknown` are distinct states.
--   Provider representation cannot accidentally be treated as client
-    recognition.
--   Execution decisions are inspectable and serialisable for tests.
--   Failure conditions have machine-testable identities rather than
-    relying on message strings.
+-   foundation contracts instantiate without any running Lumen service;
+-   framework code contains no concrete OpenAI, Anthropic, Qwen, System Prompt
+    or Cognition knowledge;
+-   representation identities can be contributed by discovered implementations;
+-   a dummy Base Adapter can describe its representation without changing SIE;
+-   a dummy Filter can declare required EMD attributes without changing SIE;
+-   Filter applicability is reducible to current EMD requirement availability;
+-   no applicability result is persisted as provider/model knowledge;
+-   a Filter can declare whether it requires private model interaction;
+-   SIE has a defined Core boundary through which such private interaction can
+    be executed;
+-   a session-scoped Execution Instance can be created, retrieved by
+    `session_id`, and destroyed;
+-   the Execution Instance does not duplicate the EMD or Session Execution Plan;
+-   no generic `decisions.py` or provenance framework is required.
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 # 9. Work Stage IP-01.2 --- Representation Registry and Client Recognition
 
@@ -796,116 +864,117 @@ Filters do not:
 
 # 20. Work Stage IP-01.13 --- Filter Requirement Evaluation
 
-Implement generic Filter requirement evaluation against a supplied
-synthetic Effective Model Definition.
+Implement transient Filter applicability evaluation against the current EMD.
 
-The evaluator must preserve the architectural rule:
+A Filter declares only the EMD attributes it requires. SIE determines whether
+those requirements are currently supplied/satisfied by the authoritative EMD.
 
-> `Unknown` does not satisfy a positive requirement.
+SIE does not define the semantic meaning of an EMD attribute and does not
+evaluate Filter-specific numeric/string boundaries. If a Filter requires an
+attribute such as `context_window`, the Filter itself interprets the supplied
+value when its own implementation requires such interpretation.
 
-Requirements are owned semantically by Moderari Filters; model facts are
-supplied as external authoritative input.
-
-The initial implementation should avoid inventing a broad
-model-characteristic ontology inside IP-01. Use only characteristics
-required by the initial Filters/tests.
+The applicability result is not persisted as model knowledge. It is evaluated
+during configuration and revalidated at first Ask because the EMD and installed
+component set may have changed and the client representation is only then
+known.
 
 ### Acceptance
 
--   satisfied positive requirement → applicable;
--   false requirement → not applicable;
--   Unknown requirement value → not applicable;
+-   required EMD attribute available/satisfied → Filter may remain applicable;
+-   required EMD attribute false → not applicable;
+-   required EMD attribute Unknown/missing → not applicable;
+-   SIE contains no characteristic-specific boundary rules;
 -   Filter does not query provider/model runtime;
--   Filter does not modify model facts;
--   requirement evaluation is generic and not Filter-specific Core
-    logic.
+-   SIE does not retain model↔Filter compatibility after evaluation;
+-   first Ask revalidates the selected Filter against the current EMD.
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
-# 21. Work Stage IP-01.14 --- Filter Execution Identity and Provenance
+# 21. Work Stage IP-01.14 --- Filter Invocation and Private Model Interaction
 
 Implement generic Filter invocation ownership.
 
 For every Filter invocation the Filter Framework creates:
 
-``` text
+```text
 filter_execution_id
 ```
 
 The framework, not the Filter, owns this identity.
 
-Execution evidence should distinguish origin from:
+A Filter declares its execution mode. A simple transformation Filter completes
+without a private model round-trip. A Filter requiring model interaction emits
+a private Ask through its SIE execution context.
 
--   client;
--   Filter; and
--   model/private Filter interaction where applicable.
+SIE remains in control of the invocation. It passes the provider-bound private
+interaction to Moderari Core using the Core ↔ SIE contract; Moderari Core owns
+provider transport/execution; the returned provider response is passed back
+through SIE to the same `filter_execution_id` and Filter invocation.
 
-Origin must be known from execution-path state, not inferred from role,
-content or protocol fields.
-
-Provenance must not be inserted into the external interaction
-representation.
+The Filter must not know provider endpoints, Praebere lifecycle, CIM routing or
+the concrete Adapter path.
 
 ### Acceptance
 
--   every Filter invocation receives a unique execution identity;
--   execution identity is stable across its associated artefacts;
--   origin is explicit internal metadata;
--   external protocol material remains free of Lumen provenance fields.
+-   every Filter invocation receives a unique `filter_execution_id`;
+-   a transform-only Filter requires no provider round-trip;
+-   a model-interaction Filter can request a private Ask without calling the
+    provider directly;
+-   Moderari Core can execute the private provider interaction through the
+    defined SIE boundary;
+-   the response returns to the same Filter invocation;
+-   Adapter/CIM compatibility processing remains owned by SIE.
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 # 22. Work Stage IP-01.15 --- Filter Execution and Mandatory Loopback
 
-Implement the complete Filter execution path.
+Implement Filter execution with one authoritative loopback implementation
+inside SIE.
 
-``` text
-Filter Framework
-    │
-    ├── create filter_execution_id
-    │
-    ▼
+Moderari Core must not contain Filter-loopback rules.
+
+```text
 Filter
-    │
-    └── Filter-produced material
-        in Filter native output representation
-    │
-    ▼
-Filter Framework
-    │
-    ├── output representation == client representation
-    │       → Final Filter Output
-    │
-    └── differs
-            → Adapter Framework loopback
-            → Final Filter Output
-               in client representation
+  │
+  └── Filter-produced material in Filter native representation
+          │
+          ▼
+         SIE
+          │
+          ├── representation == client representation
+          │       → no translation
+          │
+          └── representation differs
+                  → source Base Adapter
+                  → CIM
+                  → client Base Adapter
+                  → client representation
 ```
 
-Loopback translation is mandatory when representations differ.
+Loopback translation is mandatory when representations differ and remains
+active even when normal client↔provider Adapter processing is Disabled.
 
-It must operate even when normal client→provider Adapter processing is
-Disabled.
+For Filters requiring a private model interaction, SIE also owns the reverse
+compatibility path required to return the provider response to the Filter's
+native representation before Filter execution continues.
 
-Only the **Final Filter Output** is treated as the Filter result.
-
-Transient Filter-produced representation and CIM intermediates are
-implementation mechanics.
+Only the Filter's final materialised output is incorporated as its result.
+Transient representation/CIM objects are execution mechanics.
 
 ### Acceptance
 
 -   Filter output already in client representation requires no loopback;
--   OpenAI Filter output + Anthropic client uses OpenAI→CIM→Anthropic
-    loopback;
+-   differing known representations use Base Adapter → CIM → Base Adapter;
 -   loopback remains active with normal Adapter state Disabled;
--   Final Filter Output is always in the recognised client
-    representation;
--   Unknown client representation + selected Filter rejects before
-    Filter execution;
--   transient CIM is not exposed as Filter output;
--   pre-loopback material is not confused with Final Filter Output.
+-   Unknown client representation + selected Filter rejects before execution;
+-   Moderari Core contains no duplicate loopback logic;
+-   private model response returns to the Filter in the representation its
+    contract expects;
+-   transient CIM is not exposed as Filter output.
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 # 23. Work Stage IP-01.16 --- Initial Test Filter
 
@@ -967,14 +1036,13 @@ The architecture identifies Cognition as the second current built-in
 Filter, but its full behaviour need not block the Adapter/CIM
 foundation.
 
-IP-01 should at minimum prove that the framework can represent a Filter
-that:
+IP-01 should at minimum prove that the framework can represent a Filter that:
 
 -   has positive model/context requirements;
--   may perform private model interaction;
+-   declares that it requires private model interaction;
 -   produces external-representation interaction material;
--   associates private Ask/Response artefacts with one
-    `filter_execution_id`.
+-   keeps the private Ask/Response under one `filter_execution_id`; and
+-   receives the private response back from SIE without knowing provider transport.
 
 If existing Cognition behaviour is sufficiently stable and reusable,
 migration may proceed in IP-01. Otherwise a contract-level test
@@ -986,7 +1054,53 @@ implementation rather than assumed now.
 
 ------------------------------------------------------------------------
 
-# 26. Work Stage IP-01.19 --- Published-Semantic Loss Handling
+# 26. Work Stage IP-01.19 --- Session-Scoped Execution Instance
+
+Implement the hot runtime object created after successful first-Ask
+materialisation.
+
+The Execution Instance is keyed by `session_id` and contains only live resolved
+machinery needed by SIE to execute subsequent interactions. It is not an
+alternative Session Execution Plan and must not become a model-knowledge cache.
+
+It may hold resolved Adapter/Filter instances or references and pre-resolved
+request, response and loopback paths where those are required for efficient
+execution.
+
+Lifecycle:
+
+```text
+configuration
+    → transient availability evaluation
+
+first Ask
+    → recognise client representation
+    → revalidate current EMD/configuration
+    → resolve paths/components
+    → materialise immutable Session Execution Plan
+    → create hot Execution Instance
+
+subsequent Ask/Response
+    → session_id
+    → existing Execution Instance
+    → execute resolved path
+
+session end
+    → destroy Execution Instance
+```
+
+### Acceptance
+
+-   first Ask creates exactly one hot Execution Instance for the session;
+-   subsequent interactions reuse it without repeated EMD evaluation;
+-   it contains only execution-required runtime state;
+-   it does not duplicate the Session Execution Plan;
+-   it does not retain EMD/model knowledge merely for reference;
+-   session end removes the instance and its session-local component state.
+
+------------------------------------------------------------------------------
+
+# 27. Work Stage IP-01.20 --- Published-Semantic Loss Handling
 
 Implement an explicit result mechanism for published-representation
 interoperability loss.
@@ -1024,7 +1138,7 @@ interoperability loss.
 
 ------------------------------------------------------------------------
 
-# 27. Work Stage IP-01.20 --- Standalone Scenario Harness
+# 29. Work Stage IP-01.21 --- Standalone Scenario Harness
 
 Build a lightweight harness around the interaction engine.
 
@@ -1063,7 +1177,6 @@ and return an inspectable result containing:
 -   normal provider translation path;
 -   final provider-bound interaction;
 -   component identities/versions;
--   provenance;
 -   loss/failure information.
 
 The harness should be usable both from automated tests and a simple
@@ -1071,7 +1184,7 @@ developer-facing command line.
 
 ------------------------------------------------------------------------
 
-# 28. Minimum Acceptance Scenario Matrix
+# 29. Minimum Acceptance Scenario Matrix
 
 The following scenarios form the minimum IP-01 acceptance suite.
 
@@ -1151,7 +1264,7 @@ The following scenarios form the minimum IP-01 acceptance suite.
 
 ------------------------------------------------------------------------
 
-# 29. Testing Layers
+# 30. Testing Layers
 
 ## 29.1 Unit Tests
 
@@ -1166,7 +1279,6 @@ Cover:
 -   requirement evaluation;
 -   resolver branches;
 -   Filter execution identity;
--   provenance;
 -   loss reporting.
 
 ## 29.2 Contract Tests
@@ -1223,12 +1335,12 @@ reproducing obsolete architecture.
 
 ------------------------------------------------------------------------
 
-# 30. Implementation Order
+# 31. Implementation Order
 
 Recommended coding order:
 
-``` text
-IP-01.1   Foundation types/results
+```text
+IP-01.1   SIE foundation contracts
     ↓
 IP-01.2   Representation recognition
     ↓
@@ -1242,7 +1354,7 @@ IP-01.6   Anthropic Base Adapter
     ↓
 IP-01.7   Adapter registry/discovery
     ↓
-IP-01.8   Deterministic resolver
+IP-01.8   Deterministic Adapter resolver
     ↓
 IP-01.9   Specialised Adapter contract
     ↓
@@ -1252,11 +1364,11 @@ IP-01.11  Normal execution path
     ↓
 IP-01.12  Filter contract/registry
     ↓
-IP-01.13  Filter requirements
+IP-01.13  transient Filter requirement evaluation
     ↓
-IP-01.14  Filter identity/provenance
+IP-01.14  Filter invocation/private model interaction
     ↓
-IP-01.15  Filter execution + loopback
+IP-01.15  Filter execution + mandatory SIE loopback
     ↓
 IP-01.16  Test Filter
     ↓
@@ -1264,18 +1376,20 @@ IP-01.17  System Prompt migration
     ↓
 IP-01.18  Cognition contract/migration decision
     ↓
-IP-01.19  Explicit loss handling
+IP-01.19  session-scoped Execution Instance
     ↓
-IP-01.20  Complete standalone scenario harness
+IP-01.20  explicit loss handling
+    ↓
+IP-01.21  complete standalone scenario harness
 ```
 
-This order may be implemented in small vertical slices where useful, but
-later stages must not force architectural coupling back into earlier
-layers.
+This order may be implemented in small vertical slices where useful, but later
+stages must not force architectural coupling back into earlier layers.
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
-# 31. Existing Moderari Code Inspection Points
+
+# 32. Existing Moderari Code Inspection Points
 
 Existing Moderari code should be inspected selectively rather than
 treated as the design source.
@@ -1313,7 +1427,7 @@ No existing code is retained merely to preserve the old path.
 
 ------------------------------------------------------------------------
 
-# 32. Deliverables
+# 33. Deliverables
 
 IP-01 should produce:
 
@@ -1331,7 +1445,7 @@ IP-01 should produce:
 12. Filter requirement evaluator;
 13. Filter execution framework;
 14. mandatory client-representation loopback;
-15. execution identity/provenance structures;
+15. Filter invocation identity/private-interaction structures;
 16. simple framework Test Filter;
 17. migrated System Prompt Filter;
 18. Cognition Filter migration decision/contract proof;
@@ -1346,7 +1460,7 @@ IP-01 should produce:
 
 ------------------------------------------------------------------------
 
-# 33. Definition of Done
+# 34. Definition of Done
 
 IP-01 is complete when all of the following are true.
 
@@ -1389,7 +1503,7 @@ normal Adapter Enabled/Disabled state.
 ### Evidence
 
 The engine exposes component identity/version, `filter_execution_id`,
-provenance and translation/loss decisions generically without depending
+translation/loss information generically without depending
 on Vestigare.
 
 ### Failure Behaviour
@@ -1409,7 +1523,7 @@ subsequent Praebere and full Moderari session integration.
 
 ------------------------------------------------------------------------
 
-# 34. Exit Point and Next Work Package
+# 35. Exit Point and Next Work Package
 
 IP-01 deliberately stops before production Stack integration.
 
@@ -1434,16 +1548,22 @@ only on paper.
 
 ------------------------------------------------------------------------
 
-# 35. IP-01 Guiding Test
+# 36. IP-01 Guiding Test
 
 A concise test of whether IP-01 has maintained the architecture is:
 
-> Given only synthetic provider/model facts, installed Adapter/Filter
-> extensions and a raw client request, can the standalone Moderari
-> interaction engine determine what it safely knows, what it must not
-> guess, what representation path is required, what intentional Filter
-> transformation is requested, what compatibility translation is
-> required, and produce an inspectable result explaining exactly what it
-> did --- without knowing anything about the rest of the Lumen Stack?
+> Given discovered/self-describing Adapter and Filter implementations, an
+> authoritative current EMD, selected session configuration and a raw first
+> client request, can SIE determine whether the configuration is usable,
+> resolve the required representation/Filter/loopback paths, materialise the
+> execution configuration into a minimal hot session-scoped Execution
+> Instance, and thereafter process interactions without re-reading model
+> knowledge or knowing the semantics of any concrete Adapter or Filter?
 
-If yes, the foundation is ready for Praebere and Stack integration.
+A second boundary test is equally important:
+
+> Can Moderari Core treat SIE as the single interaction-processing enter/exit
+> point, including private Filter model interactions and mandatory loopback,
+> without containing protocol-, model- or Filter-specific transformation logic?
+
+If yes, the foundation is ready for Praebere and full Stack integration.

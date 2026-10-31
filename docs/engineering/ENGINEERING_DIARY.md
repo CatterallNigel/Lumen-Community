@@ -4,6 +4,7 @@
 
 | Version | Date | Change |
 |---|---|---|
+| 1.7 | 2026-10-31 | Appended 7–31 October implementation and integration evidence: session-owned EMD/SEP lifecycle, Moderari SIE and CIM delivery, Praebere/Pontis/Rogare integration, Qwen tool-call normalisation experiments, Pi SDK tool execution, evidence export, remaining protocol conformance, and the agreed Repetere → Fiducia → stabilisation → deferred development → verification → release roadmap. |
 | 1.6 | 2026-10-06 | Added 28 September–6 October post-M0.1 architecture consolidation: Moderari/Praebere responsibility boundaries, session configuration and first-Ask materialisation, Canonical Interaction Model, Base and Specialised Adapters, Filter architecture and loopback, Vestigare/Repetere evidence boundaries, standalone IP-01 implementation strategy, and `research-foundation-next` as the next external research-build target. |
 | 1.5 | 2026-09-27 | Added 15–27 September M0.1 distribution closeout: containerisation and network boundary, runtime authorization and research licensing, integrated acceptance and provider resilience, external research distribution, Colibri provider investigation, Reasoning Assurance direction, and post-M0.1 multi-session roadmap. |
 | 1.4 | 2026-09-14 | Added 11–14 September Replay closeout: Repetere UI/state convergence, durable Experiment/Run/child-Trace hierarchy, cleanup and deletion semantics, Fiducia contract compatibility, roadmap reconciliation, and M0.1 release position. |
@@ -15705,3 +15706,137 @@ The engineering emphasis now moves from architecture definition to implementatio
 The central test for the next phase is no longer whether the architecture can be described coherently.
 
 It is whether the architecture remains coherent once implemented.
+
+---
+
+# 7–17 October 2026 — From Architecture to Executable Session Contracts
+
+## Observation
+
+The 6 October architectural position established that model selection, Filter selection and execution planning must be session-scoped. The subsequent implementation work converted this from a conceptual boundary into a concrete lifecycle across Praebere, Moderari, Pontis, Rogare and Vestigare.
+
+Praebere now distinguishes model reservation from activation. Provider/model identity is fixed on the first successful reservation, while model loading is deferred until First Ask. Servire remains authoritative for provider connection configuration. Praebere discovers model characteristics and constructs the Effective Model Definition (EMD); the initial implementation deliberately uses discovery-derived values rather than a persistent catalogue or user overrides.
+
+Moderari uses the EMD to determine applicable Filters and available Profiles. The client selects a Profile, including the explicit `None` option. At First Ask, Moderari resolves the incoming client protocol and applicable Adapters, validates the selected Filters and materialises the immutable Session Execution Plan (SEP). Vestigare must acknowledge the SEP before Moderari enters READY, even when conversation recording is disabled.
+
+## Analysis
+
+This separates three operations that had previously been at risk of conflation: **reservation** (identity and ownership), **planning** (frozen execution semantics) and **activation** (model resource use). It also prevents a global model selection from silently altering an established session. The authoritative execution request flows from Moderari directly to the model provider; Praebere handles discovery and model lifecycle, not inference proxying.
+
+The new SIE distinguishes Base Adapters (protocol-to-CIM and CIM-to-protocol conversion) from Specialised Adapters (targeted same-protocol transformation), with ordered to-model Filters operating on declared-protocol Context. `ADAPTERS_DISABLED` remains a native pass-through mode; its behavioural equivalence requires continued conformance testing.
+
+## Decision and status
+
+The first implementation sequence was Moderari SIE foundations, Praebere P1–P3, Pontis alignment and Rogare Profile selection. Reported unit/type-checking milestones and subsequent integration runs provide evidence of substantial implementation. They do **not** certify exhaustive OpenAI/Anthropic semantics, streaming compatibility or every failure path. Repetere alignment remained deliberately deferred until the execution contract stabilised.
+
+---
+
+# 18–26 October 2026 — Execution Ownership and Observability
+
+## Observation
+
+Integration work exposed the importance of making each service's responsibilities explicit. Pontis owns external session creation, termination and cancellation. Moderari owns execution orchestration, SEP state and local execution evidence. Praebere owns provider/model reservation and activation. Rogare owns the conversational surface and, in the revised design, the Pi SDK tool host. Vestigare owns recorded traces and the authoritative persisted SEP.
+
+Moderari execution evidence moved to MongoDB; SQLite was removed from that evidence path. The evidence model records structural transformations, before/after representations, sequence and correlation data, and terminal outcomes. A successful transport or terminal status must not be mistaken for successful fulfilment of the user's task.
+
+## Analysis
+
+The architectural distinction between **what the model claimed**, **what Moderari transformed**, **which tools were actually invoked**, and **what the filesystem or provider actually did** is essential to Reasoning Assurance. It enables faults to be localised to model behaviour, Adapter normalisation, tool dispatch or tool execution rather than attributed indiscriminately to the orchestration stack.
+
+A related research question emerged from scientific AI-agent reporting: a correct final answer alone does not establish whether important observations were discarded, whether intermediate decisions were justified, or whether the work is reproducible. The proposed Cognition direction remains a future research item, not a delivered Filter.
+
+## Decision and status
+
+Retain Moderari-local transformation evidence and Vestigare's separate SEP/trace authority. Do not use a diagnostic evidence export as a replacement for the persisted replay contract. Preserve distinct terminal-outcome categories as an outstanding requirement rather than describing the current generic failure handling as complete.
+
+---
+
+# 27–30 October 2026 — Pi Tool Routing and the First End-to-End Tool Cycles
+
+## Observation
+
+Early Rogare tool tests failed or detached while waiting for the first model/tool response. Controlled experiments isolated a Pi HTTP timeout as a major cause: with a 10-second timeout, the session detached around that threshold; with the timeout disabled, an end-to-end run completed with real Pi tool invocations. This established a transport-timeout issue without proving that every possible detach shared that cause.
+
+The first-Ask routing design was also corrected. The user's First Ask belongs to the Moderari-to-provider execution path, not a legacy Pi ACP model invocation. Pontis should route actual tool requests to Rogare's Pi SDK host; it should not send the original model Ask through Pi merely to discover tools. Tool availability is resolved at First Ask and reflected in the SEP. A subsequent tool result does not trigger re-materialisation of that SEP.
+
+## Analysis
+
+The distinction between a tool **advertised** in the effective model request, a tool **requested** by the model, and a tool **executed** by the SDK host became central to testing. Successful `write` and `read` HTTP dispatches provided stronger evidence than a conversational response claiming to have created a file. Later dependent tasks demonstrated multiple model/tool cycles, rather than only a pair of calls requested in one response.
+
+The Pi ACP model label is not authoritative for Lumen's selected model. The provider/model selected through Praebere remains authoritative, and Pi's own configured default model must not be reported as a model-identity discrepancy.
+
+## Decision and status
+
+Retain Pi SDK as the immediate tool-host integration rather than removing the dependency during this stabilisation period. Preserve tool execution under normal operating-system permissions, including the intended `bash` capability. Continue testing cancellation, missing tools, malformed arguments, tool failures, stale results and transport errors before declaring the integration fully verified.
+
+---
+
+# 30 October 2026 — Qwen Specialised Adapter: Mixed Commentary and Tool Calls
+
+## Observation
+
+A Qwen2.5-Coder response to a file-editing request contained conversational introduction, a fenced JSON object describing a `read` call, and subsequent explanation. Its provider response had `finish_reason=stop` and no structured `tool_calls`. Under the initial all-or-nothing text policy, the Specialised Adapter preserved the whole response as text. Consequently no tool was dispatched, although the model appeared to describe the intended operation.
+
+This exposed a gap between a model's textual tool-call convention and the OpenAI-compatible structured tool-call contract. It was not, by itself, evidence that the Rogare SDK tool host had failed.
+
+## Analysis
+
+Determining whether surrounding prose semantically intends execution would require inference beyond a deterministic Adapter. The agreed alternative is **structural recognition**, limited to explicit tool-call-shaped blocks and names declared in the effective tool definitions. Valid blocks may be converted even when surrounded by commentary; the commentary must be preserved. Arbitrary JSON must not be scanned indiscriminately. If a batch contains multiple candidate calls and any is malformed or invalid, none should be executed through partial normalisation; the original response should be preserved and the rejection reason made observable.
+
+This creates a known risk: a structurally valid illustrative example can be mistaken for an executable call. The risk is a documented consequence of deterministic structural recognition, not a capability the Adapter can silently solve through semantic intent detection.
+
+## Decision and evidence
+
+The revised Qwen Specialised Adapter was implemented and iterated through type-checking and regression fixes, including effective tool-definition lookup against the actual SEP/request shape. Subsequent live tests produced actual Pi SDK tool execution. Keep a regression fixture based on the original mixed-content provider response and effective declared tools; separately test atomic rejection, commentary preservation, multiple candidate calls and the illustrative-example risk.
+
+---
+
+# 30–31 October 2026 — File-Editing Tests and the Evidence/Outcome Distinction
+
+## Observation
+
+The file-editing experiment evolved from a response that merely displayed JSON, through a response that claimed success without meeting the full content requirement, to a successful file-content result. The final task required reading the original file, preserving its existing lines, appending `This was appended by Lumen!`, writing a distinct output file and reading it back for verification.
+
+The successful run's operational evidence reported three tool-execution cycles. The first cycle requested `read` and `write` together; later cycles requested `read` and `write` separately. The final file content matched the requested result, but the first cycle did not obey the stricter instruction that each invocation be standalone.
+
+## Analysis
+
+This is a useful assurance case precisely because it is not an unqualified pass. **Task outcome succeeded; tool-ordering instruction compliance was imperfect.** A successful HTTP 200 or model statement of success is insufficient to establish either property. File inspection and tool-dispatch records support the outcome, while the execution sequence identifies the remaining behavioural deviation.
+
+The Moderari session export was extended to include the session SEP and raw MongoDB execution evidence in JSON, with newest-first evidence ordering, visible millisecond timestamps, and retained sequence numbers and transformation diffs. A reviewed run contained 35 evidence records across four model interactions. `Before` or `After` may legitimately be JSON `null` for an added or removed path; this must not be confused with a field that is absent from the source object. Explicit missing-versus-null representation remains a separately tracked improvement.
+
+## Decision and status
+
+Retain this scenario as an end-to-end regression test with separate assertions for **actual tool dispatch**, **tool ordering**, **file content**, **original-file preservation**, and **model-reported outcome**. The export is valuable diagnostic evidence; its correctness in this session does not replace systematic export, replay and cross-service acceptance testing.
+
+---
+
+# 31 October 2026 — Consolidated Requirements and the NEXT Development Sequence
+
+## Observation
+
+A review of fourteen documented change specifications found that much of the new Moderari/Praebere/Pontis/Rogare foundation is implemented or supported by recent integration evidence, while the largest architectural gap is Repetere's adaptation to the immutable SEP/SIE execution model. Fiducia depends on that replay contract. Several older documents describe historical plans or incomplete milestones, and their unchecked acceptance lists cannot be interpreted as proof of missing implementation.
+
+A consolidated **Lumen Requirement Status Register and Development Roadmap** was created on 31 October 2026, covering 103 requirements and five classifications: Implemented, Partially Implemented, Verification Required, Not Started and Deferred. Its status values are planning assessments, not a fresh audit of every repository.
+
+## Analysis
+
+Starting a formal verification campaign before finishing Repetere, Fiducia and the remaining architectural alignment would create avoidable rework. Conversely, postponing *all* tests until the end would undermine the controlled, evidence-based development approach. The appropriate distinction is continuous implementation testing versus a later formal, cross-service acceptance gate.
+
+Deferred requirements must remain visible on the development timeline rather than disappearing from scope. This includes the persistent model catalogue and user EMD overrides, Cognition and Compaction Filters, arbitrary extension loading, multi-version CIM/protocol negotiation, complete Adapter/CIM semantic and streaming coverage, terminal-outcome taxonomy and other deferred or incomplete items identified by the register.
+
+## Decision — governing development order
+
+1. **Repetere:** implement Original Setup from the recorded immutable SEP; New Setup with newly resolved components and a new SEP; replay provenance, failure behaviour and trace separation.
+2. **Fiducia:** update scheduled replay to use the revised Repetere contract and verify orchestration behaviour.
+3. **Cross-service architecture stabilisation:** bring all services into consistency with session ownership, SIE, SEP and tool-routing contracts; resolve integration gaps and establish a stable baseline.
+4. **Outstanding and deferred development:** return to all retained requirements, prioritise dependencies and complete the agreed scope rather than silently dropping deferred work.
+5. **Formal verification:** execute the consolidated acceptance criteria across services, address failures and record evidence for each requirement.
+6. **Release build:** freeze the verified baseline, complete Linux/Docker packaging and release acceptance, then produce the next research build.
+
+The next release remains provisionally named `NEXT`, and `research-foundation-next` remains the common development branch. `main` retains the M0.1 baseline until the new architecture is ready.
+
+## Conclusion
+
+Lumen has moved beyond an architectural proposal: real session reservation, immutable execution planning, tool dispatch and transformation evidence have now been exercised together. The remaining engineering priority is to make **replay and scheduled replay** consistent with that execution contract, then complete deferred scope and prove the whole system through formal verification. The central assurance principle remains unchanged: **record what actually happened, distinguish it from what the model said happened, and preserve enough evidence to reproduce and assess the difference.**
+
