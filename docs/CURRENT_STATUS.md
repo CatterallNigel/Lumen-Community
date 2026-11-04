@@ -1,238 +1,78 @@
 # Lumen Current Status
 
-**Status:** Current\
-**Purpose:** Concise maintained snapshot of Lumen's present engineering
-state\
-**Snapshot date:** 2026-08-21
-
-------------------------------------------------------------------------
+**Document status:** Current snapshot  
+**Snapshot date:** 2026-11-04  
+**Evidence baseline:** Lumen-Community repository snapshot of 2026-11-03; Engineering Diary through 2026-10-31  
+**Purpose:** Concise, maintained account of current engineering state; not a release certification
 
 ## What Lumen Is Today
 
-Lumen is an emerging **Reasoning Assurance Service** composed of bounded
-services around probabilistic model execution.
+Lumen is an independently developed, model- and client-independent **Reasoning Assurance Service**. Its focus is preserving execution evidence, reproducing model interactions under controlled conditions and providing a foundation for behavioural assessment. Its operating principle is **Observe → Reproduce → Repeat**.
 
-The principal execution and operational stack is working end-to-end.
-Current development emphasis is moving from establishing
-execution/reproduction infrastructure toward **behavioural assessment
-through Aestimare**.
+The **M0.1 external research distribution is the completed baseline**. Development of the next research build (provisionally **NEXT**, on `research-foundation-next`) is ongoing. The current priority is alignment of replay and scheduled replay with the revised session-owned, immutable Session Execution Plan (SEP) architecture—not a claim that behavioural assessment is already delivered.
 
-For architectural authority, use:
+For authoritative architecture, see [Canonical Architecture](architecture/core/ARCHITECTURE.md), [Ecosystem Architecture](architecture/ecosystem/LUMEN_ECOSYSTEM_CURRENT_ARCHITECTURE.md), and [Service Matrix](architecture/ecosystem/LUMEN_SERVICE_MATRIX.md).
 
--   `docs/architecture/core/ARCHITECTURE.md`
--   `docs/architecture/ecosystem/LUMEN_ECOSYSTEM_CURRENT_ARCHITECTURE.md`
--   `docs/architecture/ecosystem/LUMEN_SERVICE_MATRIX.md`
+## Service Status and Responsibilities
 
-This page is deliberately short and time-sensitive.
+| Service | Role | Status / qualification |
+| --- | --- | --- |
+| **Servire** | Operational control plane and service-group lifecycle | Established M0.1 foundation; NEXT alignment and verification remain |
+| **Nuntius** | Shared command, status and diagnostic path | Established foundation; cross-service integration remains subject to verification |
+| **Rogare** | Research/session interface and current Pi SDK tool host | Active integration and tool-dispatch testing |
+| **Pontis** | Authoritative client session lifecycle, cancellation and tool routing | Revised session/tool routing implemented or under integration verification |
+| **Praebere** | Provider discovery, model reservation, readiness and Lumen-initiated residency | Session-owned reservation and lazy activation developed; broader conformance remains |
+| **Moderari** | Orchestration, Session Interaction Engine, adapter/filter resolution and immutable SEP | Substantial implementation and integration evidence; full protocol/streaming conformance not certified |
+| **Vestigare** | Correlated trace evidence and persisted execution-plan acknowledgement | Active evidence path; replay integration and failure-path verification remain |
+| **Repetere** | Experiments, runs and fresh-session replay | **Current NEXT alignment priority**: Original Setup from recorded SEP and New Setup from newly resolved execution configuration |
+| **Fiducia** | Scheduled and repeated replay workflows | M0.1 foundation exists; NEXT contract alignment follows Repetere |
+| **Aestimare** | Behavioural assessment and evidence synthesis | **Research/design direction; not included in M0.1**; not represented as a completed assessment engine |
+| **Audire** | Proposed multi-host operational transport | Proposed; not part of the implemented critical path |
 
-------------------------------------------------------------------------
+Status labels reflect documented development and integration evidence, **not a fresh source-code audit or formal release acceptance**. Consult the canonical service matrix for current ownership and dependencies.
 
-## Service Status
+## Execution Architecture Under Development
 
-  ----------------------------------------------------------------------------
-  Service                 Present status          Current role / direction
-  ----------------------- ----------------------- ----------------------------
-  **Moderari**            Implemented / active    Model-request orchestration
-                                                  and controlled intervention
+The NEXT architecture separates three concerns:
 
-  **Pontis**              Implemented / active    Client/session bridge and
-                                                  protocol/capability path
+1. **Reservation:** Pontis owns the session; Praebere reserves the selected provider/model for that session. Selection is not model loading.
+2. **Planning:** Moderari's Session Interaction Engine resolves execution configuration into an immutable **Session Execution Plan (SEP)** on First Ask. Vestigare acknowledgement is required before READY, independently of whether conversation recording is enabled.
+3. **Activation and execution:** Praebere manages model readiness and residency; Moderari sends inference requests to the selected provider. Tool execution is routed through Pontis to the current Rogare Pi SDK host.
 
-  **Praebere**            Implemented / active    External model-provider
-                                                  abstraction, readiness and
-                                                  lifecycle
+For **Original Setup** replay, Repetere reuses the recorded SEP, rebound to a fresh session, with Moderari responsible for validation. For **New Setup**, a fresh configuration is resolved and materialised. Repetere does not reinterpret recorded filters, adapters or system prompts. These are current design and integration targets; their full end-to-end verification is not asserted here.
 
-  **Vestigare**           Implemented / active    Trace and execution evidence
-                                                  capture
+## Current Development Sequence
 
-  **Repetere**            Implemented / active    Controlled Replay and
-                                                  divergence evidence
+The Engineering Diary's 31 October roadmap establishes this order:
 
-  **Fiducia**             Implemented / early     Coordinates repeated Replay
-                          capability              execution; integrated with
-                                                  Servire
+1. Repetere alignment with immutable SEP and trace provenance.
+2. Fiducia alignment with the revised replay contract.
+3. Cross-service architecture stabilisation.
+4. Outstanding and deferred requirements.
+5. Formal cross-service verification and acceptance evidence.
+6. NEXT release build and packaging.
 
-  **Aestimare**           Active                  Behavioural assessment of
-                          design/development      accumulated evidence
+Implementation-level tests occur throughout; **formal verification and release acceptance are future gates**. The `main` branch retains the M0.1 baseline until the revised architecture is ready.
 
-  **Rogare**              Implemented / active    Human-facing
-                                                  conversational/operational
-                                                  client
+## Research and Evidence
 
-  **Servire**             Implemented / active    Operational control plane
-                                                  and stack lifecycle
+The [Selected Experimental Investigations](research/SELECTED_EXPERIMENTAL_INVESTIGATIONS.md) index provides a short route into the [Engineering Diary](engineering/ENGINEERING_DIARY.md). Documented investigations include long-context continuity, checkpoint prompt changes with a negative result, and tool-execution evidence showing why a correct output is not the same as complete procedural compliance.
 
-  **Audire**              Proposed architecture   Distributed operational
-                                                  transport for future
-                                                  multi-host operation
-  ----------------------------------------------------------------------------
+These are engineering experiments and observations, not independently validated claims about internal model cognition. In particular, text checkpoints are **observable artefacts**; they do not provide direct access to a model's hidden internal state.
 
-Refer to the service matrix for current ports and dependencies.
+## Deferred or Unverified
 
-------------------------------------------------------------------------
+- Aestimare behavioural assessment and specialist assessors remain future research/development work.
+- Full protocol and streaming conformance, terminal-outcome taxonomy and edge-case tool failures require additional verification or implementation.
+- Persistent model catalogue/user overrides, advanced filters and broader extension support remain in the tracked deferred scope.
+- Audire multi-host transport and an external contributor setup process are not current critical-path capabilities.
 
-## Operational State
+Refer to the current requirement status register and canonical service documents for detailed scope; this summary is not an exhaustive requirement inventory.
 
-The Lumen stack has reached end-to-end operation across the principal
-implemented services.
+## Documentation and Historical Status
 
-Current operational architecture includes:
-
--   model-provider readiness/lifecycle through Praebere;
--   orchestration through Moderari;
--   bridging/session handling through Pontis;
--   execution evidence through Vestigare;
--   Replay through Repetere;
--   repeated Replay coordination through Fiducia;
--   user interaction through Rogare;
--   stack lifecycle and operational control through Servire.
-
-This establishes the infrastructure needed to begin accumulating
-controlled behavioural evidence for Aestimare.
-
-------------------------------------------------------------------------
-
-## Current Development Focus --- Aestimare
-
-Aestimare is the major active architectural/development focus.
-
-Its governing principles currently include:
-
--   **Assess behaviour, not intelligence.**
--   Treat a single execution as an observation rather than a behavioural
-    conclusion.
--   Use repeated controlled executions to form experiments.
--   Characterise behaviour from multiple experiments/evidence sets.
--   Use longitudinal evidence to detect behavioural change.
--   Assess sufficiency where a task permits multiple acceptable
-    outcomes.
--   Preserve execution context/provenance so behavioural change can be
-    distinguished from changed conditions.
--   Allow specialist internal assessment engines to mature independently
-    rather than force all assessment into one monolithic algorithm.
-
-The proposed internal specialist-engine terminology is **Peritus**
-(singular), **Periti** (plural), collectively **Periti Assessores**.
-
-This is an Aestimare internal design direction, not an expansion of the
-top-level Lumen service family.
-
-------------------------------------------------------------------------
-
-## Evidence Generation
-
-The immediate prerequisite for useful Aestimare work is a controlled
-corpus of executions.
-
-The current approach begins with tasks having definitive answers, then
-progresses toward prompts where:
-
--   multiple outcomes may be sufficient;
--   tool use may vary;
--   reasoning paths may diverge;
--   context can materially affect behaviour.
-
-Fiducia provides the mechanism for repeated controlled Replay activity;
-Vestigare and Repetere provide the underlying observation/reproduction
-evidence.
-
-------------------------------------------------------------------------
-
-## Architectural Direction --- Audire
-
-All Lumen services communicate over HTTP and need not permanently reside
-on one host.
-
-Servire currently operates services in a topology where local process
-output can be directly available. Audire is the proposed architectural
-answer for distributed operation.
-
-The intended direction is a small operational transport layer capable of
-carrying:
-
--   stdout/stderr-style operational messages;
--   lifecycle commands;
--   acknowledgements;
--   service state/control messages.
-
-Audire is not currently part of the implemented critical path and should
-be treated as **Proposed**, not as current runtime behaviour.
-
-------------------------------------------------------------------------
-
-## External Capability Integration
-
-The architecture supports external tool/capability providers without
-making those providers part of Lumen.
-
-The governing rule is:
-
-> External providers return capability results or semantics, not Lumen
-> prompts.
-
-Moderari remains responsible for Lumen-controlled
-orchestration/instruction behaviour, while Pontis provides the
-integration path.
-
-The MEG semantic-provider work is an example of this architectural
-pattern rather than a special-case dependency.
-
-------------------------------------------------------------------------
-
-## Current Documentation State
-
-The Community repository has completed a structural and high-priority
-documentation housekeeping pass.
-
-Completed work includes:
-
--   reorganised service documentation;
--   service-level README indexes;
--   canonical current ecosystem topology;
--   canonical service matrix;
--   documentation status/lifecycle convention;
--   superseded-document register;
--   new canonical Lumen architecture;
--   classification of older architecture, UI Vision and Lumen Console
-    documents as historical where appropriate.
-
-The original architecture plus its two appendices are retained under
-`docs/architecture/core/history/`.
-
-------------------------------------------------------------------------
-
-## Deferred
-
-### Contribution / Development Entry Point
-
-A formal `CONTRIBUTING.md` and external developer setup guide are
-intentionally deferred until Lumen is ready to invite external code
-contributions.
-
-Public visibility of the Community repository does not by itself mean
-the engineering contribution contract is ready.
-
-------------------------------------------------------------------------
+The August repository reorganisation and documentation-overlap review are preserved as historical records. Current architectural authority belongs to canonical documents; the [Engineering Diary](engineering/ENGINEERING_DIARY.md) preserves dated observations, including decisions subsequently revised. The [Documentation Index](README.md) provides navigation.
 
 ## Maintaining This Page
 
-This document is a **snapshot**, not a historical ledger.
-
-When status materially changes:
-
-1.  update this page;
-2.  update the service matrix where maturity/dependencies change;
-3.  update the relevant service documentation;
-4.  preserve meaningful historical milestones in service version history
-    or the Engineering Diary.
-
-Do not turn this page into another Engineering Diary or roadmap.
-
-------------------------------------------------------------------------
-
-## Current Summary
-
-> Lumen's execution, evidence-capture, Replay, repeated-execution and
-> operational foundations are in place. The next major step is to turn
-> that accumulated evidence into behavioural assessment through
-> Aestimare.
+Update the snapshot date when the actual state is reviewed. Record major changes here, update the canonical service matrix and service documentation as necessary, and retain historical evidence in the Engineering Diary. **Do not silently promote planned work to implemented status.**

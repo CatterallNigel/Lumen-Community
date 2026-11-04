@@ -33,6 +33,20 @@ Lumen therefore treats the **project, experiment and execution evidence**—rath
 
 ---
 
+## Research questions
+
+Lumen is being developed around practical research questions concerning the behaviour, continuity and reliability of AI-assisted work:
+
+- **Reproducibility** — Under what conditions can observed model behaviour be reproduced, and how should differences between executions be interpreted?
+- **Instruction interpretation** — How do language models respond to ambiguous, conflicting or changing instructions, and how do execution conditions influence those responses?
+- **Continuity** — How does preserving and reintroducing working context influence model behaviour during extended tasks?
+- **Evidence and provenance** — What execution evidence is needed to distinguish observed behaviour from assumptions, interpretations and conclusions?
+- **Behavioural assessment** — How can repeated observations support meaningful assessments of reliability without assuming that model behaviour is deterministic?
+
+These are ongoing questions informing Lumen's architecture and experiments, not claims of established scientific findings. Lumen's primary observations concern model *outputs and recorded execution behaviour*; checkpoint contents are not direct measurements of a model's internal mechanisms.
+
+---
+
 ## What Lumen provides
 
 Lumen is designed to support four connected capabilities:
@@ -42,7 +56,7 @@ Lumen is designed to support four connected capabilities:
 3. **Reproduction** — replay controlled runs in fresh sessions with sufficient model and configuration metadata to make comparisons meaningful.
 4. **Assurance** — build calibrated trust from accumulated evidence rather than requiring every output to be accepted or reverified from first principles.
 
-The immediate M0.1 research focus is:
+The initial M0.1 research focus was:
 
 > **Observe → Reproduce → Repeat**
 
@@ -102,7 +116,7 @@ MongoDB provides persistence for the M0.1 service group. Services run in Docker 
 
 Lumen Aestimare is deliberately framed as behavioural assessment rather than an intelligence benchmark:
 
-> Lumen Assess does not attempt to determine how intelligent an AI system is. It characterises how that system behaves under controlled, repeatable conditions so that behaviour can be understood, compared and improved.
+> Lumen Aestimare does not attempt to determine how intelligent an AI system is. It characterises how that system behaves under controlled, repeatable conditions so that behaviour can be understood, compared and improved.
 
 The aim is not to reduce a model to one score. Different assessors examine distinct behavioural dimensions, while Aestimare relates their findings to the execution evidence captured elsewhere in Lumen.
 
@@ -163,13 +177,15 @@ The distribution comprises:
 
 The supported installation is a single-machine Docker deployment on a private Lumen network. Servire is the operational authority; directly starting protected services is not the supported runtime model.
 
-M0.1 remains active engineering work. The repository should not be interpreted as a finished, generally available product or as a promise that every documented future capability is already implemented.
+M0.1 established the initial external research distribution baseline. Subsequent development is extending the architecture to improve session isolation, immutable execution configuration, provider-independent model management, controlled replay and evidence provenance.
+
+The next research release remains under active development. This repository should not be interpreted as a finished, generally available product or as a promise that every documented future capability has been implemented or independently validated.
 
 ---
 
 ## Current development
 
-Current work is concentrated on making the first external research workflow dependable:
+Current work builds on the M0.1 baseline to make recording, replay and execution configuration dependable across independent sessions:
 
 - recording model identity and configuration with execution evidence;
 - persisting experiments and individual runs;
@@ -184,17 +200,58 @@ Later work extends these foundations into richer behavioural assessment through 
 
 ---
 
+## Experimental investigations
+
+Lumen's engineering direction has evolved through practical investigations of model behaviour, continuity, execution reliability and reproducibility. The following are selected observations from the [Engineering Diary](docs/engineering/ENGINEERING_DIARY.md), not independently validated research findings.
+
+### Long-context continuity
+
+Experiments with Qwen2.5-Coder investigated whether a model operating with a bounded context window could read and analyse a production source file of approximately 10,000 lines. Rolling checkpoints and context reconstruction enabled the reading task to complete while preserving sufficient working context for a subsequent architectural explanation.
+
+The experiments also exposed limitations: checkpoint content could accumulate implementation detail without equivalent architectural synthesis, and a richer recorded checkpoint did not necessarily lead to a richer final answer. Successful source coverage alone was therefore not treated as proof of improved reasoning quality.
+
+### Checkpoint structure and model behaviour
+
+Successive experiments examined whether changing the structure of continuity checkpoints altered the usefulness of the model's subsequent architectural descriptions.
+
+In the v3.2.7 evaluation, a revised checkpoint prompt requested explicitly evidence-linked observations and conclusions. Contrary to the working hypothesis, the resulting checkpoints appeared more conservative and less architecturally detailed than those produced with the previous structure. The run was interrupted, so the comparison was treated as qualified evidence rather than a definitive causal result. The experimental prompt change was reverted, while unrelated lifecycle fixes were retained.
+
+This investigation illustrates why even a local prompt change must be evaluated against a consistent task and source, with unexpected outcomes preserved in the engineering record.
+
+### Execution evidence and instruction compliance
+
+Investigations of model-directed tool use distinguish a correct final artefact from compliance with the requested execution procedure. A model can produce an apparently successful result without necessarily following the intended sequence of actions.
+
+This motivates recording tool interactions and execution traces, and assessing the observed procedure as well as the final response. It does not, by itself, establish the general reliability of a model or a tool-use policy.
+
+### Experimental method
+
+Where practical, Lumen investigations aim to:
+
+- keep the model, task, source material and initial instructions consistent across comparisons;
+- vary one clearly defined orchestration or checkpoint condition at a time;
+- record operational failures, unexpected results and unsuccessful hypotheses;
+- distinguish recorded observations from interpretations and proposed explanations;
+- preserve the architectural decisions and corrections that follow from the evidence.
+
+The [Engineering Diary](docs/engineering/ENGINEERING_DIARY.md) is maintained as an append-only record of these investigations. Earlier interpretations remain visible when later evidence changes the engineering conclusions.
+
+---
+
 ## Documentation
 
-The repository contains the public architecture, research, engineering record and development direction for Lumen.
+The repository contains Lumen's public architecture, research direction, engineering investigations and development history.
 
-Start with:
+**Architecture and project documentation**
 
-- [Documentation index](docs/README.md)
-- [Canonical Lumen architecture](docs/architecture/core/ARCHITECTURE.md)
-- [Current ecosystem architecture](docs/architecture/ecosystem/LUMEN_ECOSYSTEM_CURRENT_ARCHITECTURE.md)
-- [Canonical service matrix](docs/architecture/ecosystem/LUMEN_SERVICE_MATRIX.md)
-- [Engineering Diary](docs/engineering/ENGINEERING_DIARY.md)
+- [Documentation index](docs/README.md) — Entry point to the public documentation.
+- [Canonical Lumen architecture](docs/architecture/core/ARCHITECTURE.md) — Core architecture, service boundaries and execution model.
+- [Current ecosystem architecture](docs/architecture/ecosystem/LUMEN_ECOSYSTEM_CURRENT_ARCHITECTURE.md) — Relationships among the Lumen services.
+- [Canonical service matrix](docs/architecture/ecosystem/LUMEN_SERVICE_MATRIX.md) — Authoritative ownership and responsibility boundaries.
+
+**Research and engineering evidence**
+
+- [Engineering Diary](docs/engineering/ENGINEERING_DIARY.md) — Chronological experimental observations, negative results, technical investigations, architectural decisions and revised conclusions.
 
 Historical milestone notes, evidence and research documents remain valuable records, but they may describe earlier architecture. Where documents conflict, the canonical architecture and service matrix define the current service boundaries.
 
@@ -204,7 +261,7 @@ Historical milestone notes, evidence and research documents remain valuable reco
 
 No general community software licence has yet been published.
 
-This repository makes Lumen's architecture, research and development record available for examination. The M0.1 software distribution is planned as a separately authorised, research-only release with defined usage and redistribution restrictions.
+This repository makes Lumen's architecture, research and development record available for examination. Software distribution is subject to separate authorisation and research-use terms; publication of this documentation does not grant a general licence to the software.
 
 An **Illuminates Community License** and an **Illuminates Commercial License** remain planned for later software availability.
 
@@ -214,7 +271,7 @@ An **Illuminates Community License** and an **Illuminates Commercial License** r
 
 Discussion, research interest and constructive feedback are welcome.
 
-Formal code contributions are not currently being accepted while the architecture and first external research distribution continue to evolve. A contribution process will be introduced when the project reaches an appropriate level of maturity.
+Formal code contributions are not currently being accepted while the architecture and next research distribution continue to evolve. A contribution process will be introduced when the project reaches an appropriate level of maturity.
 
 ---
 

@@ -4,38 +4,53 @@
     "type": "split",
     "children": [
       {
-        "id": "6ed5838b2ae642fb",
+        "id": "fab555dfe51bdced",
         "type": "tabs",
         "children": [
           {
-            "id": "6a7731cb3ab1da9d",
+            "id": "85a3aa4d263c0554",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/releases/Next/archive/Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated.md",
+                "file": "docs/releases/Next/current/LUMEN-Requirements-Status-and-Development-Roadmap-2026-10-31.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated"
+              "title": "LUMEN-Requirements-Status-and-Development-Roadmap-2026-10-31"
             }
           },
           {
-            "id": "7971fe9fa3de8dd8",
+            "id": "d47bf9b253fa2a71",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/releases/Next/current/MILESTONE-5P-SEMANTIC-COVERAGE-IMPLEMENTATION-PART-2.md",
+                "file": "docs/releases/Next/current/LUMEN-Repetere-Architectural-Alignment-Implementation-Plan-2026-10-31.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "MILESTONE-5P-SEMANTIC-COVERAGE-IMPLEMENTATION-PART-2"
+              "title": "LUMEN-Repetere-Architectural-Alignment-Implementation-Plan-2026-10-31"
+            }
+          },
+          {
+            "id": "c9ca3f1f4d9c6064",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/research/SELECTED_EXPERIMENTAL_INVESTIGATIONS.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "SELECTED_EXPERIMENTAL_INVESTIGATIONS"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -203,9 +218,32 @@
       "read-aloud:Read aloud / pause": false
     }
   },
-  "active": "6a7731cb3ab1da9d",
+  "active": "c9ca3f1f4d9c6064",
   "lastOpenFiles": [
+    "docs/architecture/LUMEN_DEVELOPMENT_REQUIREMENTS—REPETERE_EXPERIMENT_STRUCTURE_AND_MODERARI_SYSTEM_PROMPT_POLICY.md",
+    "docs/architecture/LUMEN_DEVELOPMENT_REQUIREMENTS—EXTERNAL_RESEARCH_M0.1_READINESS.md",
+    "docs/architecture/LUMEN_DEVELOPMENT_REQUIREMENTS-4REPETERE_EXPERIMENT_STRUCTURE_AND_MODERARI_SYSTEM_PROMPT_POLICY.md",
+    "docs/services/rogare/HUMAN_RESPONSE_ASSESSMENT-ROGARE_AND_AESTIMARE.md",
+    "docs/services/pontis/PONTIS-MULTIPLE_TOOL_PROVIDERS_AND_TOOL_CATALOGUE.md",
+    "docs/services/aestimare/periti_assessores/oeconomia/AESTIMARE_OECONOMIA-ECONOMIC_EFFICIENCY_ASSESSMENT_OVERVIEW.md",
+    "docs/architecture/LUMEN_DEVELOPMENT_REQUIREMENTS-REPETERE_EXPERIMENT_STRUCTURE_AND_MODERARI_SYSTEM_PROMPT_POLICY.md",
+    "docs/architecture/LUMEN_DEVELOPMENT_REQUIREMENTS-EXTERNAL_RESEARCH_M0.1_READINESS.md",
+    "docs/README.md",
+    "docs/releases/Next/current/LUMEN-Repetere-Increment-01-Source-Audit-and-Contracts-2026-10-31.md",
+    "README.md",
+    "docs/research/SELECTED_EXPERIMENTAL_INVESTIGATIONS.md",
+    "docs/engineering/reviews/LUMEN_COMMUNITY_NOTABLE_CHANGES_REVIEW_2026-11-04.md",
+    "docs/engineering/reviews",
+    "docs/engineering/New folder",
+    "Lumen-Community-2026-11-03.zip",
+    "docs.zip",
+    "REPOSITORY_STRUCTURE_AUDIT.md",
+    "README.MD",
+    "docs/releases/Next/current/LUMEN-Repetere-Increment-01-Integration-Progress-2026-11-01.md",
+    "docs/releases/Next/current/LUMEN-Repetere-Increment-01-Implementation-Status-2026-10-31.md",
+    "docs/releases/Next/current/LUMEN-Repetere-Architectural-Alignment-Implementation-Plan-2026-10-31.md",
     "docs/releases/Next/current/LUMEN-Requirements-Status-and-Development-Roadmap-2026-10-31.md",
+    "docs/releases/Next/archive/Lumen_Moderari_Redesign_Proposal_02026-10-03_Consolidated.md",
     "docs/releases/Next/archive/LUMEN-DOCUMENTED_REQ_CHANGES.zip",
     "docs/releases/Next/archive/03_MODERARI_FILTER_ARCHITECTURE.md",
     "docs/releases/Next/archive/02_MODERARI_CIM_ADAPTER_ARCHITECTURE.md",
@@ -213,34 +251,11 @@
     "docs/releases/Next/archive/MILESTONE-5P-SEMANTIC-COVERAGE-IMPLEMENTATION-PART-2.md",
     "docs/releases/Next/archive/MILESTONE-5P-SEMANTIC-COVERAGE-IMPLEMENTATION.md",
     "docs/releases/Next/archive/MILESTONE-5P-PROTOCOL-COMPATIBILITY-FOUNDATION.md",
-    "docs/releases/Next/archive/Lumen_RTH-01_Rogare_Tool_Hosting_Implementation_Plan.md",
-    "docs/releases/Next/archive/Lumen_Moderari_SIE_Contract_and_Session_Execution_Plan.md",
-    "docs/releases/Next/archive/LUMEN_MODERARI_ADAPTER_RESPONSE_PROTOCOL_COVERAGE_BACKLOG.md",
-    "docs/releases/Next/archive/APPLY-5S.1.md",
-    "docs/releases/Next/archive/06_LUMEN_COMPANION_SERVICE_CHANGES.md",
-    "docs/releases/Next/archive/05_MODERARI_CONFORMANCE_SPECIFICATION.md",
-    "docs/releases/Next/archive/04_MODERARI_IP-01_IMPLEMENTATION_AND_STATUS.md",
     "docs/releases/Next/current/LUMEN-DOCUMENTED_REQ_CHANGES.zip",
     "docs/releases/Next/current/06_LUMEN_COMPANION_SERVICE_CHANGES.zip",
-    "docs/releases/Next/current/Lumen_RTH-01_Rogare_Tool_Hosting_Implementation_Plan.md",
-    "docs/releases/Next/current/01_MODERARI_SIE_ARCHITECTURE.md",
-    "docs/development/future/PER_SESSION_MODEL_OWNERSHIP_AND_CONCURRENT_TRACE_RECORDING.md",
-    "docs/services/pontis/PONTIS#U2014MULTIPLE_TOOL_PROVIDERS_AND_TOOL_CATALOGUE.md",
-    "docs/services/moderari/MODERARI-ENFORCED TOOL INVOCATION AND ASSISTANT-CONTEXT INJECTION.md",
-    "docs/roadmaps/LUMEN_POST_M01_ENGINEERING_PLANNING_20260927.md",
-    "docs/releases/Next/current/Lumen_Moderari_OUT_Materialisation_Semantic_Loss_and_Specialised_Adapter_Architecture_02026-10-10.md",
-    "docs/releases/Next/current/05_MODERARI_CONFORMANCE_SPECIFICATION.md",
-    "docs/releases/Next/current/LUMEN_MODERARI_ADAPTER_RESPONSE_PROTOCOL_COVERAGE_BACKLOG.md",
-    "docs/releases/Next/current/Lumen_Moderari_SIE_Contract_and_Session_Execution_Plan.md",
-    "docs/releases/Next/current/MILESTONE-5P-SEMANTIC-COVERAGE-IMPLEMENTATION-PART-2.md",
-    "docs/releases/Next/current/MILESTONE-5P-SEMANTIC-COVERAGE-IMPLEMENTATION.md",
     "docs/releases/Next/current",
     "docs/releases/Next/archive/Lumen_Moderari_IP-01_Implementation_20206-10-10.zip",
     "docs/releases/Next/Lumen_Moderari_IP-01_Implementation_20206-10-10.zip",
-    "docs/private/services/moderari/schemas/openai-chat-completions-cim-1.0.mapping.yaml",
-    "docs/private/services/moderari/schemas/cim-1.0.schema.json",
-    "docs/private/services/moderari/schemas/anthropic-messages-cim-1.0.mapping.yaml",
-    "docs/private/services/moderari/schemas",
     "docs/graphics/individual-logos/nuntius.png",
     "docs/graphics/individual-logos/servire.png",
     "docs/graphics/individual-logos/aestimare.png",

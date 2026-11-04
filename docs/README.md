@@ -2,9 +2,11 @@
 
 This directory contains the working architectural, engineering, research and release documentation for **Lumen — the Reasoning Assurance Service**.
 
-Lumen preserves the evidence needed to understand, reproduce and assess model behaviour across sessions. The current M0.1 External Research Distribution is centred on:
+Lumen preserves the evidence needed to understand, reproduce and assess model behaviour across sessions. The **completed M0.1 External Research Distribution** established the initial baseline around:
 
 > **Observe → Reproduce → Repeat**
+
+The next research build (**NEXT**, provisional name) is under active development, with replay alignment, stabilisation and formal verification still ahead. See [Current Status](CURRENT_STATUS.md) for the dated engineering snapshot.
 
 The documentation is organised by **purpose first**, then by service where appropriate.
 
@@ -27,17 +29,17 @@ The documentation is organised by **purpose first**, then by service where appro
 
 The following responsibilities should be used when reading or updating the documentation:
 
-| Area | Current authority |
-| --- | --- |
-| Operational control | **Servire** is the operational authority and supported control plane for starting, stopping and supervising the Lumen service group. |
-| Common control path | **Nuntius** provides the shared control and diagnostic path used by the operator-facing interfaces. |
-| Client and execution sessions | **Pontis** owns session lifecycle, selected-model enforcement, request correlation and the bridge into execution. |
-| Model use | **Moderari** determines how the selected model is used, including orchestration, prompting and tool behaviour. It does not own provider readiness or model lifecycle. |
-| Provider and model lifecycle | **Praebere** owns provider discovery, model discovery, runtime-global model selection, reservation, readiness and model residency caused by Lumen. |
-| Trace evidence | **Vestigare** records execution evidence and correlated traces, including multiple active sessions. |
-| Reproduction and experiments | **Repetere** owns experiment/run persistence, fresh replay-session creation and reproducible execution. |
-| Scheduling and assurance workflow | **Fiducia** coordinates scheduled and assurance-related work. |
-| User interaction | **Rogare** provides the research and session interface, including model selection during session establishment. |
+| Area                              | Current authority                                                                                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Operational control               | **Servire** is the operational authority and supported control plane for starting, stopping and supervising the Lumen service group.                                  |
+| Common control path               | **Nuntius** provides the shared control and diagnostic path used by the operator-facing interfaces.                                                                   |
+| Client and execution sessions     | **Pontis** owns session lifecycle, selected-model enforcement, request correlation and the bridge into execution.                                                     |
+| Model use                         | **Moderari** determines how the selected model is used, including orchestration, prompting and tool behaviour. It does not own provider readiness or model lifecycle. |
+| Provider and model lifecycle      | **Praebere** owns provider discovery, model discovery, runtime-global model selection, reservation, readiness and model residency caused by Lumen.                    |
+| Trace evidence                    | **Vestigare** records execution evidence and correlated traces, including multiple active sessions.                                                                   |
+| Reproduction and experiments      | **Repetere** owns experiment/run persistence, fresh replay-session creation and reproducible execution.                                                               |
+| Scheduling and assurance workflow | **Fiducia** coordinates scheduled and assurance-related work.                                                                                                         |
+| User interaction                  | **Rogare** provides the research and session interface, including model selection during session establishment.                                                       |
 
 ## Current provider lifecycle
 
@@ -52,9 +54,9 @@ Ollama is **external infrastructure**. Lumen verifies its availability but does 
 
 These rules supersede older documents that describe Lumen as owning the Ollama process or eagerly loading a model during stack or session startup.
 
-## M0.1 distribution boundary
+## Completed M0.1 distribution boundary
 
-The M0.1 External Research Distribution contains Rogare, Pontis, Vestigare, Repetere, Fiducia, Moderari, Praebere, Servire, Nuntius and MongoDB on a private Docker network. **Aestimare is not included in M0.1.**
+The completed M0.1 External Research Distribution baseline contains Rogare, Pontis, Vestigare, Repetere, Fiducia, Moderari, Praebere, Servire, Nuntius and MongoDB on a private Docker network. **Aestimare is not included in M0.1.**
 
 The supported runtime is Servire-controlled. Installation identity uses a Service Group UUID and cryptographic identity; protected configuration is unlocked through runtime authorisation over TLS/HTTPS with Illuminates.One. Directly starting individual protected services is not the supported operating model.
 
@@ -69,6 +71,12 @@ Each significant topic should have one canonical current engineering document. O
 - superseded context.
 
 Where a historical document conflicts with the current canonical architecture, the canonical document and the boundaries stated above take precedence. Do not silently rewrite historical evidence to match the present design; mark or register it as superseded instead.
+
+## Research and current status
+
+- [Current engineering status](CURRENT_STATUS.md) — dated snapshot of the NEXT development priorities, implemented foundations and remaining verification.
+- [Selected experimental investigations](research/SELECTED_EXPERIMENTAL_INVESTIGATIONS.md) — concise index of documented experiments, negative results and limitations.
+- [Engineering Diary](engineering/ENGINEERING_DIARY.md) — chronological evidence, investigations and decisions.
 
 ## Canonical current indexes
 
